@@ -1,5 +1,12 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  index,
+  integer,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -89,5 +96,44 @@ export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
     references: [user.id],
+  }),
+}));
+
+export const workout = pgTable("workout", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const exercise = pgTable("exercise", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  workoutId: text("workout_id")
+    .notNull()
+    .references(() => workout.id, { onDelete: "cascade" }),
+  weight: integer("weight").notNull(),
+  sets: integer("sets").notNull(),
+  maxReps: integer("max_reps"), // If set not null: Increase weight suggestion is enabled
+  logging: boolean("logging").default(false).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const workoutRelations = relations(workout, ({ many }) => ({
+  exercises: many(exercise),
+}));
+
+export const exerciseRelations = relations(exercise, ({ one }) => ({
+  workout: one(workout, {
+    fields: [exercise.workoutId],
+    references: [workout.id],
   }),
 }));
