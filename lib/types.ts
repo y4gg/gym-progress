@@ -23,6 +23,9 @@ interface Store {
   editExercise: (exercise: Exercise) => void;
   deleteWorkout: (workoutId: string) => void;
   deleteExercise: (exerciseId: string) => void;
+
+  getWorkoutById: (workoutId: string) => Workout | undefined;
+  getExerciseById: (exerciseId: string) => Exercise | undefined;
 }
 
 export type { Workout, Exercise, Store };

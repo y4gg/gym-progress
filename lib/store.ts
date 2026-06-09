@@ -4,7 +4,7 @@ import type { Workout, Exercise, Store } from "./types";
 
 const useStore = create<Store>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       workouts: [],
       addWorkout: (workout: Workout) =>
         set((state) => ({ workouts: [...state.workouts, workout] })),
@@ -59,6 +59,19 @@ const useStore = create<Store>()(
             ),
           })),
         })),
+      getWorkoutById: (workoutId: string) =>
+        get().workouts.find((workout) => workout.id === workoutId),
+      getExerciseById: (exerciseId: string) => {
+        for (const workout of get().workouts) {
+          const exercise = workout.exercises.find(
+            (exercise) => exercise.id === exerciseId,
+          );
+          if (exercise) {
+            return exercise;
+          }
+        }
+        return undefined;
+      },
     }),
     {
       name: "store",
