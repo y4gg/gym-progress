@@ -1,0 +1,70 @@
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { useStore } from "@/lib/store";
+import { createId } from "@paralleldrive/cuid2";
+import { Edit } from "lucide-react";
+
+export function CreateWorkoutDialog() {
+  const [open, setOpen] = useState(false);
+  const [workoutName, setWorkoutName] = useState("");
+
+  const { addWorkout } = useStore();
+
+  const handleCreateWorkout = () => {
+    let id = createId();
+    addWorkout({ id, name: workoutName, exercises: [] });
+    setWorkoutName("");
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">Create Workout</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Workout</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-2 py-4">
+          <Label htmlFor="name" className="text-right">
+            Name
+          </Label>
+          <Input
+            id="name"
+            value={workoutName}
+            onChange={(e) => setWorkoutName(e.target.value)}
+            className="col-span-3"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleCreateWorkout();
+              }
+            }}
+          />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button type="submit" onClick={handleCreateWorkout}>
+            Create Workout
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
