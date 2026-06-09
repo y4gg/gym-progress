@@ -65,3 +65,5 @@ const useStore = create<Store>()(
     },
   ),
 );
+
+export { useStore };
