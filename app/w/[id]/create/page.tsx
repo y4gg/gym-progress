@@ -19,11 +19,8 @@ export default function CreateExercisePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const workout = useStore((state) => state.getWorkoutById(id));
-  if (!workout) {
-    return <div>Workout not found</div>;
-  }
-
   const [exercise, setExercise] = useState<Exercise>({
     id: createId(),
     name: "",
@@ -34,10 +31,14 @@ export default function CreateExercisePage({
     workoutId: id,
   });
 
+  if (!workout) {
+    return <div>Workout not found</div>;
+  }
+
   const handleCreateExercise = () => {
     // TODO: validate input
     useStore.getState().addExercise(exercise, workout.id);
-    useRouter().push(`/w/${workout.id}`);
+    router.push(`/w/${workout.id}`);
     toast.success("Exercise created successfully!");
   };
 
@@ -99,13 +100,16 @@ export default function CreateExercisePage({
           </Button>
         </div>
       </div>
-      <div className="flex gap-1">
-        <Button className="flex-1" variant="outline">
-          Increase weight suggestions
-        </Button>
-        <Button variant="outline" size="icon">
-          <Info />
-        </Button>
+      <div className="grid gap-1">
+        <Label>Reps</Label>
+        <div className="flex gap-1">
+          <Button className="flex-1" variant="outline">
+            Increase weight suggestions
+          </Button>
+          <Button variant="outline" size="icon">
+            <Info />
+          </Button>
+        </div>
       </div>
       <div className="grid gap-1">
         <Label>Logging</Label>
