@@ -72,6 +72,30 @@ const useStore = create<Store>()(
         }
         return undefined;
       },
+      getPreviousExerciseById: (exerciseId: string) => {
+        for (const workout of get().workouts) {
+          const exerciseIndex = workout.exercises.findIndex(
+            (exercise) => exercise.id === exerciseId,
+          );
+
+          return exerciseIndex > 0
+            ? workout.exercises[exerciseIndex - 1]
+            : undefined;
+        }
+        return undefined;
+      },
+      getNextExerciseById: (exerciseId: string) => {
+        for (const workout of get().workouts) {
+          const exerciseIndex = workout.exercises.findIndex(
+            (exercise) => exercise.id === exerciseId,
+          );
+
+          return exerciseIndex < workout.exercises.length - 1
+            ? workout.exercises[exerciseIndex + 1]
+            : undefined;
+        }
+        return undefined;
+      },
     }),
     {
       name: "store",

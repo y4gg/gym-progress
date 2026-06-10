@@ -26,6 +26,9 @@ interface Store {
 
   getWorkoutById: (workoutId: string) => Workout | undefined;
   getExerciseById: (exerciseId: string) => Exercise | undefined;
+
+  getPreviousExerciseById: (exerciseId: string) => Exercise | undefined;
+  getNextExerciseById: (exerciseId: string) => Exercise | undefined;
 }
 
 export type { Workout, Exercise, Store };
