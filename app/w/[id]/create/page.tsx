@@ -12,6 +12,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { use } from "react";
+import { notFound } from "next/navigation";
 
 export default function CreateExercisePage({
   params,
@@ -32,7 +33,7 @@ export default function CreateExercisePage({
   });
 
   if (!workout) {
-    return <div>Workout not found</div>;
+    notFound();
   }
 
   const handleCreateExercise = () => {
@@ -57,7 +58,7 @@ export default function CreateExercisePage({
         <div className="relative mt-1">
           <Input
             type="number"
-            className="pr-7"
+            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             value={exercise.weight}
             onChange={(e) =>
               setExercise({ ...exercise, weight: Number(e.target.value) })
@@ -85,7 +86,7 @@ export default function CreateExercisePage({
           <div className="relative">
             <Input
               type="number"
-              className="pr-10"
+              className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               value={exercise.sets}
               onChange={(e) =>
                 setExercise({ ...exercise, sets: Number(e.target.value) })

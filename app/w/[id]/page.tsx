@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Exercise } from "@/lib/types";
 import { Edit } from "lucide-react";
+import { notFound } from "next/navigation";
 
 export default function WorkoutOverview({
   params,
@@ -15,7 +16,7 @@ export default function WorkoutOverview({
   const workout = useStore((state) => state.getWorkoutById(id));
 
   if (!workout) {
-    return <div>Workout not found</div>;
+    notFound();
   }
 
   const exercises = workout.exercises;
