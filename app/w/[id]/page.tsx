@@ -7,6 +7,7 @@ import { Exercise } from "@/lib/types";
 import { Edit } from "lucide-react";
 import { notFound } from "next/navigation";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
+import { EditExerciseDialog } from "@/components/edit-exercise-dialog";
 
 export default function WorkoutOverview({
   params,
@@ -45,9 +46,14 @@ export default function WorkoutOverview({
               <span>{exercise.name}</span>
             </Link>
           </Button>
-          <Button variant="secondary" size="icon">
-            <Edit />
-          </Button>
+          <EditExerciseDialog
+            trigger={
+              <Button variant="secondary" size="icon">
+                <Edit />
+              </Button>
+            }
+            exercise={exercise}
+          />
         </div>
       ))}
     </div>

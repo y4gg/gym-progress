@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
 import { EditWorkoutDialog } from "@/components/edit-workout-dialog";
 import Link from "next/link";
+import { Edit } from "lucide-react";
 
 export default function Home() {
   const workouts = useStore((state) => state.workouts);
@@ -25,7 +26,14 @@ export default function Home() {
               <span>{workout.name}</span>
             </Link>
           </Button>
-          <EditWorkoutDialog id={workout.id} />
+          <EditWorkoutDialog
+            id={workout.id}
+            trigger={
+              <Button variant="secondary" size="icon">
+                <Edit />
+              </Button>
+            }
+          />
         </div>
       ))}
     </div>

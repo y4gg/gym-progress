@@ -16,7 +16,13 @@ import { Exercise } from "@/lib/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "sonner";
 
-export function EditExerciseDialog({ exercise }: { exercise: Exercise }) {
+export function EditExerciseDialog({
+  exercise,
+  trigger,
+}: {
+  exercise: Exercise;
+  trigger: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const [newExercise, setNewExercise] = useState<Exercise>(exercise);
 
@@ -30,9 +36,7 @@ export function EditExerciseDialog({ exercise }: { exercise: Exercise }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="secondary">Edit Exercise</Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Exercise</DialogTitle>

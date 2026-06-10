@@ -15,7 +15,13 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { Edit } from "lucide-react";
 
-export function EditWorkoutDialog({ id }: { id: string }) {
+export function EditWorkoutDialog({
+  id,
+  trigger,
+}: {
+  id: string;
+  trigger: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
 
@@ -28,11 +34,7 @@ export function EditWorkoutDialog({ id }: { id: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="secondary" size="icon">
-          <Edit />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Workout</DialogTitle>
