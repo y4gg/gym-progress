@@ -34,7 +34,7 @@ export default function WorkoutOverview({
             variant={"default"}
             className="flex-1 justify-between text-left"
           >
-            <Link href={`/w/${id}/${exercise.id}`}>
+            <Link href={`/e/${exercise.id}`}>
               <span>{exercise.name}</span>
             </Link>
           </Button>
