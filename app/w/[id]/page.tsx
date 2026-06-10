@@ -24,7 +24,7 @@ export default function WorkoutOverview({
     <div className="flex flex-col items-center max-w-xl mx-auto py-10 gap-1">
       <div className="w-full">
         <Link href={`/w/${id}/create`}>
-          <Button>Create Exercise</Button>
+          <Button variant="outline">Create Exercise</Button>
         </Link>
       </div>
       {exercises.map((exercise: Exercise) => (
