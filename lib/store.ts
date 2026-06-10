@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Workout, Exercise, Store } from "./types";
@@ -75,6 +76,7 @@ const useStore = create<Store>()(
     }),
     {
       name: "store",
+      skipHydration: true,
     },
   ),
 );
