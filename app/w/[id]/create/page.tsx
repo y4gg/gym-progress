@@ -57,7 +57,7 @@ export default function CreateExercisePage({
         <div className="relative mt-1">
           <Input
             type="number"
-            className="pr-8"
+            className="pr-7"
             value={exercise.weight}
             onChange={(e) =>
               setExercise({ ...exercise, weight: Number(e.target.value) })
@@ -85,7 +85,7 @@ export default function CreateExercisePage({
           <div className="relative">
             <Input
               type="number"
-              className="pr-8"
+              className="pr-10"
               value={exercise.sets}
               onChange={(e) =>
                 setExercise({ ...exercise, sets: Number(e.target.value) })
