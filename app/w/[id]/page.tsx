@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Exercise } from "@/lib/types";
 import { Edit } from "lucide-react";
 import { notFound } from "next/navigation";
+import { useStoreHydrated } from "@/lib/use-store-hydrated";
 
 export default function WorkoutOverview({
   params,
@@ -13,7 +14,12 @@ export default function WorkoutOverview({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const hydrated = useStoreHydrated();
   const workout = useStore((state) => state.getWorkoutById(id));
+
+  if (!hydrated) {
+    return null;
+  }
 
   if (!workout) {
     notFound();

@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { createId } from "@paralleldrive/cuid2";
-import { Edit } from "lucide-react";
 
 export function CreateWorkoutDialog() {
   const [open, setOpen] = useState(false);

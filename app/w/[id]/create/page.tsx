@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { use } from "react";
 import { notFound } from "next/navigation";
+import { useStoreHydrated } from "@/lib/use-store-hydrated";
 
 export default function CreateExercisePage({
   params,
@@ -20,6 +21,7 @@ export default function CreateExercisePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const hydrated = useStoreHydrated();
   const router = useRouter();
   const workout = useStore((state) => state.getWorkoutById(id));
   const [exercise, setExercise] = useState<Exercise>({
@@ -31,6 +33,10 @@ export default function CreateExercisePage({
     logging: false,
     workoutId: id,
   });
+
+  if (!hydrated) {
+    return null;
+  }
 
   if (!workout) {
     notFound();
