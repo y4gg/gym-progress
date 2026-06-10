@@ -1,20 +1,19 @@
 "use client";
-import { use } from "react";
+
+import { use, useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus, Info } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { EditExerciseDialog } from "@/components/edit-exercise-dialog";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { Exercise } from "@/lib/types";
 import { useDebounce } from "@/lib/use-debounce";
 
@@ -25,6 +24,8 @@ export default function ExercisePage({
 }) {
   const { Id: exerciseId } = use(params);
   const hydrated = useStoreHydrated();
+  const router = useRouter();
+
   const exercise = useStore((state) => state.getExerciseById(exerciseId));
   const workout = useStore((state) =>
     exercise ? state.getWorkoutById(exercise.workoutId) : undefined,
@@ -35,24 +36,36 @@ export default function ExercisePage({
   const previousExercise = useStore((state) =>
     exercise ? state.getPreviousExerciseById(exercise.id) : undefined,
   );
-  const [currentSet, setCurrentSet] = useState(1);
-  const { deleteExercise, editExercise } = useStore();
-  const router = useRouter();
 
+  const { deleteExercise, editExercise } = useStore();
+
+  const [currentSet, setCurrentSet] = useState(1);
   const [newExercise, setNewExercise] = useState<Exercise | undefined>(
-    exercise,
+    undefined,
   );
+
+  useEffect(() => {
+    if (exercise) {
+      setNewExercise(exercise);
+    }
+  }, [exercise]);
+
+  const debouncedExercise = useDebounce(newExercise, 1500);
+
+  useEffect(() => {
+    if (!debouncedExercise || !exercise) return;
+
+    if (
+      debouncedExercise.weight !== exercise.weight ||
+      debouncedExercise.notes !== exercise.notes
+    ) {
+      console.log("called");
+      editExercise(debouncedExercise);
+    }
+  }, [debouncedExercise, exercise, editExercise]);
 
   if (!hydrated) return null;
   if (!exercise || !workout) notFound();
-
-  const handleEditExercise = (e: any) => {
-    if (!newExercise) return;
-    setNewExercise({
-      ...newExercise,
-      notes: e.target.value,
-    });
-  };
 
   const handleDelete = async () => {
     await deleteExercise(exerciseId);
@@ -63,17 +76,19 @@ export default function ExercisePage({
   return (
     <div className="grid sm:p-24 mx-auto gap-2 p-6">
       <h1 className="text-4xl font-bold text-center">{exercise.name}</h1>
+
       <div>
         <Label>Weight</Label>
         <div className="flex items-center gap-1 mt-1">
           <Button size="icon" variant="outline">
             <Plus />
           </Button>
+
           <div className="relative">
             <Input
               type="number"
               className="pr-7 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              value={newExercise?.weight}
+              value={newExercise?.weight ?? ""}
               onChange={(e) => {
                 if (!newExercise) return;
                 setNewExercise({
@@ -86,19 +101,28 @@ export default function ExercisePage({
               kg
             </span>
           </div>
+
           <Button size="icon" variant="outline">
             <Minus />
           </Button>
         </div>
       </div>
+
       <div>
         <Label>Notes</Label>
         <Textarea
           className="mt-1"
-          value={newExercise?.notes}
-          onChange={(e: any) => handleEditExercise(e)}
+          value={newExercise?.notes ?? ""}
+          onChange={(e) => {
+            if (!newExercise) return;
+            setNewExercise({
+              ...newExercise,
+              notes: e.target.value,
+            });
+          }}
         />
       </div>
+
       <div>
         <Label>Current Set</Label>
         <div className="flex items-center gap-1 mt-1">
@@ -127,7 +151,9 @@ export default function ExercisePage({
           </Button>
         </div>
       </div>
+
       <Separator orientation="horizontal" className="my-3" />
+
       <div className="grid grid-cols-2 gap-1">
         <div className="grid gap-1">
           <Button variant="outline" asChild>
@@ -137,16 +163,17 @@ export default function ExercisePage({
               <Link href={`/e/${previousExercise.id}`}>Back</Link>
             )}
           </Button>
+
           <Button variant="secondary" asChild>
             <Link href={`/e/${exercise.id}/history`}>History</Link>
           </Button>
+
           <DeleteDialog
-            onConfirm={() => {
-              handleDelete();
-            }}
+            onConfirm={handleDelete}
             element={<Button variant="destructive">Delete Exercise</Button>}
           />
         </div>
+
         <div className="grid gap-1">
           <Button variant="default" asChild>
             {typeof nextExercise === "undefined" ? (
@@ -155,9 +182,11 @@ export default function ExercisePage({
               <Link href={`/e/${nextExercise.id}`}>Next</Link>
             )}
           </Button>
+
           <Button variant="secondary" asChild>
             <Link href={`/e/${exercise.id}/logs`}>Logs</Link>
           </Button>
+
           <EditExerciseDialog
             exercise={exercise}
             trigger={<Button variant="secondary">Edit Exercise</Button>}
