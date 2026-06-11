@@ -78,6 +78,8 @@ export function EditExerciseDialog({
                 handleEditExercise();
               }
             }}
+            min={1}
+            step={1}
           />
         </div>
         <div className="flex flex-col gap-2">

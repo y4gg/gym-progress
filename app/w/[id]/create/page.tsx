@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { use } from "react";
 import { notFound } from "next/navigation";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
+import * as z from "zod";
 
 export default function CreateExercisePage({
   params,
@@ -24,12 +25,12 @@ export default function CreateExercisePage({
   const hydrated = useStoreHydrated();
   const router = useRouter();
   const workout = useStore((state) => state.getWorkoutById(id));
-  const [exercise, setExercise] = useState<Exercise>({
+  const [newExercise, setNewExercise] = useState<Exercise>({
     id: createId(),
     name: "",
     weight: 0,
     notes: "",
-    sets: 0,
+    sets: 3,
     logging: false,
     workoutId: id,
   });
@@ -42,9 +43,26 @@ export default function CreateExercisePage({
     notFound();
   }
 
+  const exercise = z.object({
+    name: z.string().min(4),
+    weight: z.number().min(0),
+    notes: z.string().optional(),
+    sets: z.number().min(1).multipleOf(1),
+    logging: z.boolean(),
+  });
+
   const handleCreateExercise = () => {
     // TODO: validate input
-    useStore.getState().addExercise(exercise, workout.id);
+    try {
+      exercise.parse(newExercise);
+    } catch (error) {
+      if (error instanceof z.ZodError)
+        error.issues.forEach((issue) => {
+          toast.error(`${issue.input}: ${issue.code}`);
+        });
+      return;
+    }
+    useStore.getState().addExercise(newExercise, workout.id);
     router.push(`/w/${workout.id}`);
     toast.success("Exercise created successfully!");
   };
@@ -55,8 +73,10 @@ export default function CreateExercisePage({
       <div className="grid gap-1">
         <Label>Exercise Name</Label>
         <Input
-          value={exercise.name}
-          onChange={(e) => setExercise({ ...exercise, name: e.target.value })}
+          value={newExercise.name}
+          onChange={(e) =>
+            setNewExercise({ ...newExercise, name: e.target.value })
+          }
         />
       </div>
       <div>
@@ -65,9 +85,9 @@ export default function CreateExercisePage({
           <Input
             type="number"
             className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            value={exercise.weight}
+            value={newExercise.weight}
             onChange={(e) =>
-              setExercise({ ...exercise, weight: Number(e.target.value) })
+              setNewExercise({ ...newExercise, weight: Number(e.target.value) })
             }
           />
           <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -79,8 +99,10 @@ export default function CreateExercisePage({
         <Label>Notes</Label>
         <Textarea
           className="mt-1"
-          value={exercise.notes}
-          onChange={(e) => setExercise({ ...exercise, notes: e.target.value })}
+          value={newExercise.notes}
+          onChange={(e) =>
+            setNewExercise({ ...newExercise, notes: e.target.value })
+          }
         />
       </div>
       <div>
@@ -93,10 +115,15 @@ export default function CreateExercisePage({
             <Input
               type="number"
               className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              value={exercise.sets}
-              onChange={(e) =>
-                setExercise({ ...exercise, sets: Number(e.target.value) })
-              }
+              value={newExercise.sets}
+              onChange={(e) => {
+                setNewExercise({
+                  ...newExercise,
+                  sets: Number(e.target.value),
+                });
+              }}
+              min={1}
+              step={1}
             />
             <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
               sets
@@ -125,7 +152,7 @@ export default function CreateExercisePage({
           variant={"outline"}
           defaultValue="false"
           onValueChange={(value) =>
-            setExercise({ ...exercise, logging: value === "true" })
+            setNewExercise({ ...newExercise, logging: value === "true" })
           }
         >
           <ToggleGroupItem value="true">Enabled</ToggleGroupItem>
