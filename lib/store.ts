@@ -59,6 +59,7 @@ const useStore = create<Store>()(
             ),
           })),
         })),
+      clearData: () => set({ workouts: [] }),
       getWorkoutById: (workoutId: string) =>
         get().workouts.find((workout) => workout.id === workoutId),
       getExerciseById: (exerciseId: string) => {

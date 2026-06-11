@@ -23,6 +23,7 @@ interface Store {
   editExercise: (exercise: Exercise) => void;
   deleteWorkout: (workoutId: string) => void;
   deleteExercise: (exerciseId: string) => void;
+  clearData: () => void;
 
   getWorkoutById: (workoutId: string) => Workout | undefined;
   getExerciseById: (exerciseId: string) => Exercise | undefined;
