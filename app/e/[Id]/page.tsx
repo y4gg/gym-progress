@@ -80,7 +80,17 @@ export default function ExercisePage({
       <div>
         <Label>Weight</Label>
         <div className="flex items-center gap-1 mt-1">
-          <Button size="icon" variant="outline">
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => {
+              if (!newExercise) return;
+              setNewExercise({
+                ...newExercise,
+                weight: Number(newExercise.weight + 1.25),
+              });
+            }}
+          >
             <Plus />
           </Button>
 
@@ -96,13 +106,32 @@ export default function ExercisePage({
                   weight: Number(e.target.value),
                 });
               }}
+              min={0}
             />
             <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
               kg
             </span>
           </div>
 
-          <Button size="icon" variant="outline">
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => {
+              if (!newExercise) return;
+              if (newExercise.weight - 1.25 <= 0) {
+                setNewExercise({
+                  ...newExercise,
+                  weight: Number(0),
+                });
+                return;
+              }
+              setNewExercise({
+                ...newExercise,
+                weight: Number(newExercise.weight - 1.25),
+              });
+            }}
+            disabled={newExercise && newExercise.weight <= 0}
+          >
             <Minus />
           </Button>
         </div>
