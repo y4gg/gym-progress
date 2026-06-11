@@ -55,13 +55,9 @@ export function CreateWorkoutDialog() {
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
+            <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button type="submit" onClick={handleCreateWorkout}>
-            Create Workout
-          </Button>
+          <Button onClick={handleCreateWorkout}>Create Workout</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

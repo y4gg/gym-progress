@@ -97,13 +97,9 @@ export function EditExerciseDialog({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
+            <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button type="submit" onClick={handleEditExercise}>
-            Save
-          </Button>
+          <Button onClick={handleEditExercise}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
