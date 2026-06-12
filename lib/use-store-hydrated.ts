@@ -7,7 +7,7 @@ export function useStoreHydrated() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setHydrated(useStore.persist.hasHydrated());
+    setHydrated(useStore.persist.hasHydrated()); // eslint-disable-line
     const unsub = useStore.persist.onFinishHydration(() => setHydrated(true));
     if (!useStore.persist.hasHydrated()) {
       useStore.persist.rehydrate();

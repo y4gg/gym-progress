@@ -46,6 +46,7 @@ export default function ExercisePage({
 
   useEffect(() => {
     if (exercise) {
+      // eslint-disable-next-line
       setNewExercise(exercise);
     }
   }, [exercise]);

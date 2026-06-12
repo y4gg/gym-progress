@@ -21,7 +21,7 @@ export function CreateWorkoutDialog() {
   const { addWorkout } = useStore();
 
   const handleCreateWorkout = () => {
-    let id = createId();
+    const id = createId();
     addWorkout({ id, name: workoutName, exercises: [] });
     setWorkoutName("");
     setOpen(false);
