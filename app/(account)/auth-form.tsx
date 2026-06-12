@@ -13,13 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
 
-type AuthMode = "login" | "register";
-
-type AuthFormProps = {
-  mode: AuthMode;
-};
-
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const isRegister = mode === "register";
 
@@ -47,11 +41,20 @@ export function AuthForm({ mode }: AuthFormProps) {
             password,
             callbackURL: "/",
           })
-        : await authClient.signIn.email({
-            email: email.trim(),
-            password,
-            callbackURL: "/",
-          });
+        : await authClient.signIn.email(
+            {
+              email: email.trim(),
+              password,
+              callbackURL: "/",
+            },
+            {
+              onError: (ctx) => {
+                if (ctx.error.status === 403) {
+                  toast.error("Please verify your email first.");
+                }
+              },
+            },
+          );
 
       if (result.error) {
         const message = result.error.message ?? "Authentication failed.";

@@ -21,6 +21,7 @@ export const auth = betterAuth({
     },
   },
   emailVerification: {
+    sendOnSignUp: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
       void sendEmail({
         to: user.email,
@@ -29,6 +30,7 @@ export const auth = betterAuth({
       });
     },
   },
+  // TODO: fight googles dashboards later
   // socialProviders: {
   //   google: {
   //     clientId: process.env.GOOGLE_CLIENT_ID as string,
