@@ -43,7 +43,7 @@ export default function CreateExercisePage({
     notFound();
   }
 
-  const exercise = z.object({
+  const exerciseSchema = z.object({
     name: z.string().min(4),
     weight: z.number().min(0),
     notes: z.string().optional(),
@@ -54,7 +54,7 @@ export default function CreateExercisePage({
   const handleCreateExercise = () => {
     // TODO: validate input
     try {
-      exercise.parse(newExercise);
+      exerciseSchema.parse(newExercise);
     } catch (error) {
       if (error instanceof z.ZodError)
         error.issues.forEach((issue) => {

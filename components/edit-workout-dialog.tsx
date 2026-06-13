@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
+import z from "zod";
+import { toast } from "sonner";
 
 export function EditWorkoutDialog({
   id,
@@ -26,7 +28,20 @@ export function EditWorkoutDialog({
 
   const { editWorkout } = useStore();
 
+  const workoutSchema = z.object({
+    name: z.string().nonempty(),
+  });
+
   const handleEditWorkout = () => {
+    try {
+      workoutSchema.parse({ name: workoutName });
+    } catch (error) {
+      if (error instanceof z.ZodError)
+        error.issues.forEach((issue) => {
+          toast.error(`${issue.input}: ${issue.code}`);
+        });
+      return;
+    }
     editWorkout({ id, name: workoutName, exercises: [] });
     setOpen(false);
   };

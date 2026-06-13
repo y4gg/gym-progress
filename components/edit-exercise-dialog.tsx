@@ -15,6 +15,7 @@ import { useStore } from "@/lib/store";
 import { Exercise } from "@/lib/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "sonner";
+import z from "zod";
 
 export function EditExerciseDialog({
   exercise,
@@ -28,7 +29,24 @@ export function EditExerciseDialog({
 
   const { editExercise } = useStore();
 
+  const exerciseSchema = z.object({
+    name: z.string().min(4),
+    weight: z.number().min(0),
+    notes: z.string().optional(),
+    sets: z.number().min(1).multipleOf(1),
+    logging: z.boolean(),
+  });
+
   const handleEditExercise = () => {
+    try {
+      exerciseSchema.parse(newExercise);
+    } catch (error) {
+      if (error instanceof z.ZodError)
+        error.issues.forEach((issue) => {
+          toast.error(`${issue.input}: ${issue.code}`);
+        });
+      return;
+    }
     editExercise(newExercise);
     toast.success("Exercise edited successfuly.");
     setOpen(false);
