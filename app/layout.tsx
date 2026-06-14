@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import Hydration from "@/components/hydration";
+import { AppNavbar } from "@/components/app-navbar";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -50,6 +51,7 @@ export default function RootLayout({
         >
           <Hydration />
           {children}
+          <AppNavbar />
           <Toaster />
         </ThemeProvider>
       </body>

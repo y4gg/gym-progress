@@ -16,7 +16,7 @@ import { createId } from "@paralleldrive/cuid2";
 import z from "zod";
 import { toast } from "sonner";
 
-export function CreateWorkoutDialog() {
+export function CreateWorkoutDialog({ trigger }: { trigger?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
 
@@ -45,7 +45,7 @@ export function CreateWorkoutDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Create Workout</Button>
+        {trigger ?? <Button variant="outline">Create Workout</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

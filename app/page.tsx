@@ -2,7 +2,6 @@
 import { useStore } from "@/lib/store";
 import { Workout } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
 import { EditWorkoutDialog } from "@/components/edit-workout-dialog";
 import Link from "next/link";
 import { Edit } from "lucide-react";
@@ -11,31 +10,32 @@ export default function Home() {
   const workouts = useStore((state) => state.workouts);
 
   return (
-    <div className="flex flex-col items-center max-w-xl mx-auto py-10 gap-1">
-      <div className="w-full">
-        <CreateWorkoutDialog />
-      </div>
+    <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-7 pb-28">
       {workouts.map((workout: Workout) => (
-        <div className="flex w-full gap-0.5" key={workout.id}>
+        <div className="flex w-full gap-2" key={workout.id}>
           <Button
             asChild
-            variant={"default"}
-            className="flex-1 justify-between text-left"
+            variant="outline"
+            className="h-16 min-w-0 flex-1 justify-start px-5 text-left text-2xl font-semibold"
           >
             <Link href={`/w/${workout.id}?redirect=true`}>
-              <span>{workout.name}</span>
+              <span className="min-w-0 truncate">{workout.name}</span>
             </Link>
           </Button>
           <EditWorkoutDialog
             id={workout.id}
             trigger={
-              <Button variant="secondary" size="icon">
+              <Button
+                aria-label={`Edit ${workout.name}`}
+                className="h-16 w-16"
+                variant="secondary"
+              >
                 <Edit />
               </Button>
             }
           />
         </div>
       ))}
-    </div>
+    </main>
   );
 }
