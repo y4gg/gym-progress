@@ -57,9 +57,16 @@ function getExerciseId(pathname: string) {
   return match?.[1];
 }
 
-function PageSpecificNavItem({ pathname }: { pathname: string }) {
+function PageSpecificNavItem({
+  isLoggedIn,
+  isSessionPending,
+  pathname,
+}: {
+  isLoggedIn: boolean;
+  isSessionPending: boolean;
+  pathname: string;
+}) {
   const router = useRouter();
-  const session = authClient.useSession();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const workoutId = getWorkoutId(pathname);
   const exerciseId = getExerciseId(pathname);
@@ -136,7 +143,7 @@ function PageSpecificNavItem({ pathname }: { pathname: string }) {
   }
 
   if (pathname === "/account") {
-    if (!session.isPending && !session.data) {
+    if (!isSessionPending && !isLoggedIn) {
       return (
         <NavLink href="/login" label="Login">
           <LogIn />
@@ -149,7 +156,7 @@ function PageSpecificNavItem({ pathname }: { pathname: string }) {
       <button
         aria-label="Sign out"
         className={navItemClass(false)}
-        disabled={session.isPending || isSigningOut}
+        disabled={isSessionPending || isSigningOut}
         onClick={handleSignOut}
         type="button"
       >
@@ -169,6 +176,11 @@ function PageSpecificNavItem({ pathname }: { pathname: string }) {
 
 export function AppNavbar() {
   const pathname = usePathname();
+  const session = authClient.useSession();
+  const isLoggedIn = Boolean(session.data);
+  const accountHref = !session.isPending && !isLoggedIn ? "/login" : "/account";
+  const accountLabel = accountHref === "/login" ? "Login" : "Account";
+  const AccountIcon = accountHref === "/login" ? LogIn : UserRound;
 
   return (
     <nav
@@ -185,15 +197,19 @@ export function AppNavbar() {
           <Home />
           <span>Home</span>
         </NavLink>
-        <PageSpecificNavItem pathname={pathname} />
+        <PageSpecificNavItem
+          isLoggedIn={isLoggedIn}
+          isSessionPending={session.isPending}
+          pathname={pathname}
+        />
         <NavLink
-          active={pathname === "/account"}
+          active={pathname === accountHref}
           className="mr-1"
-          href="/account"
-          label="Account"
+          href={accountHref}
+          label={accountLabel}
         >
-          <UserRound />
-          <span>Account</span>
+          <AccountIcon />
+          <span>{accountLabel}</span>
         </NavLink>
       </div>
     </nav>

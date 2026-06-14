@@ -29,20 +29,21 @@ import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
-type AccountActionButtonProps = {
+type AccountActionButtonProps = Omit<
+  ComponentProps<typeof Button>,
+  "children"
+> & {
   children: ReactNode;
-  className?: string;
-  disabled?: boolean;
   icon: ReactNode;
-  variant?: ComponentProps<typeof Button>["variant"];
 };
 
 function AccountActionButton({
   children,
   className,
-  disabled,
   icon,
+  type = "button",
   variant = "outline",
+  ...props
 }: AccountActionButtonProps) {
   return (
     <Button
@@ -50,8 +51,9 @@ function AccountActionButton({
         "h-14 w-full justify-start gap-3 px-4 text-base",
         className,
       )}
-      disabled={disabled}
+      type={type}
       variant={variant}
+      {...props}
     >
       {icon}
       <span className="min-w-0 truncate">{children}</span>
