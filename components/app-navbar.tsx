@@ -57,22 +57,23 @@ function getExerciseId(pathname: string) {
   return match?.[1];
 }
 
-function PageSpecificNavItem({
+function isAccountPath(pathname: string) {
+  return (
+    pathname === "/account" ||
+    pathname === "/login" ||
+    pathname === "/register"
+  );
+}
+
+function AccountPageNavItem({
   isLoggedIn,
   isSessionPending,
-  pathname,
 }: {
   isLoggedIn: boolean;
   isSessionPending: boolean;
-  pathname: string;
 }) {
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const workoutId = getWorkoutId(pathname);
-  const exerciseId = getExerciseId(pathname);
-  const exerciseWorkoutId = useStore((state) =>
-    exerciseId ? state.getExerciseById(exerciseId)?.workoutId : undefined,
-  );
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -94,6 +95,39 @@ function PageSpecificNavItem({
       setIsSigningOut(false);
     }
   }
+
+  if (isSessionPending || !isLoggedIn) {
+    return <div aria-hidden className={cn(navItemClass(false), "invisible")} />;
+  }
+
+  return (
+    <button
+      aria-label="Sign out"
+      className={navItemClass(false)}
+      disabled={isSigningOut}
+      onClick={handleSignOut}
+      type="button"
+    >
+      <LogOut className="size-6" />
+      <span>{isSigningOut ? "Signing out" : "Sign out"}</span>
+    </button>
+  );
+}
+
+function PageSpecificNavItem({
+  isLoggedIn,
+  isSessionPending,
+  pathname,
+}: {
+  isLoggedIn: boolean;
+  isSessionPending: boolean;
+  pathname: string;
+}) {
+  const workoutId = getWorkoutId(pathname);
+  const exerciseId = getExerciseId(pathname);
+  const exerciseWorkoutId = useStore((state) =>
+    exerciseId ? state.getExerciseById(exerciseId)?.workoutId : undefined,
+  );
 
   if (pathname === "/") {
     return (
@@ -142,27 +176,12 @@ function PageSpecificNavItem({
     );
   }
 
-  if (pathname === "/account") {
-    if (!isSessionPending && !isLoggedIn) {
-      return (
-        <NavLink href="/login" label="Login">
-          <LogIn />
-          <span>Login</span>
-        </NavLink>
-      );
-    }
-
+  if (isAccountPath(pathname)) {
     return (
-      <button
-        aria-label="Sign out"
-        className={navItemClass(false)}
-        disabled={isSessionPending || isSigningOut}
-        onClick={handleSignOut}
-        type="button"
-      >
-        <LogOut className="size-6" />
-        <span>{isSigningOut ? "Signing out" : "Sign out"}</span>
-      </button>
+      <AccountPageNavItem
+        isLoggedIn={isLoggedIn}
+        isSessionPending={isSessionPending}
+      />
     );
   }
 

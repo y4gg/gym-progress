@@ -2,7 +2,16 @@
 
 import type { ComponentProps, FormEvent, ReactNode } from "react";
 import { useState } from "react";
-import { Fingerprint, KeyRound, Mail, ShieldAlert, Trash2 } from "lucide-react";
+import { getAuthenticatorName } from "@better-auth/passkey";
+import {
+  Fingerprint,
+  KeyRound,
+  LogOut,
+  Mail,
+  Plus,
+  ShieldAlert,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -56,6 +65,18 @@ function AccountActionButton({
 
 function getAuthErrorMessage(error: { message?: string } | null | undefined) {
   return error?.message ?? "Something went wrong.";
+}
+
+function getPasskeyLabel(passkey: {
+  name?: string;
+  aaguid?: string;
+  credentialID: string;
+}) {
+  return (
+    passkey.name ||
+    getAuthenticatorName(passkey.aaguid) ||
+    `Passkey ${passkey.credentialID.slice(0, 8)}`
+  );
 }
 
 function ChangeEmailDialog({
@@ -262,6 +283,68 @@ function ChangePasswordDialog({ disabled }: { disabled?: boolean }) {
 }
 
 function PasskeysDialog({ disabled }: { disabled?: boolean }) {
+  const passkeys = authClient.useListPasskeys();
+  const [name, setName] = useState("");
+  const [pendingAction, setPendingAction] = useState<"add" | string | null>(
+    null,
+  );
+  const [error, setError] = useState<string | null>(null);
+  const passkeyList = passkeys.data ?? [];
+
+  async function handleAddPasskey(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setPendingAction("add");
+
+    try {
+      const result = await authClient.passkey.addPasskey({
+        name: name.trim() || undefined,
+      });
+
+      if (result.error) {
+        const message = getAuthErrorMessage(result.error);
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
+      setName("");
+      await passkeys.refetch();
+      toast.success("Passkey added.");
+    } catch {
+      const message = "Passkey could not be added.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleDeletePasskey(id: string) {
+    setError(null);
+    setPendingAction(id);
+
+    try {
+      const result = await authClient.passkey.deletePasskey({ id });
+
+      if (result.error) {
+        const message = getAuthErrorMessage(result.error);
+        setError(message);
+        toast.error(message);
+        return;
+      }
+
+      await passkeys.refetch();
+      toast.success("Passkey deleted.");
+    } catch {
+      const message = "Passkey could not be deleted.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -273,12 +356,113 @@ function PasskeysDialog({ disabled }: { disabled?: boolean }) {
         <DialogHeader>
           <DialogTitle>Passkeys</DialogTitle>
           <DialogDescription>
-            Passkeys are not configured for this app yet.
+            Add a passkey to sign in with your device, password manager, or
+            security key.
           </DialogDescription>
         </DialogHeader>
+        <form className="grid gap-3" onSubmit={handleAddPasskey}>
+          <div>
+            <Label htmlFor="passkey-name">Name</Label>
+            <Input
+              autoComplete="off"
+              className="mt-1"
+              id="passkey-name"
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Personal laptop"
+              value={name}
+            />
+          </div>
+          {error ? (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <Button disabled={pendingAction !== null} type="submit">
+            <Plus />
+            {pendingAction === "add" ? "Adding" : "Add passkey"}
+          </Button>
+        </form>
+
+        <div className="grid gap-2">
+          <p className="text-sm font-medium">Saved passkeys</p>
+          {passkeys.isPending ? (
+            <p className="text-sm text-muted-foreground">Loading passkeys.</p>
+          ) : passkeyList.length > 0 ? (
+            <div className="grid gap-2">
+              {passkeyList.map((passkey) => (
+                <div
+                  className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-lg border bg-background p-3"
+                  key={passkey.id}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {getPasskeyLabel(passkey)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {passkey.createdAt
+                        ? new Date(passkey.createdAt).toLocaleDateString()
+                        : "No creation date"}
+                    </p>
+                  </div>
+                  <Button
+                    aria-label={`Delete ${getPasskeyLabel(passkey)}`}
+                    disabled={pendingAction !== null}
+                    onClick={() => void handleDeletePasskey(passkey.id)}
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No passkeys added yet.
+            </p>
+          )}
+        </div>
         <DialogFooter showCloseButton />
       </DialogContent>
     </Dialog>
+  );
+}
+
+function SignOutButton({ disabled }: { disabled?: boolean }) {
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
+
+  async function handleSignOut() {
+    setIsPending(true);
+
+    try {
+      const result = await authClient.signOut();
+
+      if (result.error) {
+        toast.error(result.error.message ?? "Sign out failed.");
+        return;
+      }
+
+      toast.success("Signed out.");
+      router.push("/login");
+      router.refresh();
+    } catch {
+      toast.error("Sign out failed.");
+    } finally {
+      setIsPending(false);
+    }
+  }
+
+  return (
+    <AccountActionButton
+      disabled={disabled || isPending}
+      icon={<LogOut />}
+      onClick={handleSignOut}
+      variant="secondary"
+    >
+      {isPending ? "Signing out" : "Sign out"}
+    </AccountActionButton>
   );
 }
 
@@ -390,6 +574,7 @@ export default function AccountPage() {
         />
         <ChangePasswordDialog disabled={actionsDisabled} />
         <PasskeysDialog disabled={actionsDisabled} />
+        <SignOutButton disabled={actionsDisabled} />
         <DeleteAccountDialog disabled={actionsDisabled} />
 
         {!session.isPending && !session.data ? (

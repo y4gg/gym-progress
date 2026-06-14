@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { sendEmail } from "./email";
+import { passkey } from "@better-auth/passkey";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -44,4 +45,5 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
   },
+  plugins: [passkey()],
 });
