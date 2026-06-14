@@ -4,39 +4,76 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogIn, UserPlus } from "lucide-react";
+import { Fingerprint, KeyRound, LogIn, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
+
+type PendingAction = "email" | "google" | null;
+
+function getDisplayName(email: string) {
+  const fallback = "Gym Ladder User";
+  const localPart = email.split("@")[0]?.trim();
+
+  return localPart || fallback;
+}
+
+function AuthDivider() {
+  return (
+    <div className="flex items-center gap-4 py-1 text-sm text-muted-foreground">
+      <div className="h-px flex-1 bg-border" />
+      <span>or</span>
+      <div className="h-px flex-1 bg-border" />
+    </div>
+  );
+}
+
+function AuthButton({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<typeof Button>) {
+  return (
+    <Button
+      className={cn("h-14 w-full gap-3 px-4 text-base", className)}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const isRegister = mode === "register";
 
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isPending, setIsPending] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [error, setError] = useState<string | null>(null);
 
   const title = isRegister ? "Register" : "Login";
-  const submitLabel = isRegister ? "Create Account" : "Login";
+  const submitLabel = isRegister ? "Register" : "Login";
   const switchHref = isRegister ? "/login" : "/register";
-  const switchAction = isRegister ? "Login" : "Register";
+  const switchAction = isRegister
+    ? "Login with existing account"
+    : "Create new account";
+  const googleLabel = isRegister ? "Sign up with Google" : "Sign in with Google";
+  const isPending = pendingAction !== null;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setIsPending(true);
+    setPendingAction("email");
 
     try {
       const result = isRegister
         ? await authClient.signUp.email({
-            name: name.trim(),
+            name: getDisplayName(email.trim()),
             email: email.trim(),
             password,
             callbackURL: "/",
@@ -71,77 +108,131 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       setError(message);
       toast.error(message);
     } finally {
-      setIsPending(false);
+      setPendingAction(null);
     }
   }
 
-  return (
-    <div className="grid w-full max-w-sm gap-2 p-6 sm:p-24 sm:max-w-xl mx-auto">
-      <h1 className="text-4xl font-bold text-center">{title}</h1>
+  async function handleGoogleSignIn() {
+    setError(null);
+    setPendingAction("google");
 
-      <form className="grid gap-2" onSubmit={handleSubmit}>
-        {isRegister ? (
+    try {
+      const result = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+
+      if (result.error) {
+        const message = result.error.message ?? "Google sign-in failed.";
+        setError(message);
+        toast.error(message);
+      }
+    } catch {
+      const message = "Google sign-in failed.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  function handlePasskeySignIn() {
+    toast.info("Passkeys are not configured for this app yet.");
+  }
+
+  return (
+    <main className="min-h-dvh px-6 py-10">
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
+        <h1 className="mb-5 text-center text-4xl font-bold">{title}</h1>
+
+        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="name">Name</Label>
+            <Label className="text-base" htmlFor="email">
+              Email
+            </Label>
             <Input
-              id="name"
-              name="name"
-              autoComplete="name"
-              className="mt-1"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
+              autoComplete="email"
+              className="h-14 px-4 text-base"
+              id="email"
+              name="email"
+              onChange={(event) => setEmail(event.target.value)}
               required
+              type="email"
+              value={email}
             />
           </div>
-        ) : null}
 
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            className="mt-1"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </div>
+          <div>
+            <Label className="text-base" htmlFor="password">
+              Password
+            </Label>
+            <Input
+              autoComplete={isRegister ? "new-password" : "current-password"}
+              className="h-14 px-4 text-base"
+              id="password"
+              minLength={isRegister ? 8 : undefined}
+              name="password"
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              type="password"
+              value={password}
+            />
+          </div>
 
-        <div>
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete={isRegister ? "new-password" : "current-password"}
-            className="mt-1"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
-        </div>
+          {error ? (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
 
-        {error ? (
-          <p className="text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        ) : null}
-
-        <Separator orientation="horizontal" className="my-3" />
-
-        <div className="grid grid-cols-2 gap-1">
-          <Button variant="outline" asChild>
-            <Link href={switchHref}>{switchAction}</Link>
-          </Button>
-
-          <Button type="submit" disabled={isPending}>
+          <AuthButton disabled={isPending} type="submit">
             {isRegister ? <UserPlus /> : <LogIn />}
-            {isPending ? "Please wait" : submitLabel}
-          </Button>
-        </div>
-      </form>
-    </div>
+            {pendingAction === "email" ? "Please wait" : submitLabel}
+          </AuthButton>
+        </form>
+
+        <AuthButton asChild variant="secondary">
+          <Link href={switchHref}>
+            <KeyRound />
+            {switchAction}
+          </Link>
+        </AuthButton>
+
+        <AuthDivider />
+
+        {isRegister ? (
+          <AuthButton
+            disabled={isPending}
+            onClick={handleGoogleSignIn}
+            type="button"
+            variant="outline"
+          >
+            <span className="text-lg font-semibold">G</span>
+            {pendingAction === "google" ? "Please wait" : googleLabel}
+          </AuthButton>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            <AuthButton
+              disabled={isPending}
+              onClick={handlePasskeySignIn}
+              type="button"
+              variant="outline"
+            >
+              <Fingerprint />
+              Passkey
+            </AuthButton>
+            <AuthButton
+              disabled={isPending}
+              onClick={handleGoogleSignIn}
+              type="button"
+              variant="outline"
+            >
+              <span className="text-lg font-semibold">G</span>
+              {pendingAction === "google" ? "Waiting" : "Google"}
+            </AuthButton>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
