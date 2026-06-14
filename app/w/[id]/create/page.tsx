@@ -1,20 +1,17 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus, Info } from "lucide-react";
+import { Info, Minus, Plus } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { useState } from "react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { use, useState } from "react";
 import { Exercise } from "@/lib/types";
 import { createId } from "@paralleldrive/cuid2";
-import { useRouter } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { use } from "react";
-import { notFound } from "next/navigation";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import * as z from "zod";
+import { Switch } from "@/components/ui/switch";
 
 export default function CreateExercisePage({
   params,
@@ -68,98 +65,142 @@ export default function CreateExercisePage({
   };
 
   return (
-    <div className="grid sm:p-24 mx-auto max-w-7xl gap-2 p-6">
-      <h1 className="text-4xl font-bold">Create Exercise</h1>
-      <div className="grid gap-1">
-        <Label>Exercise Name</Label>
+    <main className="mx-auto w-full max-w-sm px-6 py-9 pb-28">
+      <form
+        className="flex flex-col gap-4"
+        id="create-exercise-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleCreateExercise();
+        }}
+      >
         <Input
+          aria-label="Exercise name"
+          className="h-16 px-5 text-center text-2xl font-semibold"
+          placeholder="Exercise name"
           value={newExercise.name}
           onChange={(e) =>
             setNewExercise({ ...newExercise, name: e.target.value })
           }
         />
-      </div>
-      <div>
-        <Label>Weight</Label>
-        <div className="relative mt-1">
+
+        <div className="relative">
           <Input
-            type="number"
-            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            value={newExercise.weight}
+            aria-label="Weight"
+            className="h-16 px-5 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            min={0}
             onChange={(e) =>
-              setNewExercise({ ...newExercise, weight: Number(e.target.value) })
+              setNewExercise({
+                ...newExercise,
+                weight: Number(e.target.value),
+              })
             }
+            placeholder="0"
+            type="number"
+            value={newExercise.weight}
           />
-          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+          <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-2xl font-semibold text-muted-foreground">
             kg
           </span>
         </div>
-      </div>
-      <div>
-        <Label>Notes</Label>
+
         <Textarea
-          className="mt-1"
+          aria-label="Notes"
+          className="min-h-36 resize-none px-4 py-4 text-xl"
+          placeholder="Notes"
           value={newExercise.notes}
           onChange={(e) =>
             setNewExercise({ ...newExercise, notes: e.target.value })
           }
         />
-      </div>
-      <div>
-        <Label>Sets</Label>
-        <div className="flex items-center gap-1 mt-1">
-          <Button size="icon" variant="outline">
-            <Plus />
+
+        <div className="grid grid-cols-[4.5rem_1fr_4.5rem] gap-2">
+          <Button
+            aria-label="Increase sets"
+            className="h-16"
+            onClick={() =>
+              setNewExercise({
+                ...newExercise,
+                sets: newExercise.sets + 1,
+              })
+            }
+            type="button"
+            variant="outline"
+          >
+            <Plus className="size-8" />
           </Button>
           <div className="relative">
             <Input
-              type="number"
-              className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              value={newExercise.sets}
+              aria-label="Sets"
+              className="h-16 px-4 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              min={1}
               onChange={(e) => {
                 setNewExercise({
                   ...newExercise,
                   sets: Number(e.target.value),
                 });
               }}
-              min={1}
               step={1}
+              type="number"
+              value={newExercise.sets}
             />
-            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">
               sets
             </span>
           </div>
-          <Button size="icon" variant="outline">
-            <Minus />
+          <Button
+            aria-label="Decrease sets"
+            className="h-16"
+            disabled={newExercise.sets <= 1}
+            onClick={() =>
+              setNewExercise({
+                ...newExercise,
+                sets: Math.max(1, newExercise.sets - 1),
+              })
+            }
+            type="button"
+            variant="outline"
+          >
+            <Minus className="size-8" />
           </Button>
         </div>
-      </div>
-      <div className="grid gap-1">
-        <Label>Reps</Label>
-        <div className="flex gap-1">
-          <Button className="flex-1" variant="outline">
-            Increase weight suggestions
+
+        <div className="grid grid-cols-[1fr_4.5rem] gap-2">
+          <Button
+            className="h-16 whitespace-normal text-base"
+            type="button"
+            variant="outline"
+          >
+            Increase weight suggestion
           </Button>
-          <Button variant="outline" size="icon">
-            <Info />
+          <Button
+            aria-label="Increase weight suggestion info"
+            className="h-16"
+            type="button"
+            variant="outline"
+          >
+            <Info className="size-8" />
           </Button>
         </div>
-      </div>
-      <div className="grid gap-1">
-        <Label>Logging</Label>
-        <ToggleGroup
-          type="single"
-          variant={"outline"}
-          defaultValue="false"
-          onValueChange={(value) =>
-            setNewExercise({ ...newExercise, logging: value === "true" })
-          }
+
+        <label
+          className="flex h-16 items-center justify-between gap-4 rounded-lg border border-input px-5 text-xl font-semibold"
+          htmlFor="rep-tracking"
         >
-          <ToggleGroupItem value="true">Enabled</ToggleGroupItem>
-          <ToggleGroupItem value="false">Disabled</ToggleGroupItem>
-        </ToggleGroup>
-      </div>
-      <Button onClick={handleCreateExercise}>Create Exercise</Button>
-    </div>
+          <span className="min-w-0 truncate">Enable Rep Tracking</span>
+          <Switch
+            checked={newExercise.logging}
+            id="rep-tracking"
+            onCheckedChange={(checked) =>
+              setNewExercise({ ...newExercise, logging: checked })
+            }
+          />
+        </label>
+
+        <Button className="h-16 text-xl font-semibold" type="submit">
+          Create Exercise
+        </Button>
+      </form>
+    </main>
   );
 }
