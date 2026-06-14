@@ -2,20 +2,13 @@
 
 import type { ComponentProps, FormEvent, ReactNode } from "react";
 import { useState } from "react";
-import {
-  Fingerprint,
-  KeyRound,
-  Mail,
-  ShieldAlert,
-  Trash2,
-} from "lucide-react";
+import { Fingerprint, KeyRound, Mail, ShieldAlert, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -29,20 +22,21 @@ import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
-type AccountActionButtonProps = {
+type AccountActionButtonProps = Omit<
+  ComponentProps<typeof Button>,
+  "children"
+> & {
   children: ReactNode;
-  className?: string;
-  disabled?: boolean;
   icon: ReactNode;
-  variant?: ComponentProps<typeof Button>["variant"];
 };
 
 function AccountActionButton({
   children,
   className,
-  disabled,
   icon,
+  type = "button",
   variant = "outline",
+  ...props
 }: AccountActionButtonProps) {
   return (
     <Button
@@ -50,8 +44,9 @@ function AccountActionButton({
         "h-14 w-full justify-start gap-3 px-4 text-base",
         className,
       )}
-      disabled={disabled}
+      type={type}
       variant={variant}
+      {...props}
     >
       {icon}
       <span className="min-w-0 truncate">{children}</span>
@@ -140,11 +135,6 @@ function ChangeEmailDialog({
             </p>
           ) : null}
           <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
             <Button disabled={isPending} type="submit">
               {isPending ? "Saving" : "Save"}
             </Button>
@@ -261,11 +251,6 @@ function ChangePasswordDialog({ disabled }: { disabled?: boolean }) {
             </p>
           ) : null}
           <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
             <Button disabled={isPending} type="submit">
               {isPending ? "Saving" : "Save"}
             </Button>
@@ -356,7 +341,8 @@ function DeleteAccountDialog({ disabled }: { disabled?: boolean }) {
           </div>
           <DialogTitle>Delete Account</DialogTitle>
           <DialogDescription>
-            This deletes your account and clears workout data stored on this device.
+            This deletes your account and clears workout data stored on this
+            device.
           </DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={handleSubmit}>
@@ -378,11 +364,6 @@ function DeleteAccountDialog({ disabled }: { disabled?: boolean }) {
             </p>
           ) : null}
           <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
             <Button disabled={isPending} type="submit" variant="destructive">
               {isPending ? "Deleting" : "Delete"}
             </Button>
