@@ -4,10 +4,9 @@ import { use, useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { notFound, useRouter } from "next/navigation";
 import { EditExerciseDialog } from "@/components/edit-exercise-dialog";
@@ -60,7 +59,6 @@ export default function ExercisePage({
       debouncedExercise.weight !== exercise.weight ||
       debouncedExercise.notes !== exercise.notes
     ) {
-      console.log("called");
       editExercise(debouncedExercise);
     }
   }, [debouncedExercise, exercise, editExercise]);
@@ -75,15 +73,16 @@ export default function ExercisePage({
   };
 
   return (
-    <div className="grid sm:p-24 mx-auto gap-2 p-6">
-      <h1 className="text-4xl font-bold text-center">{exercise.name}</h1>
+    <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32">
+      <div className="flex flex-col gap-4">
+        <h1 className="truncate text-center text-3xl font-bold">
+          {exercise.name}
+        </h1>
 
-      <div>
-        <Label>Weight</Label>
-        <div className="flex items-center gap-1 mt-1">
+        <div className="grid grid-cols-[4.5rem_1fr_4.5rem] gap-2">
           <Button
-            size="icon"
-            variant="outline"
+            aria-label="Increase weight"
+            className="h-16"
             onClick={() => {
               if (!newExercise) return;
               setNewExercise({
@@ -91,15 +90,17 @@ export default function ExercisePage({
                 weight: Number(newExercise.weight + 1.25),
               });
             }}
+            type="button"
+            variant="outline"
           >
-            <Plus />
+            <Plus className="size-8" />
           </Button>
 
           <div className="relative">
             <Input
-              type="number"
-              className="pr-7 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              value={newExercise?.weight ?? ""}
+              aria-label="Weight"
+              className="h-16 px-4 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              min={0}
               onChange={(e) => {
                 if (!newExercise) return;
                 setNewExercise({
@@ -107,42 +108,36 @@ export default function ExercisePage({
                   weight: Number(e.target.value),
                 });
               }}
-              min={0}
+              placeholder="0"
+              type="number"
+              value={newExercise?.weight ?? ""}
             />
-            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-semibold text-muted-foreground">
               kg
             </span>
           </div>
 
           <Button
-            size="icon"
-            variant="outline"
+            aria-label="Decrease weight"
+            className="h-16"
+            disabled={newExercise ? newExercise.weight <= 0 : true}
             onClick={() => {
               if (!newExercise) return;
-              if (newExercise.weight - 1.25 <= 0) {
-                setNewExercise({
-                  ...newExercise,
-                  weight: Number(0),
-                });
-                return;
-              }
               setNewExercise({
                 ...newExercise,
-                weight: Number(newExercise.weight - 1.25),
+                weight: Math.max(0, Number(newExercise.weight - 1.25)),
               });
             }}
-            disabled={newExercise && newExercise.weight <= 0}
+            type="button"
+            variant="outline"
           >
-            <Minus />
+            <Minus className="size-8" />
           </Button>
         </div>
-      </div>
 
-      <div>
-        <Label>Notes</Label>
         <Textarea
-          className="mt-1"
-          value={newExercise?.notes ?? ""}
+          aria-label="Notes"
+          className="min-h-36 resize-none px-4 py-4 text-xl"
           onChange={(e) => {
             if (!newExercise) return;
             setNewExercise({
@@ -150,79 +145,117 @@ export default function ExercisePage({
               notes: e.target.value,
             });
           }}
+          placeholder="Notes"
+          value={newExercise?.notes ?? ""}
         />
-      </div>
 
-      <div>
-        <Label>Current Set</Label>
-        <div className="flex items-center gap-1 mt-1">
+        <div className="grid grid-cols-[4.5rem_1fr_4.5rem] gap-2">
           <Button
-            size="icon"
-            variant="outline"
-            onClick={() => setCurrentSet(currentSet + 1)}
+            aria-label="Next set"
+            className="h-16"
             disabled={currentSet === exercise.sets}
-          >
-            <Plus />
-          </Button>
-          <Input
-            type="number"
-            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            value={currentSet}
-            onChange={(e) => setCurrentSet(Number(e.target.value))}
-            disabled
-          />
-          <Button
-            size="icon"
+            onClick={() =>
+              setCurrentSet((set) => Math.min(exercise.sets, set + 1))
+            }
+            type="button"
             variant="outline"
-            onClick={() => setCurrentSet(currentSet - 1)}
-            disabled={currentSet === 1}
           >
-            <Minus />
+            <Plus className="size-8" />
+          </Button>
+
+          <div className="relative">
+            <Input
+              aria-label="Current set"
+              className="h-16 px-4 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              disabled
+              max={exercise.sets}
+              min={1}
+              onChange={(e) => setCurrentSet(Number(e.target.value))}
+              type="number"
+              value={currentSet}
+            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">
+              set
+            </span>
+          </div>
+
+          <Button
+            aria-label="Previous set"
+            className="h-16"
+            disabled={currentSet === 1}
+            onClick={() => setCurrentSet((set) => Math.max(1, set - 1))}
+            type="button"
+            variant="outline"
+          >
+            <Minus className="size-8" />
           </Button>
         </div>
-      </div>
 
-      <Separator orientation="horizontal" className="my-3" />
+        <Separator orientation="horizontal" className="my-2" />
 
-      <div className="grid grid-cols-2 gap-1">
-        <div className="grid gap-1">
-          <Button variant="outline" asChild>
+        <div className="grid grid-cols-2 gap-2 -mt-2">
+          <Button
+            className="h-14 text-xl font-semibold"
+            variant="outline"
+            asChild
+          >
             {typeof previousExercise === "undefined" ? (
-              <Link href={`/w/${workout.id}`}>Workout Overview</Link>
+              <Link href={`/w/${workout.id}`}>Back</Link>
             ) : (
               <Link href={`/e/${previousExercise.id}`}>Back</Link>
             )}
           </Button>
 
-          <Button variant="secondary" asChild>
-            <Link href={`/e/${exercise.id}/history`}>History</Link>
-          </Button>
-
-          <DeleteDialog
-            onConfirm={handleDelete}
-            element={<Button variant="destructive">Delete Exercise</Button>}
-          />
-        </div>
-
-        <div className="grid gap-1">
-          <Button variant="default" asChild>
+          <Button className="h-14 text-xl font-semibold" asChild>
             {typeof nextExercise === "undefined" ? (
-              <Link href={`/w/${workout.id}`}>Finish Workout</Link>
+              <Link href={`/w/${workout.id}`}>Finish</Link>
             ) : (
               <Link href={`/e/${nextExercise.id}`}>Next</Link>
             )}
           </Button>
 
-          <Button variant="secondary" asChild>
-            <Link href={`/e/${exercise.id}/logs`}>Logs</Link>
+          <Button
+            className="h-14 text-xl font-semibold"
+            variant="outline"
+            asChild
+          >
+            <Link href={`/e/${exercise.id}/history`}>History</Link>
           </Button>
 
+          <Button
+            className="h-14 text-xl font-semibold"
+            variant="outline"
+            asChild
+          >
+            <Link href={`/e/${exercise.id}/logs`}>Logs</Link>
+          </Button>
           <EditExerciseDialog
             exercise={exercise}
-            trigger={<Button variant="secondary">Edit Exercise</Button>}
+            trigger={
+              <Button
+                className="h-14 text-xl font-semibold"
+                type="button"
+                variant="secondary"
+              >
+                Edit
+              </Button>
+            }
+          />
+
+          <DeleteDialog
+            onConfirm={handleDelete}
+            element={
+              <Button
+                className="h-14 text-xl font-semibold"
+                type="button"
+                variant="destructive"
+              >
+                Delete
+              </Button>
+            }
           />
         </div>
       </div>
-    </div>
+    </main>
   );
 }
