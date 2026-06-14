@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Dumbbell,
+  ArrowLeft,
   Home,
   Plus,
   Settings,
@@ -75,9 +75,9 @@ function PageSpecificNavItem({ pathname }: { pathname: string }) {
 
   if (workoutId && pathname.endsWith("/create")) {
     return (
-      <NavLink href={`/w/${workoutId}`} label="Workout overview">
-        <Dumbbell />
-        <span>Workout</span>
+      <NavLink href={`/w/${workoutId}`} label="Back to workout">
+        <ArrowLeft />
+        <span>Back</span>
       </NavLink>
     );
   }
