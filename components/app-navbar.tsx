@@ -1,23 +1,28 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Home,
+  LogIn,
+  LogOut,
   Plus,
   Settings,
   UserRound,
-  Weight,
 } from "lucide-react";
+import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
 import { cn } from "@/lib/utils";
+import { useStore } from "@/lib/store";
+import { authClient } from "@/lib/auth-client";
 
 type NavLinkProps = {
   active?: boolean;
   children: React.ReactNode;
+  className?: string;
   href: string;
   label: string;
 };
@@ -25,14 +30,18 @@ type NavLinkProps = {
 function navItemClass(active?: boolean) {
   return cn(
     "flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-colors",
-    "text-muted-foreground hover:bg-muted hover:text-foreground",
+    "text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50",
     active && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
   );
 }
 
-function NavLink({ active, children, href, label }: NavLinkProps) {
+function NavLink({ active, children, className, href, label }: NavLinkProps) {
   return (
-    <Link aria-label={label} className={navItemClass(active)} href={href}>
+    <Link
+      aria-label={label}
+      className={cn(navItemClass(active), className)}
+      href={href}
+    >
       {children}
     </Link>
   );
@@ -43,22 +52,54 @@ function getWorkoutId(pathname: string) {
   return match?.[1];
 }
 
+function getExerciseId(pathname: string) {
+  const match = pathname.match(/^\/e\/([^/]+)/);
+  return match?.[1];
+}
+
 function PageSpecificNavItem({ pathname }: { pathname: string }) {
+  const router = useRouter();
+  const session = authClient.useSession();
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const workoutId = getWorkoutId(pathname);
+  const exerciseId = getExerciseId(pathname);
+  const exerciseWorkoutId = useStore((state) =>
+    exerciseId ? state.getExerciseById(exerciseId)?.workoutId : undefined,
+  );
+
+  async function handleSignOut() {
+    setIsSigningOut(true);
+
+    try {
+      const result = await authClient.signOut();
+
+      if (result.error) {
+        toast.error(result.error.message ?? "Sign out failed.");
+        return;
+      }
+
+      toast.success("Signed out.");
+      router.push("/login");
+      router.refresh();
+    } catch {
+      toast.error("Sign out failed.");
+    } finally {
+      setIsSigningOut(false);
+    }
+  }
 
   if (pathname === "/") {
     return (
       <CreateWorkoutDialog
         trigger={
-          <Button
+          <button
             aria-label="Create workout"
             className={navItemClass(false)}
             type="button"
-            variant="ghost"
           >
-            <Plus />
+            <Plus className="size-6" />
             <span>Create</span>
-          </Button>
+          </button>
         }
       />
     );
@@ -84,10 +125,37 @@ function PageSpecificNavItem({ pathname }: { pathname: string }) {
 
   if (pathname.startsWith("/e/")) {
     return (
-      <NavLink href="/" label="Workouts">
-        <Weight />
-        <span>Workouts</span>
+      <NavLink
+        href={exerciseWorkoutId ? `/w/${exerciseWorkoutId}` : "/"}
+        label="Back to workout"
+      >
+        <ArrowLeft />
+        <span>Back</span>
       </NavLink>
+    );
+  }
+
+  if (pathname === "/account") {
+    if (!session.isPending && !session.data) {
+      return (
+        <NavLink href="/login" label="Login">
+          <LogIn />
+          <span>Login</span>
+        </NavLink>
+      );
+    }
+
+    return (
+      <button
+        aria-label="Sign out"
+        className={navItemClass(false)}
+        disabled={session.isPending || isSigningOut}
+        onClick={handleSignOut}
+        type="button"
+      >
+        <LogOut className="size-6" />
+        <span>{isSigningOut ? "Signing out" : "Sign out"}</span>
+      </button>
     );
   }
 
@@ -108,13 +176,19 @@ export function AppNavbar() {
       className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-6 pointer-events-none"
     >
       <div className="pointer-events-auto grid h-16 w-full max-w-sm grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md">
-        <NavLink active={pathname === "/"} href="/" label="Home">
+        <NavLink
+          active={pathname === "/"}
+          className="ml-1"
+          href="/"
+          label="Home"
+        >
           <Home />
           <span>Home</span>
         </NavLink>
         <PageSpecificNavItem pathname={pathname} />
         <NavLink
           active={pathname === "/account"}
+          className="mr-1"
           href="/account"
           label="Account"
         >
