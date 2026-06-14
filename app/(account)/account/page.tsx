@@ -2,20 +2,13 @@
 
 import type { ComponentProps, FormEvent, ReactNode } from "react";
 import { useState } from "react";
-import {
-  Fingerprint,
-  KeyRound,
-  Mail,
-  ShieldAlert,
-  Trash2,
-} from "lucide-react";
+import { Fingerprint, KeyRound, Mail, ShieldAlert, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -142,11 +135,6 @@ function ChangeEmailDialog({
             </p>
           ) : null}
           <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
             <Button disabled={isPending} type="submit">
               {isPending ? "Saving" : "Save"}
             </Button>
@@ -263,11 +251,6 @@ function ChangePasswordDialog({ disabled }: { disabled?: boolean }) {
             </p>
           ) : null}
           <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
             <Button disabled={isPending} type="submit">
               {isPending ? "Saving" : "Save"}
             </Button>
@@ -358,7 +341,8 @@ function DeleteAccountDialog({ disabled }: { disabled?: boolean }) {
           </div>
           <DialogTitle>Delete Account</DialogTitle>
           <DialogDescription>
-            This deletes your account and clears workout data stored on this device.
+            This deletes your account and clears workout data stored on this
+            device.
           </DialogDescription>
         </DialogHeader>
         <form className="grid gap-4" onSubmit={handleSubmit}>
@@ -380,11 +364,6 @@ function DeleteAccountDialog({ disabled }: { disabled?: boolean }) {
             </p>
           ) : null}
           <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </DialogClose>
             <Button disabled={isPending} type="submit" variant="destructive">
               {isPending ? "Deleting" : "Delete"}
             </Button>
