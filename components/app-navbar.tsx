@@ -1,18 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   ArrowLeft,
   Home,
   LogIn,
-  LogOut,
   Plus,
   Settings,
   UserRound,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
 import { cn } from "@/lib/utils";
@@ -57,43 +54,20 @@ function getExerciseId(pathname: string) {
   return match?.[1];
 }
 
-function PageSpecificNavItem({
-  isLoggedIn,
-  isSessionPending,
-  pathname,
-}: {
-  isLoggedIn: boolean;
-  isSessionPending: boolean;
-  pathname: string;
-}) {
-  const router = useRouter();
-  const [isSigningOut, setIsSigningOut] = useState(false);
+function isAccountPath(pathname: string) {
+  return (
+    pathname === "/account" ||
+    pathname === "/login" ||
+    pathname === "/register"
+  );
+}
+
+function PageSpecificNavItem({ pathname }: { pathname: string }) {
   const workoutId = getWorkoutId(pathname);
   const exerciseId = getExerciseId(pathname);
   const exerciseWorkoutId = useStore((state) =>
     exerciseId ? state.getExerciseById(exerciseId)?.workoutId : undefined,
   );
-
-  async function handleSignOut() {
-    setIsSigningOut(true);
-
-    try {
-      const result = await authClient.signOut();
-
-      if (result.error) {
-        toast.error(result.error.message ?? "Sign out failed.");
-        return;
-      }
-
-      toast.success("Signed out.");
-      router.push("/login");
-      router.refresh();
-    } catch {
-      toast.error("Sign out failed.");
-    } finally {
-      setIsSigningOut(false);
-    }
-  }
 
   if (pathname === "/") {
     return (
@@ -142,28 +116,8 @@ function PageSpecificNavItem({
     );
   }
 
-  if (pathname === "/account") {
-    if (!isSessionPending && !isLoggedIn) {
-      return (
-        <NavLink href="/login" label="Login">
-          <LogIn />
-          <span>Login</span>
-        </NavLink>
-      );
-    }
-
-    return (
-      <button
-        aria-label="Sign out"
-        className={navItemClass(false)}
-        disabled={isSessionPending || isSigningOut}
-        onClick={handleSignOut}
-        type="button"
-      >
-        <LogOut className="size-6" />
-        <span>{isSigningOut ? "Signing out" : "Sign out"}</span>
-      </button>
-    );
+  if (isAccountPath(pathname)) {
+    return null;
   }
 
   return (
@@ -178,6 +132,7 @@ export function AppNavbar() {
   const pathname = usePathname();
   const session = authClient.useSession();
   const isLoggedIn = Boolean(session.data);
+  const showPageSpecificItem = !isAccountPath(pathname);
   const accountHref = !session.isPending && !isLoggedIn ? "/login" : "/account";
   const accountLabel = accountHref === "/login" ? "Login" : "Account";
   const AccountIcon = accountHref === "/login" ? LogIn : UserRound;
@@ -187,7 +142,12 @@ export function AppNavbar() {
       aria-label="Primary"
       className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-6 pointer-events-none"
     >
-      <div className="pointer-events-auto grid h-16 w-full max-w-sm grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md">
+      <div
+        className={cn(
+          "pointer-events-auto grid h-16 w-full max-w-sm items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md",
+          showPageSpecificItem ? "grid-cols-3" : "grid-cols-2",
+        )}
+      >
         <NavLink
           active={pathname === "/"}
           className="ml-1"
@@ -197,11 +157,9 @@ export function AppNavbar() {
           <Home />
           <span>Home</span>
         </NavLink>
-        <PageSpecificNavItem
-          isLoggedIn={isLoggedIn}
-          isSessionPending={session.isPending}
-          pathname={pathname}
-        />
+        {showPageSpecificItem ? (
+          <PageSpecificNavItem pathname={pathname} />
+        ) : null}
         <NavLink
           active={pathname === accountHref}
           className="mr-1"

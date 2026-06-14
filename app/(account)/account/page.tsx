@@ -2,7 +2,14 @@
 
 import type { ComponentProps, FormEvent, ReactNode } from "react";
 import { useState } from "react";
-import { Fingerprint, KeyRound, Mail, ShieldAlert, Trash2 } from "lucide-react";
+import {
+  Fingerprint,
+  KeyRound,
+  LogOut,
+  Mail,
+  ShieldAlert,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -282,6 +289,43 @@ function PasskeysDialog({ disabled }: { disabled?: boolean }) {
   );
 }
 
+function SignOutButton({ disabled }: { disabled?: boolean }) {
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
+
+  async function handleSignOut() {
+    setIsPending(true);
+
+    try {
+      const result = await authClient.signOut();
+
+      if (result.error) {
+        toast.error(result.error.message ?? "Sign out failed.");
+        return;
+      }
+
+      toast.success("Signed out.");
+      router.push("/login");
+      router.refresh();
+    } catch {
+      toast.error("Sign out failed.");
+    } finally {
+      setIsPending(false);
+    }
+  }
+
+  return (
+    <AccountActionButton
+      disabled={disabled || isPending}
+      icon={<LogOut />}
+      onClick={handleSignOut}
+      variant="secondary"
+    >
+      {isPending ? "Signing out" : "Sign out"}
+    </AccountActionButton>
+  );
+}
+
 function DeleteAccountDialog({ disabled }: { disabled?: boolean }) {
   const router = useRouter();
   const clearData = useStore((state) => state.clearData);
@@ -390,6 +434,7 @@ export default function AccountPage() {
         />
         <ChangePasswordDialog disabled={actionsDisabled} />
         <PasskeysDialog disabled={actionsDisabled} />
+        <SignOutButton disabled={actionsDisabled} />
         <DeleteAccountDialog disabled={actionsDisabled} />
 
         {!session.isPending && !session.data ? (
