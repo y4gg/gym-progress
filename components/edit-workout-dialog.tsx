@@ -71,9 +71,6 @@ export function EditWorkoutDialog({
           />
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
           <Button onClick={handleEditWorkout}>Edit Workout</Button>
         </DialogFooter>
       </DialogContent>

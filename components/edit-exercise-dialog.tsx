@@ -116,9 +116,6 @@ export function EditExerciseDialog({
           </ToggleGroup>
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
           <Button onClick={handleEditExercise}>Save</Button>
         </DialogFooter>
       </DialogContent>
