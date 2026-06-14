@@ -29,26 +29,28 @@ export default function WorkoutOverview({
   const exercises = workout.exercises;
 
   return (
-    <div className="flex flex-col items-center max-w-xl mx-auto py-10 gap-1">
-      <div className="w-full">
-        <Link href={`/w/${id}/create`}>
-          <Button variant="outline">Create Exercise</Button>
-        </Link>
-      </div>
+    <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-9 pb-28">
+      <h1 className="mb-2 truncate text-center text-3xl font-bold">
+        {workout.name}
+      </h1>
       {exercises.map((exercise: Exercise) => (
-        <div className="flex w-full gap-0.5" key={exercise.id}>
+        <div className="flex w-full gap-2" key={exercise.id}>
           <Button
             asChild
-            variant={"default"}
-            className="flex-1 justify-between text-left"
+            variant="outline"
+            className="h-16 min-w-0 flex-1 justify-start px-5 text-left text-2xl font-semibold"
           >
             <Link href={`/e/${exercise.id}`}>
-              <span>{exercise.name}</span>
+              <span className="min-w-0 truncate">{exercise.name}</span>
             </Link>
           </Button>
           <EditExerciseDialog
             trigger={
-              <Button variant="secondary" size="icon">
+              <Button
+                aria-label={`Edit ${exercise.name}`}
+                className="h-16 w-16"
+                variant="secondary"
+              >
                 <Edit />
               </Button>
             }
@@ -56,6 +58,6 @@ export default function WorkoutOverview({
           />
         </div>
       ))}
-    </div>
+    </main>
   );
 }
