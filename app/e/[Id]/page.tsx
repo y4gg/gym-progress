@@ -100,6 +100,7 @@ export default function ExercisePage({
             <Input
               aria-label="Weight"
               className="h-16 px-4 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              inputMode="decimal"
               min={0}
               onChange={(e) => {
                 if (!newExercise) return;
@@ -109,6 +110,7 @@ export default function ExercisePage({
                 });
               }}
               placeholder="0"
+              step="any"
               type="number"
               value={newExercise?.weight ?? ""}
             />
