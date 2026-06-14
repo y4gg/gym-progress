@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fingerprint, KeyRound, LogIn, UserPlus } from "lucide-react";
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-type PendingAction = "email" | "google" | null;
+type PendingAction = "email" | "google" | "passkey" | null;
 
 function getDisplayName(email: string) {
   const fallback = "Gym Ladder User";
@@ -136,8 +136,71 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     }
   }
 
+  const signInWithPasskey = useCallback(
+    async ({
+      autoFill = false,
+      silent = false,
+    }: {
+      autoFill?: boolean;
+      silent?: boolean;
+    } = {}) => {
+      if (!silent) {
+        setError(null);
+        setPendingAction("passkey");
+      }
+
+      try {
+        const result = await authClient.signIn.passkey({ autoFill });
+
+        if (result.error) {
+          const message = result.error.message ?? "Passkey sign-in failed.";
+          if (!silent) {
+            setError(message);
+            toast.error(message);
+          }
+          return;
+        }
+
+        toast.success("Logged in.");
+        router.push("/");
+        router.refresh();
+      } catch {
+        const message = "Passkey sign-in failed.";
+        if (!silent) {
+          setError(message);
+          toast.error(message);
+        }
+      } finally {
+        if (!silent) {
+          setPendingAction(null);
+        }
+      }
+    },
+    [router],
+  );
+
+  useEffect(() => {
+    if (isRegister || typeof PublicKeyCredential === "undefined") {
+      return;
+    }
+
+    const credential = PublicKeyCredential as typeof PublicKeyCredential & {
+      isConditionalMediationAvailable?: () => Promise<boolean>;
+    };
+
+    if (!credential.isConditionalMediationAvailable) {
+      return;
+    }
+
+    void credential.isConditionalMediationAvailable().then((isAvailable) => {
+      if (isAvailable) {
+        void signInWithPasskey({ autoFill: true, silent: true });
+      }
+    });
+  }, [isRegister, signInWithPasskey]);
+
   function handlePasskeySignIn() {
-    toast.info("Passkeys are not configured for this app yet.");
+    void signInWithPasskey();
   }
 
   return (
@@ -151,7 +214,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               Email
             </Label>
             <Input
-              autoComplete="email"
+              autoComplete={isRegister ? "email" : "username webauthn"}
               className="h-14 px-4 text-base"
               id="email"
               name="email"
@@ -167,7 +230,9 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               Password
             </Label>
             <Input
-              autoComplete={isRegister ? "new-password" : "current-password"}
+              autoComplete={
+                isRegister ? "new-password" : "current-password webauthn"
+              }
               className="h-14 px-4 text-base"
               id="password"
               minLength={isRegister ? 8 : undefined}
@@ -219,7 +284,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               variant="outline"
             >
               <Fingerprint />
-              Passkey
+              {pendingAction === "passkey" ? "Waiting" : "Passkey"}
             </AuthButton>
             <AuthButton
               disabled={isPending}
