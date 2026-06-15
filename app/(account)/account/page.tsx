@@ -5,6 +5,7 @@ import { ChangePasswordDialog } from "@/components/account/change-password-dialo
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
 import { PasskeysDialog } from "@/components/account/passkeys-dialog";
 import { SignOutButton } from "@/components/account/sign-out-button";
+import { SyncStatus } from "@/components/sync-status";
 import { authClient } from "@/lib/auth-client";
 
 export default function AccountPage() {
@@ -17,6 +18,7 @@ export default function AccountPage() {
       <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
         <h1 className="mb-5 text-center text-4xl font-bold">Account</h1>
 
+        <SyncStatus />
         <ChangeEmailDialog
           currentEmail={currentEmail}
           disabled={actionsDisabled}

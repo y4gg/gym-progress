@@ -86,6 +86,7 @@ function AccountPageNavItem({
         return;
       }
 
+      useStore.getState().clearData();
       toast.success("Signed out.");
       router.push("/login");
       router.refresh();
