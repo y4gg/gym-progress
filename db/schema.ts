@@ -131,7 +131,7 @@ export const passkeyRelations = relations(passkey, ({ one }) => ({
 }));
 
 export const workout = pgTable("workout", {
-  id: text("id").primaryKey(),
+  id: text("id").primaryKey().unique(),
   name: text("name").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
@@ -141,7 +141,7 @@ export const workout = pgTable("workout", {
 });
 
 export const exercise = pgTable("exercise", {
-  id: text("id").primaryKey(),
+  id: text("id").primaryKey().unique(),
   name: text("name").notNull(),
   workoutId: text("workout_id")
     .notNull()
