@@ -13,6 +13,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { Exercise } from "@/lib/types";
 
@@ -24,6 +26,7 @@ export function AdvancedExerciseOptionsDialog({
   onExerciseChange: (exercise: Exercise) => void;
 }) {
   const loggingId = useId();
+  const stepId = useId();
 
   return (
     <Dialog>
@@ -45,6 +48,34 @@ export function AdvancedExerciseOptionsDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-3">
+          <div className="relative">
+            <Label htmlFor={stepId} className="sr-only">
+              Weight step
+            </Label>
+            <Input
+              className="h-16 px-5 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              defaultValue={exercise.step ?? 2.5}
+              id={stepId}
+              inputMode="decimal"
+              min={0.01}
+              onChange={(event) =>
+                onExerciseChange({
+                  ...exercise,
+                  step:
+                    event.target.value === ""
+                      ? undefined
+                      : Number(event.target.value),
+                })
+              }
+              placeholder="2.5"
+              step="any"
+              type="number"
+            />
+            <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">
+              kg steps
+            </span>
+          </div>
+
           <div className="grid grid-cols-[1fr_4.5rem] gap-2">
             <Button
               className="h-16 justify-start whitespace-normal px-5 text-left text-base"

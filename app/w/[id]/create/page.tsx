@@ -29,6 +29,7 @@ export default function CreateExercisePage({
     notes: "",
     sets: 3,
     logging: false,
+    step: 2.5,
     workoutId: id,
   });
 
@@ -46,6 +47,7 @@ export default function CreateExercisePage({
     notes: z.string().optional(),
     sets: z.number().min(1).multipleOf(1),
     logging: z.boolean(),
+    step: z.number().positive().optional(),
   });
 
   const handleCreateExercise = () => {

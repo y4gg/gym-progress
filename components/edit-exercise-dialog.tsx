@@ -36,6 +36,7 @@ export function EditExerciseDialog({
     notes: z.string().optional(),
     sets: z.number().min(1).multipleOf(1),
     logging: z.boolean(),
+    step: z.number().positive().optional(),
   });
 
   const handleEditExercise = () => {
