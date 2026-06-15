@@ -1,49 +1,77 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Workout, Exercise, Store } from "./types";
+import type {
+  Workout,
+  Exercise,
+  Store,
+  NewWorkout,
+  NewExercise,
+} from "./types";
 
 const useStore = create<Store>()(
   persist(
     (set, get) => ({
       workouts: [],
-      addWorkout: (workout: Workout) =>
-        set((state) => ({ workouts: [...state.workouts, workout] })),
-      addExercise: (exercise: Exercise, workoutId: string) =>
+      addWorkout: (workout: NewWorkout) => {
+        const updatedWorkout: Workout = {
+          ...workout,
+          updatedAt: new Date(),
+          createdAt: new Date(),
+        };
+        set((state) => ({ workouts: [...state.workouts, updatedWorkout] }));
+      },
+      addExercise: (exercise: NewExercise) => {
+        const updatedExercise: Exercise = {
+          ...exercise,
+          updatedAt: new Date(),
+          createdAt: new Date(),
+        };
         set((state) => ({
           workouts: state.workouts.map((workout) => {
-            if (workout.id === workoutId) {
+            if (workout.id === exercise.workoutId) {
               return {
                 ...workout,
-                exercises: [...workout.exercises, exercise],
+                exercises: [...workout.exercises, updatedExercise],
               };
             }
 
             return workout;
           }),
-        })),
-      editWorkout: (updatedWorkout: Workout) =>
+        }));
+      },
+      editWorkout: (updatedWorkout: Workout) => {
+        const updatedWorkoutWithTime: Workout = {
+          ...updatedWorkout,
+          updatedAt: new Date(),
+        };
         set((state) => ({
           workouts: state.workouts.map((workout) => {
             if (workout.id === updatedWorkout.id) {
-              return updatedWorkout;
+              return updatedWorkoutWithTime;
             }
 
             return workout;
           }),
-        })),
-      editExercise: (updatedExercise: Exercise) =>
+        }));
+      },
+      editExercise: (updatedExercise: Exercise) => {
+        const updatedExerciseWithTime: Exercise = {
+          ...updatedExercise,
+          updatedAt: new Date(),
+        };
         set((state) => ({
           workouts: state.workouts.map((workout) => ({
             ...workout,
             exercises: workout.exercises.map((exercise) => {
               if (exercise.id === updatedExercise.id) {
-                return updatedExercise;
+                return updatedExerciseWithTime;
               }
 
               return exercise;
             }),
           })),
-        })),
+        }));
+      },
       deleteWorkout: (workoutId: string) =>
         set((state) => ({
           workouts: state.workouts.filter(

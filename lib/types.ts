@@ -2,6 +2,9 @@ interface Workout {
   id: string;
   name: string;
   exercises: Exercise[];
+
+  updatedAt: Date;
+  createdAt: Date;
 }
 
 interface Exercise {
@@ -14,12 +17,19 @@ interface Exercise {
   logging: boolean;
   notes: string;
   step?: number;
+
+  updatedAt: Date;
+  createdAt: Date;
 }
+
+export type NewExercise = Omit<Exercise, "updatedAt" | "createdAt">;
+
+export type NewWorkout = Omit<Workout, "updatedAt" | "createdAt">;
 
 interface Store {
   workouts: Workout[];
-  addWorkout: (workout: Workout) => void;
-  addExercise: (exercise: Exercise, workoutId: string) => void;
+  addWorkout: (workout: NewWorkout) => void;
+  addExercise: (exercise: NewExercise) => void;
   editWorkout: (workout: Workout) => void;
   editExercise: (exercise: Exercise) => void;
   deleteWorkout: (workoutId: string) => void;
