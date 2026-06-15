@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, SlidersHorizontal } from "lucide-react";
+import { Info } from "lucide-react";
 import { useId } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -32,11 +32,10 @@ export function AdvancedExerciseOptionsDialog({
     <Dialog>
       <DialogTrigger asChild>
         <Button
-          className="h-16 justify-start gap-3 px-5 text-xl font-semibold"
+          className="h-16 text-xl font-semibold"
           type="button"
           variant="outline"
         >
-          <SlidersHorizontal className="size-6" />
           <span>Advanced</span>
         </Button>
       </DialogTrigger>
