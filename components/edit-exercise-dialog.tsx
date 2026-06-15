@@ -16,7 +16,7 @@ import { Exercise } from "@/lib/types";
 import { toast } from "sonner";
 import z from "zod";
 import { Minus, Plus } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { AdvancedExerciseOptionsDialog } from "@/components/advanced-exercise-options-dialog";
 
 export function EditExerciseDialog({
   exercise,
@@ -152,19 +152,10 @@ export function EditExerciseDialog({
             </Button>
           </div>
 
-          <label
-            className="flex h-16 items-center justify-between gap-4 rounded-lg border border-input px-5 text-xl font-semibold"
-            htmlFor="logging"
-          >
-            <span className="min-w-0 truncate">Enable Rep Tracking</span>
-            <Switch
-              checked={newExercise.logging}
-              id="logging"
-              onCheckedChange={(checked) =>
-                setNewExercise({ ...newExercise, logging: checked })
-              }
-            />
-          </label>
+          <AdvancedExerciseOptionsDialog
+            exercise={newExercise}
+            onExerciseChange={setNewExercise}
+          />
         </div>
         <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">
           <DialogClose asChild>

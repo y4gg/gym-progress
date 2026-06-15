@@ -2,7 +2,7 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Info, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { use, useState } from "react";
 import { Exercise } from "@/lib/types";
@@ -11,7 +11,7 @@ import { notFound, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import * as z from "zod";
-import { Switch } from "@/components/ui/switch";
+import { AdvancedExerciseOptionsDialog } from "@/components/advanced-exercise-options-dialog";
 
 export default function CreateExercisePage({
   params,
@@ -167,37 +167,10 @@ export default function CreateExercisePage({
           </Button>
         </div>
 
-        <div className="grid grid-cols-[1fr_4.5rem] gap-2">
-          <Button
-            className="h-16 whitespace-normal text-base"
-            type="button"
-            variant="outline"
-          >
-            Increase weight suggestion
-          </Button>
-          <Button
-            aria-label="Increase weight suggestion info"
-            className="h-16"
-            type="button"
-            variant="outline"
-          >
-            <Info className="size-8" />
-          </Button>
-        </div>
-
-        <label
-          className="flex h-16 items-center justify-between gap-4 rounded-lg border border-input px-5 text-xl font-semibold"
-          htmlFor="rep-tracking"
-        >
-          <span className="min-w-0 truncate">Enable Rep Tracking</span>
-          <Switch
-            checked={newExercise.logging}
-            id="rep-tracking"
-            onCheckedChange={(checked) =>
-              setNewExercise({ ...newExercise, logging: checked })
-            }
-          />
-        </label>
+        <AdvancedExerciseOptionsDialog
+          exercise={newExercise}
+          onExerciseChange={setNewExercise}
+        />
 
         <Button className="h-16 text-xl font-semibold" type="submit">
           Create Exercise
