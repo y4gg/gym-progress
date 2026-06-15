@@ -1,5 +1,6 @@
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -52,17 +53,20 @@ export function CreateWorkoutDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Workout</DialogTitle>
+          <DialogTitle className="pr-8 text-2xl font-bold">
+            New workout
+          </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-2 py-4">
-          <Label htmlFor="name" className="text-right">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="name" className="sr-only">
             Name
           </Label>
           <Input
             id="name"
+            placeholder="Workout name"
             value={workoutName}
             onChange={(e) => setWorkoutName(e.target.value)}
-            className="col-span-3"
+            className="h-16 px-5 text-center text-2xl font-semibold"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -71,8 +75,18 @@ export function CreateWorkoutDialog({
             }}
           />
         </div>
-        <DialogFooter>
-          <Button onClick={handleCreateWorkout}>Create Workout</Button>
+        <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">
+          <DialogClose asChild>
+            <Button className="h-14 text-lg font-semibold" variant="outline">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            className="h-14 text-lg font-semibold"
+            onClick={handleCreateWorkout}
+          >
+            Create
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

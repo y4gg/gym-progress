@@ -72,6 +72,8 @@ export default function ExercisePage({
     toast.success("Exercise deleted successfully.");
   };
 
+  const step = exercise.step ?? 2.5;
+
   return (
     <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32">
       <div className="flex flex-col gap-4">
@@ -87,7 +89,7 @@ export default function ExercisePage({
               if (!newExercise) return;
               setNewExercise({
                 ...newExercise,
-                weight: Number(newExercise.weight + 1.25),
+                weight: Number(newExercise.weight + step),
               });
             }}
             type="button"
@@ -127,7 +129,7 @@ export default function ExercisePage({
               if (!newExercise) return;
               setNewExercise({
                 ...newExercise,
-                weight: Math.max(0, Number(newExercise.weight - 1.25)),
+                weight: Math.max(0, Number(newExercise.weight - step)),
               });
             }}
             type="button"

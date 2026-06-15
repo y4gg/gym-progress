@@ -1,6 +1,7 @@
 "use client";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -25,7 +26,8 @@ export function EditWorkoutDialog({
   const [open, setOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
 
-  const { editWorkout } = useStore();
+  const workout = useStore((state) => state.getWorkoutById(id));
+  const editWorkout = useStore((state) => state.editWorkout);
 
   const workoutSchema = z.object({
     name: z.string().nonempty(),
@@ -41,26 +43,39 @@ export function EditWorkoutDialog({
         });
       return;
     }
-    editWorkout({ id, name: workoutName, exercises: [] });
+    if (!workout) return;
+
+    editWorkout({ ...workout, name: workoutName });
     setOpen(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) {
+          setWorkoutName(workout?.name ?? "");
+        }
+      }}
+    >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Workout</DialogTitle>
+          <DialogTitle className="pr-8 text-2xl font-bold">
+            Edit workout
+          </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-2 py-4">
-          <Label htmlFor="name" className="text-right">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="name" className="sr-only">
             Name
           </Label>
           <Input
             id="name"
+            placeholder="Workout name"
             value={workoutName}
             onChange={(e) => setWorkoutName(e.target.value)}
-            className="col-span-3"
+            className="h-16 px-5 text-center text-2xl font-semibold"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -69,8 +84,18 @@ export function EditWorkoutDialog({
             }}
           />
         </div>
-        <DialogFooter>
-          <Button onClick={handleEditWorkout}>Edit Workout</Button>
+        <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">
+          <DialogClose asChild>
+            <Button className="h-14 text-lg font-semibold" variant="outline">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            className="h-14 text-lg font-semibold"
+            onClick={handleEditWorkout}
+          >
+            Save
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

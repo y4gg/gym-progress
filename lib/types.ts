@@ -13,6 +13,7 @@ interface Exercise {
   maxReps?: number; // If set not null: Increase weight suggestion is enabled
   logging: boolean;
   notes: string;
+  step?: number;
 }
 
 interface Store {
