@@ -28,6 +28,22 @@ function isRetriableStatus(status: string) {
   return status === "server_error";
 }
 
+function getSyncFailureMessage(status: string) {
+  if (status === "server_error") {
+    return "Sync failed on the server. Check database migrations and server logs.";
+  }
+
+  if (status === "invalid_payload" || status === "invalid_id") {
+    return "Sync failed because local data could not be validated.";
+  }
+
+  if (status === "conflict") {
+    return "Sync failed because the data belongs to another account.";
+  }
+
+  return "Sync failed.";
+}
+
 function hasSyncSnapshotResult(
   result: unknown,
 ): result is {
@@ -169,12 +185,13 @@ export function SyncProvider() {
         }
       }
 
-      useStore.getState().setSyncStatus("error", "Sync failed.");
+      const message = getSyncFailureMessage(result.status);
+      useStore.getState().setSyncStatus("error", message);
 
       if (isRetriableStatus(result.status)) {
         scheduleRetry();
       } else {
-        showToastOnce("sync-error", "Sync failed.");
+        showToastOnce(`sync-error-${result.status}`, message);
       }
     } catch {
       useStore.getState().setSyncStatus("error", "Sync failed.");
@@ -263,7 +280,8 @@ export function SyncProvider() {
             return;
           }
 
-          useStore.getState().setSyncStatus("error", "Sync failed.");
+          const message = getSyncFailureMessage(snapshot.status);
+          useStore.getState().setSyncStatus("error", message);
           scheduleRetry();
           return;
         }
@@ -296,7 +314,9 @@ export function SyncProvider() {
 
         await flushQueue();
       } catch {
-        useStore.getState().setSyncStatus("error", "Sync failed.");
+        useStore
+          .getState()
+          .setSyncStatus("error", "Sync failed before contacting the server.");
         scheduleRetry();
       } finally {
         isReconcilingRef.current = false;

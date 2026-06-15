@@ -60,6 +60,7 @@ export function SyncStatus() {
         statusConfig.className,
       )}
       disabled
+      title={lastSyncError ?? statusConfig.label}
       type="button"
       variant="outline"
     >

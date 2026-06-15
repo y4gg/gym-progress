@@ -423,7 +423,8 @@ export async function getSyncSnapshot() {
       workouts: await getUserSnapshot(userId),
       serverTime: new Date().toISOString(),
     };
-  } catch {
+  } catch (error) {
+    console.error("getSyncSnapshot failed", error);
     return statusFailure("server_error");
   }
 }
@@ -473,7 +474,8 @@ export async function syncOperations(operations: SyncOperation[]) {
       workouts: snapshot,
       serverTime,
     };
-  } catch {
+  } catch (error) {
+    console.error("syncOperations failed", error);
     return statusFailure("server_error");
   }
 }
