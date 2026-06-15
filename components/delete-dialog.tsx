@@ -31,16 +31,24 @@ export function DeleteDialog({
           <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
             <Trash2Icon />
           </AlertDialogMedia>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogTitle>Delete exercise?</AlertDialogTitle>
           <AlertDialogDescription>
             This is permanent and cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel variant="outline" onClick={onCancel}>
+          <AlertDialogCancel
+            className="h-14 text-lg font-semibold"
+            variant="outline"
+            onClick={onCancel}
+          >
             Cancel
           </AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={onConfirm}>
+          <AlertDialogAction
+            className="h-14 text-lg font-semibold"
+            variant="destructive"
+            onClick={onConfirm}
+          >
             Delete
           </AlertDialogAction>
         </AlertDialogFooter>
