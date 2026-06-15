@@ -6,9 +6,7 @@ import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -107,17 +105,6 @@ export function AdvancedExerciseOptionsDialog({
             />
           </label>
         </div>
-
-        <DialogFooter className="grid">
-          <DialogClose asChild>
-            <Button
-              className="h-14 w-full text-lg font-semibold"
-              variant="outline"
-            >
-              Close
-            </Button>
-          </DialogClose>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
