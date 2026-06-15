@@ -1,7 +1,6 @@
 "use client";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -15,6 +14,7 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import z from "zod";
 import { toast } from "sonner";
+import { DeleteDialog } from "@/components/delete-dialog";
 
 export function EditWorkoutDialog({
   id,
@@ -28,6 +28,7 @@ export function EditWorkoutDialog({
 
   const workout = useStore((state) => state.getWorkoutById(id));
   const editWorkout = useStore((state) => state.editWorkout);
+  const deleteWorkout = useStore((state) => state.deleteWorkout);
 
   const workoutSchema = z.object({
     name: z.string().nonempty(),
@@ -46,6 +47,12 @@ export function EditWorkoutDialog({
     if (!workout) return;
 
     editWorkout({ ...workout, name: workoutName });
+    setOpen(false);
+  };
+
+  const handleDeleteWorkout = () => {
+    deleteWorkout(id);
+    toast.success("Workout deleted successfully.");
     setOpen(false);
   };
 
@@ -85,11 +92,18 @@ export function EditWorkoutDialog({
           />
         </div>
         <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">
-          <DialogClose asChild>
-            <Button className="h-14 text-lg font-semibold" variant="outline">
-              Cancel
-            </Button>
-          </DialogClose>
+          <DeleteDialog
+            onConfirm={handleDeleteWorkout}
+            title="Delete workout?"
+            element={
+              <Button
+                className="h-14 text-lg font-semibold"
+                variant="destructive"
+              >
+                Delete
+              </Button>
+            }
+          />
           <Button
             className="h-14 text-lg font-semibold"
             onClick={handleEditWorkout}

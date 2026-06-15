@@ -1,6 +1,5 @@
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -17,6 +16,7 @@ import { toast } from "sonner";
 import z from "zod";
 import { Minus, Plus } from "lucide-react";
 import { AdvancedExerciseOptionsDialog } from "@/components/advanced-exercise-options-dialog";
+import { DeleteDialog } from "@/components/delete-dialog";
 
 export function EditExerciseDialog({
   exercise,
@@ -28,7 +28,7 @@ export function EditExerciseDialog({
   const [open, setOpen] = useState(false);
   const [newExercise, setNewExercise] = useState<Exercise>(exercise);
 
-  const { editExercise } = useStore();
+  const { deleteExercise, editExercise } = useStore();
 
   const exerciseSchema = z.object({
     name: z.string().min(4),
@@ -51,6 +51,12 @@ export function EditExerciseDialog({
     }
     editExercise(newExercise);
     toast.success("Exercise edited successfully.");
+    setOpen(false);
+  };
+
+  const handleDeleteExercise = () => {
+    deleteExercise(exercise.id);
+    toast.success("Exercise deleted successfully.");
     setOpen(false);
   };
 
@@ -159,11 +165,17 @@ export function EditExerciseDialog({
           />
         </div>
         <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">
-          <DialogClose asChild>
-            <Button className="h-14 text-lg font-semibold" variant="outline">
-              Cancel
-            </Button>
-          </DialogClose>
+          <DeleteDialog
+            onConfirm={handleDeleteExercise}
+            element={
+              <Button
+                className="h-14 text-lg font-semibold"
+                variant="destructive"
+              >
+                Delete
+              </Button>
+            }
+          />
           <Button
             className="h-14 text-lg font-semibold"
             onClick={handleEditExercise}
