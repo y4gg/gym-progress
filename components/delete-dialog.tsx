@@ -18,10 +18,14 @@ export function DeleteDialog({
   onConfirm,
   onCancel,
   element,
+  title = "Delete exercise?",
+  description = "This is permanent and cannot be undone.",
 }: {
   onConfirm(): void;
   onCancel?(): void;
   element: React.ReactNode;
+  title?: string;
+  description?: string;
 }) {
   return (
     <AlertDialog>
@@ -31,10 +35,8 @@ export function DeleteDialog({
           <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
             <Trash2Icon />
           </AlertDialogMedia>
-          <AlertDialogTitle>Delete exercise?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This is permanent and cannot be undone.
-          </AlertDialogDescription>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel

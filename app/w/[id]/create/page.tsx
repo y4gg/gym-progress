@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Minus, Plus } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { use, useState } from "react";
-import { Exercise } from "@/lib/types";
+import { NewExercise } from "@/lib/types";
 import { createId } from "@paralleldrive/cuid2";
 import { notFound, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -22,7 +22,7 @@ export default function CreateExercisePage({
   const hydrated = useStoreHydrated();
   const router = useRouter();
   const workout = useStore((state) => state.getWorkoutById(id));
-  const [newExercise, setNewExercise] = useState<Exercise>({
+  const [newExercise, setNewExercise] = useState<NewExercise>({
     id: createId(),
     name: "",
     weight: 0,
@@ -61,7 +61,7 @@ export default function CreateExercisePage({
         });
       return;
     }
-    useStore.getState().addExercise(newExercise, workout.id);
+    useStore.getState().addExercise(newExercise);
     router.push(`/w/${workout.id}`);
     toast.success("Exercise created successfully!");
   };

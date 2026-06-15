@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { AccountActionButton } from "@/components/account/account-action-button";
 import { authClient } from "@/lib/auth-client";
+import { useStore } from "@/lib/store";
 
 export function SignOutButton({ disabled }: { disabled?: boolean }) {
   const router = useRouter();
@@ -23,6 +24,7 @@ export function SignOutButton({ disabled }: { disabled?: boolean }) {
         return;
       }
 
+      useStore.getState().clearData();
       toast.success("Signed out.");
       router.push("/login");
       router.refresh();

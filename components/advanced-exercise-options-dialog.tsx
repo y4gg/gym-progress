@@ -15,13 +15,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { Exercise } from "@/lib/types";
+import type { Dispatch, SetStateAction } from "react";
 
-export function AdvancedExerciseOptionsDialog({
+type ExerciseOptions = Pick<Exercise, "logging" | "step">;
+
+export function AdvancedExerciseOptionsDialog<TExercise extends ExerciseOptions>({
   exercise,
   onExerciseChange,
 }: {
-  exercise: Exercise;
-  onExerciseChange: (exercise: Exercise) => void;
+  exercise: TExercise;
+  onExerciseChange: Dispatch<SetStateAction<TExercise>>;
 }) {
   const loggingId = useId();
   const stepId = useId();
@@ -56,13 +59,13 @@ export function AdvancedExerciseOptionsDialog({
               inputMode="decimal"
               min={0.01}
               onChange={(event) =>
-                onExerciseChange({
-                  ...exercise,
+                onExerciseChange((currentExercise) => ({
+                  ...currentExercise,
                   step:
                     event.target.value === ""
                       ? undefined
                       : Number(event.target.value),
-                })
+                }))
               }
               placeholder="2.5"
               step="any"
@@ -100,7 +103,10 @@ export function AdvancedExerciseOptionsDialog({
               checked={exercise.logging}
               id={loggingId}
               onCheckedChange={(checked) =>
-                onExerciseChange({ ...exercise, logging: checked })
+                onExerciseChange((currentExercise) => ({
+                  ...currentExercise,
+                  logging: checked,
+                }))
               }
             />
           </label>

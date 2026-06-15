@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import Hydration from "@/components/hydration";
 import { AppNavbar } from "@/components/app-navbar";
+import { SyncProvider } from "@/components/sync-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -50,6 +51,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Hydration />
+          <SyncProvider />
           {children}
           <AppNavbar />
           <Toaster />
