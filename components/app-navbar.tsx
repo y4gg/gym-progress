@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
+  CheckSquare,
   Home,
   LogIn,
   LogOut,
   Plus,
   Settings,
   UserRound,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -118,10 +120,12 @@ function AccountPageNavItem({
 function PageSpecificNavItem({
   isLoggedIn,
   isSessionPending,
+  logsSelectMode,
   pathname,
 }: {
   isLoggedIn: boolean;
   isSessionPending: boolean;
+  logsSelectMode: boolean;
   pathname: string;
 }) {
   const workoutId = getWorkoutId(pathname);
@@ -165,6 +169,20 @@ function PageSpecificNavItem({
     );
   }
 
+  if (exerciseId && pathname === `/e/${exerciseId}/logs`) {
+    return logsSelectMode ? (
+      <NavLink href={`/e/${exerciseId}/logs`} label="Cancel log selection">
+        <X />
+        <span>Cancel</span>
+      </NavLink>
+    ) : (
+      <NavLink href={`/e/${exerciseId}/logs?select=1`} label="Select logs">
+        <CheckSquare />
+        <span>Select</span>
+      </NavLink>
+    );
+  }
+
   if (pathname.startsWith("/e/")) {
     return (
       <NavLink
@@ -196,11 +214,13 @@ function PageSpecificNavItem({
 
 export function AppNavbar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const session = authClient.useSession();
   const isLoggedIn = Boolean(session.data);
   const accountHref = !session.isPending && !isLoggedIn ? "/login" : "/account";
   const accountLabel = accountHref === "/login" ? "Login" : "Account";
   const AccountIcon = accountHref === "/login" ? LogIn : UserRound;
+  const logsSelectMode = searchParams.get("select") === "1";
 
   return (
     <nav
@@ -220,6 +240,7 @@ export function AppNavbar() {
         <PageSpecificNavItem
           isLoggedIn={isLoggedIn}
           isSessionPending={session.isPending}
+          logsSelectMode={logsSelectMode}
           pathname={pathname}
         />
         <NavLink

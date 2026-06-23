@@ -2,10 +2,17 @@ import { createId } from "@paralleldrive/cuid2";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { compactSyncQueue, normalizeExercise, normalizeWorkout } from "@/lib/sync";
+import {
+  compactSyncQueue,
+  normalizeExercise,
+  normalizeExerciseLog,
+  normalizeWorkout,
+} from "@/lib/sync";
 import type {
   Exercise,
+  ExerciseLog,
   NewExercise,
+  NewExerciseLog,
   NewWorkout,
   Store,
   SyncOperation,
@@ -13,7 +20,7 @@ import type {
   Workout,
 } from "@/lib/types";
 
-const STORE_VERSION = 1;
+const STORE_VERSION = 2;
 
 function nowIso() {
   return new Date().toISOString();
@@ -32,6 +39,13 @@ function createOperation<T extends Omit<SyncOperation, "id" | "queuedAt">>(
 function normalizePersistedWorkouts(workouts: unknown): Workout[] {
   if (!Array.isArray(workouts)) return [];
   return workouts.map((workout) => normalizeWorkout(workout as Workout));
+}
+
+function normalizePersistedExerciseLogs(exerciseLogs: unknown): ExerciseLog[] {
+  if (!Array.isArray(exerciseLogs)) return [];
+  return exerciseLogs.map((exerciseLog) =>
+    normalizeExerciseLog(exerciseLog as ExerciseLog),
+  );
 }
 
 function normalizePersistedOperations(operations: unknown): SyncOperation[] {
@@ -60,6 +74,15 @@ function normalizePersistedOperations(operations: unknown): SyncOperation[] {
       continue;
     }
 
+    if ("exerciseLog" in syncOperation) {
+      normalizedOperations.push({
+        ...syncOperation,
+        exerciseLog: normalizeExerciseLog(syncOperation.exerciseLog),
+        queuedAt: syncOperation.queuedAt ?? nowIso(),
+      });
+      continue;
+    }
+
     normalizedOperations.push({
       ...syncOperation,
       queuedAt: syncOperation.queuedAt ?? nowIso(),
@@ -75,6 +98,7 @@ function migratePersistedState(persistedState: unknown) {
   return {
     ...state,
     workouts: normalizePersistedWorkouts(state.workouts),
+    exerciseLogs: normalizePersistedExerciseLogs(state.exerciseLogs),
     syncUserId: state.syncUserId ?? null,
     pendingSyncOperations: normalizePersistedOperations(
       state.pendingSyncOperations,
@@ -89,6 +113,7 @@ const useStore = create<Store>()(
   persist(
     (set, get) => ({
       workouts: [],
+      exerciseLogs: [],
       syncUserId: null,
       pendingSyncOperations: [],
       syncStatus: "idle",
@@ -184,10 +209,30 @@ const useStore = create<Store>()(
           ),
         }));
       },
+      addExerciseLog: (exerciseLog: NewExerciseLog) => {
+        const updatedExerciseLog = normalizeExerciseLog({
+          ...exerciseLog,
+          createdAt: nowIso(),
+        });
+
+        set((state) => ({
+          exerciseLogs: [...state.exerciseLogs, updatedExerciseLog],
+          pendingSyncOperations: compactSyncQueue(
+            state.pendingSyncOperations,
+            createOperation({
+              type: "addExerciseLog",
+              exerciseLog: updatedExerciseLog,
+            }),
+          ),
+        }));
+      },
       deleteWorkout: (workoutId: string) =>
         set((state) => ({
           workouts: state.workouts.filter(
             (workout) => workout.id !== workoutId,
+          ),
+          exerciseLogs: state.exerciseLogs.filter(
+            (exerciseLog) => exerciseLog.workoutId !== workoutId,
           ),
           pendingSyncOperations: compactSyncQueue(
             state.pendingSyncOperations,
@@ -202,13 +247,37 @@ const useStore = create<Store>()(
               (exercise) => exercise.id !== exerciseId,
             ),
           })),
+          exerciseLogs: state.exerciseLogs.filter(
+            (exerciseLog) => exerciseLog.exerciseId !== exerciseId,
+          ),
           pendingSyncOperations: compactSyncQueue(
             state.pendingSyncOperations,
             createOperation({ type: "deleteExercise", exerciseId }),
           ),
         })),
+      deleteExerciseLogs: (exerciseLogIds: string[]) =>
+        set((state) => {
+          const exerciseLogIdsSet = new Set(exerciseLogIds);
+          const pendingSyncOperations = exerciseLogIds.reduce(
+            (operations, exerciseLogId) =>
+              compactSyncQueue(
+                operations,
+                createOperation({ type: "deleteExerciseLog", exerciseLogId }),
+              ),
+            state.pendingSyncOperations,
+          );
+
+          return {
+            exerciseLogs: state.exerciseLogs.filter(
+              (exerciseLog) => !exerciseLogIdsSet.has(exerciseLog.id),
+            ),
+            pendingSyncOperations,
+          };
+        }),
       replaceWorkouts: (workouts: Workout[]) =>
         set({ workouts: workouts.map(normalizeWorkout) }),
+      replaceExerciseLogs: (exerciseLogs: ExerciseLog[]) =>
+        set({ exerciseLogs: exerciseLogs.map(normalizeExerciseLog) }),
       setSyncUser: (userId: string | null) => set({ syncUserId: userId }),
       setSyncStatus: (status: SyncStatus, error?: string | null) =>
         set({
@@ -235,6 +304,7 @@ const useStore = create<Store>()(
       clearData: () =>
         set({
           workouts: [],
+          exerciseLogs: [],
           syncUserId: null,
           pendingSyncOperations: [],
           syncStatus: "idle",
@@ -254,6 +324,10 @@ const useStore = create<Store>()(
         }
         return undefined;
       },
+      getExerciseLogsByExerciseId: (exerciseId: string) =>
+        get().exerciseLogs.filter(
+          (exerciseLog) => exerciseLog.exerciseId === exerciseId,
+        ),
       getPreviousExerciseById: (exerciseId: string) => {
         for (const workout of get().workouts) {
           const exerciseIndex = workout.exercises.findIndex(
