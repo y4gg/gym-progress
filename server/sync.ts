@@ -6,10 +6,14 @@ import { isCuid } from "@paralleldrive/cuid2";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { exercise, workout } from "@/db/schema";
+import { exercise, exerciseLog, workout } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { normalizeExercise, normalizeWorkout } from "@/lib/sync";
-import type { Exercise, SyncOperation, Workout } from "@/lib/types";
+import {
+  normalizeExercise,
+  normalizeExerciseLog,
+  normalizeWorkout,
+} from "@/lib/sync";
+import type { Exercise, ExerciseLog, SyncOperation, Workout } from "@/lib/types";
 
 type SyncFailureStatus =
   | "unauthorized"
@@ -58,6 +62,17 @@ const workoutSchema: z.ZodType<Workout> = z.object({
   updatedAt: isoDateSchema,
 });
 
+const exerciseLogSchema: z.ZodType<ExerciseLog> = z.object({
+  id: cuidSchema,
+  userId: z.string().optional(),
+  exerciseId: cuidSchema,
+  workoutId: cuidSchema,
+  reps: z.number().int().min(0),
+  weight: z.number().min(0),
+  performedAt: isoDateSchema,
+  createdAt: isoDateSchema,
+});
+
 const syncOperationSchema: z.ZodType<SyncOperation> = z.discriminatedUnion(
   "type",
   [
@@ -95,6 +110,18 @@ const syncOperationSchema: z.ZodType<SyncOperation> = z.discriminatedUnion(
       id: z.string().min(1),
       type: z.literal("deleteExercise"),
       exerciseId: cuidSchema,
+      queuedAt: isoDateSchema,
+    }),
+    z.object({
+      id: z.string().min(1),
+      type: z.literal("addExerciseLog"),
+      exerciseLog: exerciseLogSchema,
+      queuedAt: isoDateSchema,
+    }),
+    z.object({
+      id: z.string().min(1),
+      type: z.literal("deleteExerciseLog"),
+      exerciseLogId: cuidSchema,
       queuedAt: isoDateSchema,
     }),
   ],
@@ -152,6 +179,21 @@ function normalizeExerciseForDb(newExercise: Exercise) {
   };
 }
 
+function normalizeExerciseLogForDb(newExerciseLog: ExerciseLog, userId: string) {
+  const normalizedExerciseLog = normalizeExerciseLog(newExerciseLog);
+
+  return {
+    id: normalizedExerciseLog.id,
+    userId,
+    exerciseId: normalizedExerciseLog.exerciseId,
+    workoutId: normalizedExerciseLog.workoutId,
+    reps: normalizedExerciseLog.reps,
+    weight: normalizedExerciseLog.weight,
+    performedAt: toDate(normalizedExerciseLog.performedAt),
+    createdAt: toDate(normalizedExerciseLog.createdAt),
+  };
+}
+
 function toClientWorkout(
   dbWorkout: typeof workout.$inferSelect & {
     exercises: (typeof exercise.$inferSelect)[];
@@ -178,15 +220,36 @@ function toClientWorkout(
   });
 }
 
-async function getUserSnapshot(userId: string) {
-  const dbWorkouts = await db.query.workout.findMany({
-    where: eq(workout.userId, userId),
-    with: {
-      exercises: true,
-    },
+function toClientExerciseLog(dbExerciseLog: typeof exerciseLog.$inferSelect) {
+  return normalizeExerciseLog({
+    id: dbExerciseLog.id,
+    userId: dbExerciseLog.userId,
+    exerciseId: dbExerciseLog.exerciseId,
+    workoutId: dbExerciseLog.workoutId,
+    reps: dbExerciseLog.reps,
+    weight: dbExerciseLog.weight,
+    performedAt: dbExerciseLog.performedAt.toISOString(),
+    createdAt: dbExerciseLog.createdAt.toISOString(),
   });
+}
 
-  return dbWorkouts.map(toClientWorkout);
+async function getUserSnapshot(userId: string) {
+  const [dbWorkouts, dbExerciseLogs] = await Promise.all([
+    db.query.workout.findMany({
+      where: eq(workout.userId, userId),
+      with: {
+        exercises: true,
+      },
+    }),
+    db.query.exerciseLog.findMany({
+      where: eq(exerciseLog.userId, userId),
+    }),
+  ]);
+
+  return {
+    workouts: dbWorkouts.map(toClientWorkout),
+    exerciseLogs: dbExerciseLogs.map(toClientExerciseLog),
+  };
 }
 
 function validateOperations(operations: SyncOperation[]) {
@@ -226,6 +289,16 @@ async function findExerciseOwner(client: SyncDbClient, exerciseId: string) {
     .from(exercise)
     .innerJoin(workout, eq(exercise.workoutId, workout.id))
     .where(eq(exercise.id, exerciseId))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
+async function findExerciseLogOwner(client: SyncDbClient, exerciseLogId: string) {
+  const rows = await client
+    .select({ userId: exerciseLog.userId })
+    .from(exerciseLog)
+    .where(eq(exerciseLog.id, exerciseLogId))
     .limit(1);
 
   return rows[0] ?? null;
@@ -392,6 +465,44 @@ async function applyDeleteExercise(
   return "success";
 }
 
+async function applyAddExerciseLog(
+  client: SyncDbClient,
+  newExerciseLog: ExerciseLog,
+  userId: string,
+) {
+  const dbExerciseLog = normalizeExerciseLogForDb(newExerciseLog, userId);
+  const parent = await findExerciseOwner(client, dbExerciseLog.exerciseId);
+
+  if (!parent || parent.userId !== userId) return "not_found";
+  if (parent.workoutId !== dbExerciseLog.workoutId) return "invalid_payload";
+
+  const workoutOwner = await findWorkoutOwner(client, dbExerciseLog.workoutId);
+  if (!workoutOwner || workoutOwner.userId !== userId) return "not_found";
+
+  const existing = await findExerciseLogOwner(client, dbExerciseLog.id);
+  if (existing && existing.userId !== userId) return "conflict";
+  if (existing) return "success";
+
+  await client.insert(exerciseLog).values(dbExerciseLog);
+  return "success";
+}
+
+async function applyDeleteExerciseLog(
+  client: SyncDbClient,
+  exerciseLogId: string,
+  userId: string,
+) {
+  const existing = await findExerciseLogOwner(client, exerciseLogId);
+
+  if (!existing) return "success";
+  if (existing.userId !== userId) return "conflict";
+
+  await client
+    .delete(exerciseLog)
+    .where(and(eq(exerciseLog.id, exerciseLogId), eq(exerciseLog.userId, userId)));
+  return "success";
+}
+
 async function applyOperation(
   client: SyncDbClient,
   operation: SyncOperation,
@@ -410,6 +521,10 @@ async function applyOperation(
       return applyEditExercise(client, operation.exercise, userId);
     case "deleteExercise":
       return applyDeleteExercise(client, operation.exerciseId, userId);
+    case "addExerciseLog":
+      return applyAddExerciseLog(client, operation.exerciseLog, userId);
+    case "deleteExerciseLog":
+      return applyDeleteExerciseLog(client, operation.exerciseLogId, userId);
   }
 }
 
@@ -420,7 +535,7 @@ export async function getSyncSnapshot() {
 
     return {
       ...syncSuccess,
-      workouts: await getUserSnapshot(userId),
+      ...(await getUserSnapshot(userId)),
       serverTime: new Date().toISOString(),
     };
   } catch (error) {
@@ -463,7 +578,7 @@ export async function syncOperations(operations: SyncOperation[]) {
         success: false,
         status: failureStatus,
         appliedOperationIds,
-        workouts: snapshot,
+        ...snapshot,
         serverTime,
       };
     }
@@ -471,7 +586,7 @@ export async function syncOperations(operations: SyncOperation[]) {
     return {
       ...syncSuccess,
       appliedOperationIds,
-      workouts: snapshot,
+      ...snapshot,
       serverTime,
     };
   } catch (error) {

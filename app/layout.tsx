@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -53,7 +54,9 @@ export default function RootLayout({
           <Hydration />
           <SyncProvider />
           {children}
-          <AppNavbar />
+          <Suspense fallback={null}>
+            <AppNavbar />
+          </Suspense>
           <Toaster />
         </ThemeProvider>
       </body>

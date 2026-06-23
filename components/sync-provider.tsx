@@ -8,10 +8,11 @@ import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
 import {
   applyPendingOperations,
-  mergeInitialWorkouts,
+  mergeInitialData,
+  normalizeExerciseLog,
   normalizeWorkout,
 } from "@/lib/sync";
-import type { SyncOperation, Workout } from "@/lib/types";
+import type { ExerciseLog, SyncOperation, Workout } from "@/lib/types";
 import { getSyncSnapshot, syncOperations } from "@/server/sync";
 
 const MAX_RETRY_ATTEMPTS = 5;
@@ -48,14 +49,17 @@ function hasSyncSnapshotResult(
   result: unknown,
 ): result is {
   appliedOperationIds: string[];
+  exerciseLogs: ExerciseLog[];
   workouts: Workout[];
 } {
   return (
     typeof result === "object" &&
     result !== null &&
     "appliedOperationIds" in result &&
+    "exerciseLogs" in result &&
     "workouts" in result &&
     Array.isArray(result.appliedOperationIds) &&
+    Array.isArray(result.exerciseLogs) &&
     Array.isArray(result.workouts)
   );
 }
@@ -145,6 +149,7 @@ export function SyncProvider() {
         const latestState = useStore.getState();
         latestState.removeSyncedOperations(result.appliedOperationIds);
         latestState.replaceWorkouts(result.workouts);
+        latestState.replaceExerciseLogs(result.exerciseLogs);
         latestState.setSyncStatus("synced");
         clearRetry();
         lastToastRef.current = null;
@@ -171,6 +176,7 @@ export function SyncProvider() {
 
         latestState.removeSyncedOperations(operationIdsToRemove);
         latestState.replaceWorkouts(result.workouts);
+        latestState.replaceExerciseLogs(result.exerciseLogs);
 
         if (result.status === "not_found") {
           latestState.setSyncStatus(
@@ -288,28 +294,35 @@ export function SyncProvider() {
 
         const latestState = useStore.getState();
         const serverWorkouts = snapshot.workouts.map(normalizeWorkout);
+        const serverExerciseLogs =
+          snapshot.exerciseLogs.map(normalizeExerciseLog);
 
         if (!latestState.syncUserId) {
-          const merged = mergeInitialWorkouts(
+          const merged = mergeInitialData(
             latestState.workouts,
             serverWorkouts,
+            latestState.exerciseLogs,
+            serverExerciseLogs,
           );
 
           latestState.replaceWorkouts(merged.workouts);
+          latestState.replaceExerciseLogs(merged.exerciseLogs);
           latestState.setSyncUser(userId);
           for (const operation of merged.operationsToQueue) {
             useStore.getState().enqueueSyncOperation(operation);
           }
         } else if (latestState.syncUserId !== userId) {
           latestState.replaceWorkouts(serverWorkouts);
+          latestState.replaceExerciseLogs(serverExerciseLogs);
           latestState.setSyncUser(userId);
         } else {
-          latestState.replaceWorkouts(
-            applyPendingOperations(
-              serverWorkouts,
-              latestState.pendingSyncOperations,
-            ),
+          const snapshotWithPending = applyPendingOperations(
+            serverWorkouts,
+            serverExerciseLogs,
+            latestState.pendingSyncOperations,
           );
+          latestState.replaceWorkouts(snapshotWithPending.workouts);
+          latestState.replaceExerciseLogs(snapshotWithPending.exerciseLogs);
         }
 
         await flushQueue();

@@ -108,6 +108,7 @@ export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   passkeys: many(passkey),
+  exerciseLogs: many(exerciseLog),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -169,13 +170,58 @@ export const exercise = pgTable("exercise", {
     .notNull(),
 });
 
+export const exerciseLog = pgTable(
+  "exercise_log",
+  {
+    id: text("id").primaryKey().unique(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    exerciseId: text("exercise_id")
+      .notNull()
+      .references(() => exercise.id, { onDelete: "cascade" }),
+    workoutId: text("workout_id")
+      .notNull()
+      .references(() => workout.id, { onDelete: "cascade" }),
+    reps: integer("reps").notNull(),
+    weight: numeric("weight", {
+      precision: 8,
+      scale: 2,
+      mode: "number",
+    }).notNull(),
+    performedAt: timestamp("performed_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("exercise_log_userId_idx").on(table.userId),
+    index("exercise_log_exerciseId_idx").on(table.exerciseId),
+    index("exercise_log_performedAt_idx").on(table.performedAt),
+  ],
+);
+
 export const workoutRelations = relations(workout, ({ many }) => ({
   exercises: many(exercise),
+  exerciseLogs: many(exerciseLog),
 }));
 
 export const exerciseRelations = relations(exercise, ({ one }) => ({
   workout: one(workout, {
     fields: [exercise.workoutId],
     references: [workout.id],
+  }),
+}));
+
+export const exerciseLogRelations = relations(exerciseLog, ({ one }) => ({
+  user: one(user, {
+    fields: [exerciseLog.userId],
+    references: [user.id],
+  }),
+  workout: one(workout, {
+    fields: [exerciseLog.workoutId],
+    references: [workout.id],
+  }),
+  exercise: one(exercise, {
+    fields: [exerciseLog.exerciseId],
+    references: [exercise.id],
   }),
 }));

@@ -22,7 +22,20 @@ interface Exercise {
   createdAt: string;
 }
 
+interface ExerciseLog {
+  id: string;
+  userId?: string;
+  exerciseId: string;
+  workoutId: string;
+  reps: number;
+  weight: number;
+  performedAt: string;
+  createdAt: string;
+}
+
 export type NewExercise = Omit<Exercise, "updatedAt" | "createdAt">;
+
+export type NewExerciseLog = Omit<ExerciseLog, "createdAt">;
 
 export type NewWorkout = Omit<Workout, "updatedAt" | "createdAt">;
 
@@ -40,10 +53,13 @@ type SyncOperation =
   | { id: string; type: "deleteWorkout"; workoutId: string; queuedAt: string }
   | { id: string; type: "addExercise"; exercise: Exercise; queuedAt: string }
   | { id: string; type: "editExercise"; exercise: Exercise; queuedAt: string }
-  | { id: string; type: "deleteExercise"; exerciseId: string; queuedAt: string };
+  | { id: string; type: "deleteExercise"; exerciseId: string; queuedAt: string }
+  | { id: string; type: "addExerciseLog"; exerciseLog: ExerciseLog; queuedAt: string }
+  | { id: string; type: "deleteExerciseLog"; exerciseLogId: string; queuedAt: string };
 
 interface Store {
   workouts: Workout[];
+  exerciseLogs: ExerciseLog[];
   syncUserId: string | null;
   pendingSyncOperations: SyncOperation[];
   syncStatus: SyncStatus;
@@ -53,9 +69,12 @@ interface Store {
   addExercise: (exercise: NewExercise) => void;
   editWorkout: (workout: Workout) => void;
   editExercise: (exercise: Exercise) => void;
+  addExerciseLog: (exerciseLog: NewExerciseLog) => void;
   deleteWorkout: (workoutId: string) => void;
   deleteExercise: (exerciseId: string) => void;
+  deleteExerciseLogs: (exerciseLogIds: string[]) => void;
   replaceWorkouts: (workouts: Workout[]) => void;
+  replaceExerciseLogs: (exerciseLogs: ExerciseLog[]) => void;
   setSyncUser: (userId: string | null) => void;
   setSyncStatus: (status: SyncStatus, error?: string | null) => void;
   enqueueSyncOperation: (operation: SyncOperation) => void;
@@ -64,9 +83,17 @@ interface Store {
 
   getWorkoutById: (workoutId: string) => Workout | undefined;
   getExerciseById: (exerciseId: string) => Exercise | undefined;
+  getExerciseLogsByExerciseId: (exerciseId: string) => ExerciseLog[];
 
   getPreviousExerciseById: (exerciseId: string) => Exercise | undefined;
   getNextExerciseById: (exerciseId: string) => Exercise | undefined;
 }
 
-export type { Workout, Exercise, Store, SyncOperation, SyncStatus };
+export type {
+  Workout,
+  Exercise,
+  ExerciseLog,
+  Store,
+  SyncOperation,
+  SyncStatus,
+};

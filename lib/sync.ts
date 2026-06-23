@@ -1,4 +1,4 @@
-import type { Exercise, SyncOperation, Workout } from "@/lib/types";
+import type { Exercise, ExerciseLog, SyncOperation, Workout } from "@/lib/types";
 
 const DEFAULT_STEP = 2.5;
 
@@ -19,6 +19,10 @@ function compareUpdatedAt(a: { updatedAt: string }, b: { updatedAt: string }) {
   return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
 }
 
+function compareCreatedAt(a: { createdAt: string }, b: { createdAt: string }) {
+  return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+}
+
 export function normalizeExercise(exercise: Exercise): Exercise {
   return {
     ...exercise,
@@ -36,6 +40,16 @@ export function normalizeExercise(exercise: Exercise): Exercise {
         : DEFAULT_STEP,
     createdAt: toIsoString(exercise.createdAt),
     updatedAt: toIsoString(exercise.updatedAt),
+  };
+}
+
+export function normalizeExerciseLog(exerciseLog: ExerciseLog): ExerciseLog {
+  return {
+    ...exerciseLog,
+    reps: Number(exerciseLog.reps),
+    weight: Number(exerciseLog.weight),
+    performedAt: toIsoString(exerciseLog.performedAt),
+    createdAt: toIsoString(exerciseLog.createdAt),
   };
 }
 
@@ -59,6 +73,35 @@ function getExerciseWorkoutId(workouts: Workout[], exerciseId: string) {
   return null;
 }
 
+function getOperationEntity(operation: SyncOperation) {
+  if (
+    operation.type === "addWorkout" ||
+    operation.type === "editWorkout" ||
+    operation.type === "deleteWorkout"
+  ) {
+    return "workout";
+  }
+
+  if (
+    operation.type === "addExercise" ||
+    operation.type === "editExercise" ||
+    operation.type === "deleteExercise"
+  ) {
+    return "exercise";
+  }
+
+  return "exerciseLog";
+}
+
+function getOperationTargetId(operation: SyncOperation) {
+  if ("workout" in operation) return operation.workout.id;
+  if ("exercise" in operation) return operation.exercise.id;
+  if ("exerciseLog" in operation) return operation.exerciseLog.id;
+  if ("workoutId" in operation) return operation.workoutId;
+  if ("exerciseId" in operation) return operation.exerciseId;
+  return operation.exerciseLogId;
+}
+
 export function compactSyncQueue(
   existing: SyncOperation[],
   nextOperation: SyncOperation,
@@ -73,31 +116,41 @@ export function compactSyncQueue(
       ) {
         return false;
       }
+      if (
+        operation.type === "addExerciseLog" &&
+        operation.exerciseLog.workoutId === nextOperation.workoutId
+      ) {
+        return false;
+      }
       return true;
     });
   }
 
-  const targetId =
-    "workout" in nextOperation
-      ? nextOperation.workout.id
-      : "exercise" in nextOperation
-        ? nextOperation.exercise.id
-        : "workoutId" in nextOperation
-          ? nextOperation.workoutId
-          : nextOperation.exerciseId;
+  if (nextOperation.type === "deleteExercise") {
+    queue = queue.filter((operation) => {
+      if (
+        operation.type === "addExerciseLog" &&
+        operation.exerciseLog.exerciseId === nextOperation.exerciseId
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }
 
-  const entityKind =
-    nextOperation.type.endsWith("Workout") ||
-    nextOperation.type === "addWorkout" ||
-    nextOperation.type === "editWorkout" ||
-    nextOperation.type === "deleteWorkout"
-      ? "workout"
-      : "exercise";
+  const targetId = getOperationTargetId(nextOperation);
+  const entityKind = getOperationEntity(nextOperation);
 
   const previousIndex = queue.findIndex((operation) => {
     if (entityKind === "workout") {
       if ("workout" in operation) return operation.workout.id === targetId;
       if ("workoutId" in operation) return operation.workoutId === targetId;
+      return false;
+    }
+
+    if (entityKind === "exerciseLog") {
+      if ("exerciseLog" in operation) return operation.exerciseLog.id === targetId;
+      if ("exerciseLogId" in operation) return operation.exerciseLogId === targetId;
       return false;
     }
 
@@ -143,7 +196,9 @@ export function compactSyncQueue(
 
   if (
     (previous.type === "addWorkout" && nextOperation.type === "deleteWorkout") ||
-    (previous.type === "addExercise" && nextOperation.type === "deleteExercise")
+    (previous.type === "addExercise" && nextOperation.type === "deleteExercise") ||
+    (previous.type === "addExerciseLog" &&
+      nextOperation.type === "deleteExerciseLog")
   ) {
     return [...before, ...after];
   }
@@ -158,16 +213,27 @@ export function compactSyncQueue(
   return [...queue, nextOperation];
 }
 
-export function mergeInitialWorkouts(
+export function mergeInitialData(
   localWorkouts: Workout[],
   remoteWorkouts: Workout[],
-): { workouts: Workout[]; operationsToQueue: SyncOperation[] } {
+  localExerciseLogs: ExerciseLog[],
+  remoteExerciseLogs: ExerciseLog[],
+): {
+  workouts: Workout[];
+  exerciseLogs: ExerciseLog[];
+  operationsToQueue: SyncOperation[];
+} {
   const now = new Date().toISOString();
   const workoutsById = new Map<string, Workout>();
+  const exerciseLogsById = new Map<string, ExerciseLog>();
   const operationsToQueue: SyncOperation[] = [];
 
   for (const workout of remoteWorkouts.map(normalizeWorkout)) {
     workoutsById.set(workout.id, workout);
+  }
+
+  for (const exerciseLog of remoteExerciseLogs.map(normalizeExerciseLog)) {
+    exerciseLogsById.set(exerciseLog.id, exerciseLog);
   }
 
   for (const localWorkout of localWorkouts.map(normalizeWorkout)) {
@@ -229,17 +295,36 @@ export function mergeInitialWorkouts(
     }
   }
 
+  for (const localExerciseLog of localExerciseLogs.map(normalizeExerciseLog)) {
+    const remoteExerciseLog = exerciseLogsById.get(localExerciseLog.id);
+
+    if (!remoteExerciseLog) {
+      exerciseLogsById.set(localExerciseLog.id, localExerciseLog);
+      operationsToQueue.push({
+        id: `${localExerciseLog.id}:addExerciseLog:${now}`,
+        type: "addExerciseLog",
+        exerciseLog: localExerciseLog,
+        queuedAt: now,
+      });
+    } else if (compareCreatedAt(localExerciseLog, remoteExerciseLog) < 0) {
+      exerciseLogsById.set(localExerciseLog.id, remoteExerciseLog);
+    }
+  }
+
   return {
     workouts: Array.from(workoutsById.values()),
+    exerciseLogs: Array.from(exerciseLogsById.values()),
     operationsToQueue,
   };
 }
 
 export function applyPendingOperations(
-  snapshot: Workout[],
+  snapshotWorkouts: Workout[],
+  snapshotExerciseLogs: ExerciseLog[],
   operations: SyncOperation[],
-): Workout[] {
-  let workouts = snapshot.map(normalizeWorkout);
+): { workouts: Workout[]; exerciseLogs: ExerciseLog[] } {
+  let workouts = snapshotWorkouts.map(normalizeWorkout);
+  let exerciseLogs = snapshotExerciseLogs.map(normalizeExerciseLog);
 
   for (const operation of operations) {
     if (operation.type === "addWorkout") {
@@ -263,6 +348,9 @@ export function applyPendingOperations(
 
     if (operation.type === "deleteWorkout") {
       workouts = workouts.filter((workout) => workout.id !== operation.workoutId);
+      exerciseLogs = exerciseLogs.filter(
+        (exerciseLog) => exerciseLog.workoutId !== operation.workoutId,
+      );
     }
 
     if (operation.type === "addExercise") {
@@ -305,8 +393,31 @@ export function applyPendingOperations(
             }
           : workout,
       );
+      exerciseLogs = exerciseLogs.filter(
+        (exerciseLog) => exerciseLog.exerciseId !== operation.exerciseId,
+      );
+    }
+
+    if (operation.type === "addExerciseLog") {
+      const normalizedExerciseLog = normalizeExerciseLog(operation.exerciseLog);
+      const existing = exerciseLogs.find(
+        (exerciseLog) => exerciseLog.id === normalizedExerciseLog.id,
+      );
+      exerciseLogs = existing
+        ? exerciseLogs.map((exerciseLog) =>
+            exerciseLog.id === normalizedExerciseLog.id
+              ? normalizedExerciseLog
+              : exerciseLog,
+          )
+        : [...exerciseLogs, normalizedExerciseLog];
+    }
+
+    if (operation.type === "deleteExerciseLog") {
+      exerciseLogs = exerciseLogs.filter(
+        (exerciseLog) => exerciseLog.id !== operation.exerciseLogId,
+      );
     }
   }
 
-  return workouts;
+  return { workouts, exerciseLogs };
 }

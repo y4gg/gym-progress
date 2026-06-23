@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,9 @@ import { DeleteDialog } from "@/components/delete-dialog";
 import { toast } from "sonner";
 import { Exercise } from "@/lib/types";
 import { useDebounce } from "@/lib/use-debounce";
+import { authClient } from "@/lib/auth-client";
+import { TrackRepsDialog } from "@/components/track-reps-dialog";
+import { createId } from "@paralleldrive/cuid2";
 
 export default function ExercisePage({
   params,
@@ -24,6 +27,7 @@ export default function ExercisePage({
   const { Id: exerciseId } = use(params);
   const hydrated = useStoreHydrated();
   const router = useRouter();
+  const session = authClient.useSession();
 
   const exercise = useStore((state) => state.getExerciseById(exerciseId));
   const workout = useStore((state) =>
@@ -35,13 +39,27 @@ export default function ExercisePage({
   const previousExercise = useStore((state) =>
     exercise ? state.getPreviousExerciseById(exercise.id) : undefined,
   );
+  const exerciseLogs = useStore((state) => state.exerciseLogs);
 
-  const { deleteExercise, editExercise } = useStore();
+  const { addExerciseLog, deleteExercise, editExercise } = useStore();
 
   const [currentSet, setCurrentSet] = useState(1);
+  const [trackRepsDialogOpen, setTrackRepsDialogOpen] = useState(false);
   const [newExercise, setNewExercise] = useState<Exercise | undefined>(
     undefined,
   );
+
+  const exerciseLogReps = useMemo(() => {
+    if (!exercise) return undefined;
+
+    return exerciseLogs
+      .filter((exerciseLog) => exerciseLog.exerciseId === exercise.id)
+      .sort(
+        (firstLog, secondLog) =>
+          new Date(secondLog.performedAt).getTime() -
+          new Date(firstLog.performedAt).getTime(),
+      )[0]?.reps;
+  }, [exercise, exerciseLogs]);
 
   useEffect(() => {
     if (exercise) {
@@ -73,6 +91,42 @@ export default function ExercisePage({
   };
 
   const step = exercise.step ?? 2.5;
+  const defaultReps = exerciseLogReps ?? exercise.maxReps ?? 8;
+  const isLoggedIn = Boolean(session.data);
+
+  const advanceSet = () => {
+    setCurrentSet((set) => Math.min(exercise.sets, set + 1));
+  };
+
+  const handleNextSet = () => {
+    if (currentSet === exercise.sets) return;
+
+    if (isLoggedIn && exercise.logging) {
+      setTrackRepsDialogOpen(true);
+      return;
+    }
+
+    advanceSet();
+  };
+
+  const handleConfirmReps = (reps: number) => {
+    addExerciseLog({
+      id: createId(),
+      exerciseId: exercise.id,
+      workoutId: workout.id,
+      reps,
+      weight: newExercise?.weight ?? exercise.weight,
+      performedAt: new Date().toISOString(),
+    });
+    setTrackRepsDialogOpen(false);
+    advanceSet();
+    toast.success("Set logged.");
+  };
+
+  const handleSkipReps = () => {
+    setTrackRepsDialogOpen(false);
+    advanceSet();
+  };
 
   return (
     <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32">
@@ -158,9 +212,7 @@ export default function ExercisePage({
             aria-label="Next set"
             className="h-16"
             disabled={currentSet === exercise.sets}
-            onClick={() =>
-              setCurrentSet((set) => Math.min(exercise.sets, set + 1))
-            }
+            onClick={handleNextSet}
             type="button"
             variant="outline"
           >
@@ -259,6 +311,15 @@ export default function ExercisePage({
             }
           />
         </div>
+        {trackRepsDialogOpen ? (
+          <TrackRepsDialog
+            defaultReps={defaultReps}
+            exercise={exercise}
+            onConfirm={handleConfirmReps}
+            onSkip={handleSkipReps}
+            open={trackRepsDialogOpen}
+          />
+        ) : null}
       </div>
     </main>
   );
