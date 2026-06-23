@@ -1,7 +1,8 @@
 "use client";
 
 import { use, useMemo, useState, Suspense } from "react";
-import { Check, Trash2, X } from "lucide-react";
+import type { ReactNode } from "react";
+import { Check, Dumbbell, Hash, Repeat2, Trash2, X } from "lucide-react";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 
 import { DeleteDialog } from "@/components/delete-dialog";
@@ -36,9 +37,119 @@ function formatWeight(weight: number) {
 
 function buildLogLabel(exerciseLog: ExerciseLog & { setNumber: number }) {
   const weightLabel =
-    exerciseLog.weight > 0 ? ` | ${formatWeight(exerciseLog.weight)}kg` : "";
+    exerciseLog.weight > 0 ? `, ${formatWeight(exerciseLog.weight)} kg` : "";
 
-  return `Set ${exerciseLog.setNumber}: ${exerciseLog.reps} Reps${weightLabel}`;
+  return `Set ${exerciseLog.setNumber}: ${exerciseLog.reps} reps${weightLabel}`;
+}
+
+function LogMetric({
+  icon,
+  label,
+  selected,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  selected: boolean;
+  value: string | number;
+}) {
+  return (
+    <span
+      className={cn(
+        "flex min-w-0 items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2",
+        selected && "border-primary-foreground/20 bg-primary-foreground/10",
+      )}
+    >
+      <span
+        className={cn(
+          "flex size-8 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground",
+          selected && "bg-primary-foreground/15 text-primary-foreground",
+        )}
+      >
+        {icon}
+      </span>
+      <span className="flex min-w-0 flex-col leading-none">
+        <span
+          className={cn(
+            "truncate text-[0.65rem] font-bold uppercase text-muted-foreground",
+            selected && "text-primary-foreground/70",
+          )}
+        >
+          {label}
+        </span>
+        <span
+          className={cn(
+            "truncate text-xl font-bold tabular-nums text-foreground",
+            selected && "text-primary-foreground",
+          )}
+        >
+          {value}
+        </span>
+      </span>
+    </span>
+  );
+}
+
+function ExerciseLogSummary({
+  exerciseLog,
+  selected,
+}: {
+  exerciseLog: ExerciseLog & { setNumber: number };
+  selected: boolean;
+}) {
+  const hasWeight = exerciseLog.weight > 0;
+
+  return (
+    <span className="grid min-w-0 flex-1 grid-cols-[4.5rem_1fr] gap-2">
+      <span
+        className={cn(
+          "flex min-w-0 flex-col items-center justify-center rounded-md border border-border bg-card px-2 py-2",
+          selected && "border-primary-foreground/25 bg-primary-foreground/15",
+        )}
+      >
+        <Hash
+          className={cn(
+            "mb-1 size-4 text-muted-foreground",
+            selected && "text-primary-foreground/70",
+          )}
+          aria-hidden
+        />
+        <span
+          className={cn(
+            "text-[0.65rem] font-bold uppercase leading-none text-muted-foreground",
+            selected && "text-primary-foreground/70",
+          )}
+        >
+          Set
+        </span>
+        <span className="mt-1 text-2xl font-bold leading-none tabular-nums">
+          {exerciseLog.setNumber}
+        </span>
+      </span>
+
+      <span
+        className={cn(
+          "grid min-w-0 gap-2",
+          hasWeight ? "grid-cols-2" : "grid-cols-1",
+        )}
+      >
+        <LogMetric
+          icon={<Repeat2 className="size-4" aria-hidden />}
+          label="Reps"
+          selected={selected}
+          value={exerciseLog.reps}
+        />
+        {hasWeight ? (
+          <LogMetric
+            icon={<Dumbbell className="size-4" aria-hidden />}
+            label="Kg"
+            selected={selected}
+            value={formatWeight(exerciseLog.weight)}
+          />
+        ) : null}
+      </span>
+    </span>
+  );
 }
 
 function groupLogs(exerciseLogs: ExerciseLog[]) {
@@ -132,9 +243,10 @@ function ExerciseLogsView({
 
                   return (
                     <button
+                      aria-label={buildLogLabel(exerciseLog)}
                       aria-pressed={selectMode ? selected : undefined}
                       className={cn(
-                        "flex h-14 w-full items-center justify-between gap-3 rounded-lg border border-input bg-background px-4 text-left text-xl font-semibold transition-colors",
+                        "flex min-h-20 w-full items-center justify-between gap-3 rounded-lg border border-input bg-background p-2 text-left transition-colors",
                         "hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                         !selectMode && "cursor-default hover:bg-background",
                         selected &&
@@ -145,9 +257,10 @@ function ExerciseLogsView({
                       onClick={() => toggleLogSelection(exerciseLog.id)}
                       type="button"
                     >
-                      <span className="min-w-0 truncate">
-                        {buildLogLabel(exerciseLog)}
-                      </span>
+                      <ExerciseLogSummary
+                        exerciseLog={exerciseLog}
+                        selected={selected}
+                      />
                       {selectMode ? (
                         <Check
                           className={cn(
