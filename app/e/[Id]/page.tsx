@@ -93,15 +93,31 @@ export default function ExercisePage({
   const step = exercise.step ?? 2.5;
   const defaultReps = exerciseLogReps ?? exercise.maxReps ?? 8;
   const isLoggedIn = Boolean(session.data);
+  const canTrackCurrentSet = isLoggedIn && exercise.logging;
+  const isLastSet = currentSet === exercise.sets;
+
+  const goToNextExercise = () => {
+    if (typeof nextExercise === "undefined") {
+      router.push(`/w/${workout.id}`);
+      return;
+    }
+
+    router.push(`/e/${nextExercise.id}`);
+  };
 
   const advanceSet = () => {
+    if (isLastSet) {
+      goToNextExercise();
+      return;
+    }
+
     setCurrentSet((set) => Math.min(exercise.sets, set + 1));
   };
 
   const handleNextSet = () => {
-    if (currentSet === exercise.sets) return;
+    if (isLastSet && !canTrackCurrentSet) return;
 
-    if (isLoggedIn && exercise.logging) {
+    if (canTrackCurrentSet) {
       setTrackRepsDialogOpen(true);
       return;
     }
@@ -211,7 +227,7 @@ export default function ExercisePage({
           <Button
             aria-label="Next set"
             className="h-16"
-            disabled={currentSet === exercise.sets}
+            disabled={isLastSet && !canTrackCurrentSet}
             onClick={handleNextSet}
             type="button"
             variant="outline"
