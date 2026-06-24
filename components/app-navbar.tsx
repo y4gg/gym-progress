@@ -183,7 +183,16 @@ function PageSpecificNavItem({
     );
   }
 
-  if (pathname.startsWith("/e/")) {
+  if (exerciseId && pathname !== `/e/${exerciseId}`) {
+    return (
+      <NavLink href={`/e/${exerciseId}`} label="Back to exercise">
+        <ArrowLeft />
+        <span>Back</span>
+      </NavLink>
+    );
+  }
+
+  if (exerciseId && pathname === `/e/${exerciseId}`) {
     return (
       <NavLink
         href={exerciseWorkoutId ? `/w/${exerciseWorkoutId}` : "/"}
