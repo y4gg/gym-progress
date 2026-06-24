@@ -110,6 +110,15 @@ export default function ExercisePage({
     router.push(`/e/${nextExercise.id}`);
   };
 
+  const goToPreviousExercise = () => {
+    if (typeof previousExercise === "undefined") {
+      router.push(`/w/${workout.id}`);
+      return;
+    }
+
+    router.push(`/e/${previousExercise.id}`);
+  };
+
   const advanceSet = () => {
     if (isLastSet) {
       goToNextExercise();
@@ -117,6 +126,15 @@ export default function ExercisePage({
     }
 
     setCurrentSet((set) => Math.min(exercise.sets, set + 1));
+  };
+
+  const previousSet = () => {
+    if (currentSet === 1) {
+      goToPreviousExercise();
+      return;
+    }
+
+    setCurrentSet((set) => Math.max(1, set - 1));
   };
 
   const handleNextSet = () => {
@@ -256,8 +274,7 @@ export default function ExercisePage({
           <Button
             aria-label="Previous set"
             className="h-16"
-            disabled={currentSet === 1}
-            onClick={() => setCurrentSet((set) => Math.max(1, set - 1))}
+            onClick={previousSet}
             type="button"
             variant="outline"
           >
