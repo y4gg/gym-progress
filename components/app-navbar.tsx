@@ -31,7 +31,8 @@ function navItemClass(active?: boolean) {
   return cn(
     "flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-colors",
     "text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50",
-    active && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
+    active &&
+      "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
   );
 }
 
@@ -59,9 +60,7 @@ function getExerciseId(pathname: string) {
 
 function isAccountPath(pathname: string) {
   return (
-    pathname === "/account" ||
-    pathname === "/login" ||
-    pathname === "/register"
+    pathname === "/account" || pathname === "/login" || pathname === "/register"
   );
 }
 
@@ -136,7 +135,7 @@ function PageSpecificNavItem({
         trigger={
           <button
             aria-label="Create workout"
-            className={navItemClass(false)}
+            className={navItemClass(false) + " cursor-pointer"}
             type="button"
           >
             <Plus className="size-6" />
