@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,7 @@ export default function ExercisePage({
   const [newExercise, setNewExercise] = useState<Exercise | undefined>(
     undefined,
   );
+  const immediateExerciseSaveRef = useRef<Exercise | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -79,6 +80,23 @@ export default function ExercisePage({
 
   useEffect(() => {
     if (!debouncedExercise || !exercise) return;
+
+    const immediateExerciseSave = immediateExerciseSaveRef.current;
+
+    if (
+      immediateExerciseSave?.id === exercise.id &&
+      exercise.weight === immediateExerciseSave.weight &&
+      exercise.notes === immediateExerciseSave.notes
+    ) {
+      if (
+        debouncedExercise.weight !== immediateExerciseSave.weight ||
+        debouncedExercise.notes !== immediateExerciseSave.notes
+      ) {
+        return;
+      }
+
+      immediateExerciseSaveRef.current = null;
+    }
 
     if (
       debouncedExercise.weight !== exercise.weight ||
@@ -185,6 +203,7 @@ export default function ExercisePage({
     };
 
     setNewExercise(updatedExercise);
+    immediateExerciseSaveRef.current = updatedExercise;
     editExercise(updatedExercise);
     setWeightSuggestionPending(false);
     advanceSet();
