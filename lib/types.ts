@@ -11,6 +11,7 @@ interface Exercise {
   id: string;
   name: string;
   workoutId: string;
+  position: number;
   weight: number;
   sets: number;
   maxReps?: number; // If set not null: Increase weight suggestion is enabled
@@ -33,7 +34,12 @@ interface ExerciseLog {
   createdAt: string;
 }
 
-export type NewExercise = Omit<Exercise, "updatedAt" | "createdAt">;
+export type NewExercise = Omit<
+  Exercise,
+  "updatedAt" | "createdAt" | "position"
+> & {
+  position?: number;
+};
 
 export type NewExerciseLog = Omit<ExerciseLog, "createdAt">;
 
@@ -67,6 +73,7 @@ interface Store {
   lastSyncError: string | null;
   addWorkout: (workout: NewWorkout) => void;
   addExercise: (exercise: NewExercise) => void;
+  reorderWorkoutExercises: (workoutId: string, exerciseIds: string[]) => void;
   editWorkout: (workout: Workout) => void;
   editExercise: (exercise: Exercise) => void;
   addExerciseLog: (exerciseLog: NewExerciseLog) => void;

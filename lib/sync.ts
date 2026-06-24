@@ -23,9 +23,29 @@ function compareCreatedAt(a: { createdAt: string }, b: { createdAt: string }) {
   return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
 }
 
+function normalizePosition(position: unknown) {
+  const numericPosition = Number(position);
+  return Number.isFinite(numericPosition) && numericPosition >= 0
+    ? Math.floor(numericPosition)
+    : 0;
+}
+
+export function sortExercisesByPosition(exercises: Exercise[]): Exercise[] {
+  return [...exercises].sort((firstExercise, secondExercise) => {
+    const positionComparison = firstExercise.position - secondExercise.position;
+    if (positionComparison !== 0) return positionComparison;
+
+    const createdAtComparison = compareCreatedAt(firstExercise, secondExercise);
+    if (createdAtComparison !== 0) return createdAtComparison;
+
+    return firstExercise.id.localeCompare(secondExercise.id);
+  });
+}
+
 export function normalizeExercise(exercise: Exercise): Exercise {
   return {
     ...exercise,
+    position: normalizePosition(exercise.position),
     weight: Number(exercise.weight),
     sets: Number(exercise.sets),
     maxReps:
@@ -56,8 +76,14 @@ export function normalizeExerciseLog(exerciseLog: ExerciseLog): ExerciseLog {
 export function normalizeWorkout(workout: Workout): Workout {
   return {
     ...workout,
-    exercises: (workout.exercises ?? []).map((exercise) =>
-      normalizeExercise({ ...exercise, workoutId: workout.id }),
+    exercises: sortExercisesByPosition(
+      (workout.exercises ?? []).map((exercise, index) =>
+        normalizeExercise({
+          ...exercise,
+          position: exercise.position ?? index,
+          workoutId: workout.id,
+        }),
+      ),
     ),
     createdAt: toIsoString(workout.createdAt),
     updatedAt: toIsoString(workout.updatedAt),
@@ -312,7 +338,7 @@ export function mergeInitialData(
   }
 
   return {
-    workouts: Array.from(workoutsById.values()),
+    workouts: Array.from(workoutsById.values()).map(normalizeWorkout),
     exerciseLogs: Array.from(exerciseLogsById.values()),
     operationsToQueue,
   };
@@ -419,5 +445,5 @@ export function applyPendingOperations(
     }
   }
 
-  return { workouts, exerciseLogs };
+  return { workouts: workouts.map(normalizeWorkout), exerciseLogs };
 }

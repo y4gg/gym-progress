@@ -49,6 +49,11 @@ export default function ExercisePage({
     undefined,
   );
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentSet(1);
+  }, [exerciseId]);
+
   const exerciseLogReps = useMemo(() => {
     if (!exercise) return undefined;
 
@@ -115,8 +120,6 @@ export default function ExercisePage({
   };
 
   const handleNextSet = () => {
-    if (isLastSet && !canTrackCurrentSet) return;
-
     if (canTrackCurrentSet) {
       setTrackRepsDialogOpen(true);
       return;
@@ -227,7 +230,6 @@ export default function ExercisePage({
           <Button
             aria-label="Next set"
             className="h-16"
-            disabled={isLastSet && !canTrackCurrentSet}
             onClick={handleNextSet}
             type="button"
             variant="outline"
