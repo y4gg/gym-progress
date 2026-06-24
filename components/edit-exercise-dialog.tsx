@@ -35,6 +35,7 @@ export function EditExerciseDialog({
     weight: z.number().min(0),
     notes: z.string().optional(),
     sets: z.number().min(1).multipleOf(1),
+    maxReps: z.number().int().min(1).optional(),
     logging: z.boolean(),
     step: z.number().positive().optional(),
   });

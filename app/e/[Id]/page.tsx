@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { useDebounce } from "@/lib/use-debounce";
 import { authClient } from "@/lib/auth-client";
 import { TrackRepsDialog } from "@/components/track-reps-dialog";
 import { createId } from "@paralleldrive/cuid2";
+import { WeightSuggestionReachedDialog } from "@/components/weight-suggestion-reached-dialog";
 
 export default function ExercisePage({
   params,
@@ -45,9 +46,11 @@ export default function ExercisePage({
 
   const [currentSet, setCurrentSet] = useState(1);
   const [trackRepsDialogOpen, setTrackRepsDialogOpen] = useState(false);
+  const [weightSuggestionPending, setWeightSuggestionPending] = useState(false);
   const [newExercise, setNewExercise] = useState<Exercise | undefined>(
     undefined,
   );
+  const immediateExerciseSaveRef = useRef<Exercise | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -78,6 +81,23 @@ export default function ExercisePage({
   useEffect(() => {
     if (!debouncedExercise || !exercise) return;
 
+    const immediateExerciseSave = immediateExerciseSaveRef.current;
+
+    if (
+      immediateExerciseSave?.id === exercise.id &&
+      exercise.weight === immediateExerciseSave.weight &&
+      exercise.notes === immediateExerciseSave.notes
+    ) {
+      if (
+        debouncedExercise.weight !== immediateExerciseSave.weight ||
+        debouncedExercise.notes !== immediateExerciseSave.notes
+      ) {
+        return;
+      }
+
+      immediateExerciseSaveRef.current = null;
+    }
+
     if (
       debouncedExercise.weight !== exercise.weight ||
       debouncedExercise.notes !== exercise.notes
@@ -97,6 +117,10 @@ export default function ExercisePage({
 
   const step = exercise.step ?? 2.5;
   const defaultReps = exerciseLogReps ?? exercise.maxReps ?? 8;
+  const currentWeight = newExercise?.weight ?? exercise.weight;
+  const suggestedWeight = Number(currentWeight + step);
+  const targetReps = exercise.maxReps;
+  const weightSuggestionEnabled = typeof targetReps === "number";
   const isLoggedIn = Boolean(session.data);
   const canTrackCurrentSet = isLoggedIn && exercise.logging;
   const isLastSet = currentSet === exercise.sets;
@@ -156,12 +180,38 @@ export default function ExercisePage({
       performedAt: new Date().toISOString(),
     });
     setTrackRepsDialogOpen(false);
-    advanceSet();
     toast.success("Set logged.");
+
+    if (weightSuggestionEnabled && reps >= targetReps) {
+      setWeightSuggestionPending(true);
+      return;
+    }
+
+    advanceSet();
   };
 
   const handleSkipReps = () => {
     setTrackRepsDialogOpen(false);
+    advanceSet();
+  };
+
+  const handleConfirmWeightSuggestion = () => {
+    const baseExercise = newExercise ?? exercise;
+    const updatedExercise = {
+      ...baseExercise,
+      weight: Number(baseExercise.weight + step),
+    };
+
+    setNewExercise(updatedExercise);
+    immediateExerciseSaveRef.current = updatedExercise;
+    editExercise(updatedExercise);
+    setWeightSuggestionPending(false);
+    advanceSet();
+    toast.success("Weight increased.");
+  };
+
+  const handleCancelWeightSuggestion = () => {
+    setWeightSuggestionPending(false);
     advanceSet();
   };
 
@@ -353,6 +403,16 @@ export default function ExercisePage({
             onConfirm={handleConfirmReps}
             onSkip={handleSkipReps}
             open={trackRepsDialogOpen}
+          />
+        ) : null}
+        {weightSuggestionPending ? (
+          <WeightSuggestionReachedDialog
+            currentWeight={currentWeight}
+            exerciseName={exercise.name}
+            nextWeight={suggestedWeight}
+            onCancel={handleCancelWeightSuggestion}
+            onConfirm={handleConfirmWeightSuggestion}
+            open={weightSuggestionPending}
           />
         ) : null}
       </div>

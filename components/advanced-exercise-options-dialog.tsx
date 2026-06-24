@@ -1,23 +1,25 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { useId } from "react";
+import { useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { IncreaseWeightSuggestionDialog } from "@/components/increase-weight-suggestion-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { Exercise } from "@/lib/types";
 import type { Dispatch, SetStateAction } from "react";
 
-type ExerciseOptions = Pick<Exercise, "logging" | "step">;
+type ExerciseOptions = Pick<Exercise, "logging" | "maxReps" | "step">;
 
 export function AdvancedExerciseOptionsDialog<TExercise extends ExerciseOptions>({
   exercise,
@@ -28,90 +30,124 @@ export function AdvancedExerciseOptionsDialog<TExercise extends ExerciseOptions>
 }) {
   const loggingId = useId();
   const stepId = useId();
+  const [suggestionDialogOpen, setSuggestionDialogOpen] = useState(false);
+  const [suggestionInfoDialogOpen, setSuggestionInfoDialogOpen] =
+    useState(false);
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          className="h-16 text-xl font-semibold"
-          type="button"
-          variant="outline"
-        >
-          <span>Advanced</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="pr-8 text-2xl font-bold">
-            Advanced
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-3">
-          <div className="relative">
-            <Label htmlFor={stepId} className="sr-only">
-              Weight step
-            </Label>
-            <Input
-              className="h-16 px-5 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              defaultValue={exercise.step ?? 2.5}
-              id={stepId}
-              inputMode="decimal"
-              min={0.01}
-              onChange={(event) =>
-                onExerciseChange((currentExercise) => ({
-                  ...currentExercise,
-                  step:
-                    event.target.value === ""
-                      ? undefined
-                      : Number(event.target.value),
-                }))
-              }
-              placeholder="2.5"
-              step="any"
-              type="number"
-            />
-            <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">
-              kg steps
-            </span>
-          </div>
-
-          <div className="grid grid-cols-[1fr_4.5rem] gap-2">
-            <Button
-              className="h-16 justify-start whitespace-normal px-5 text-left text-base"
-              type="button"
-              variant="outline"
-            >
-              Increase weight suggestion
-            </Button>
-            <Button
-              aria-label="Increase weight suggestion info"
-              className="h-16"
-              type="button"
-              variant="outline"
-            >
-              <Info className="size-8" />
-            </Button>
-          </div>
-
-          <label
-            className="flex h-16 items-center justify-between gap-4 rounded-lg border border-input px-5 text-xl font-semibold"
-            htmlFor={loggingId}
+    <>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button
+            className="h-16 text-xl font-semibold"
+            type="button"
+            variant="outline"
           >
-            <span className="min-w-0 truncate">Enable Rep Tracking</span>
-            <Switch
-              checked={exercise.logging}
-              id={loggingId}
-              onCheckedChange={(checked) =>
-                onExerciseChange((currentExercise) => ({
-                  ...currentExercise,
-                  logging: checked,
-                }))
-              }
-            />
-          </label>
-        </div>
-      </DialogContent>
-    </Dialog>
+            <span>Advanced</span>
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="pr-8 text-2xl font-bold">
+              Advanced
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-3">
+            <div className="relative">
+              <Label htmlFor={stepId} className="sr-only">
+                Weight step
+              </Label>
+              <Input
+                className="h-16 px-5 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                defaultValue={exercise.step ?? 2.5}
+                id={stepId}
+                inputMode="decimal"
+                min={0.01}
+                onChange={(event) =>
+                  onExerciseChange((currentExercise) => ({
+                    ...currentExercise,
+                    step:
+                      event.target.value === ""
+                        ? undefined
+                        : Number(event.target.value),
+                  }))
+                }
+                placeholder="2.5"
+                step="any"
+                type="number"
+              />
+              <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">
+                kg steps
+              </span>
+            </div>
+
+            <div className="grid grid-cols-[1fr_4.5rem] gap-2">
+              <Button
+                className="h-16 justify-start whitespace-normal px-5 text-left text-base"
+                onClick={() => setSuggestionDialogOpen(true)}
+                type="button"
+                variant="outline"
+              >
+                Increase weight suggestion
+              </Button>
+              <Button
+                aria-label="Increase weight suggestion info"
+                className="h-16"
+                onClick={() => setSuggestionInfoDialogOpen(true)}
+                type="button"
+                variant="outline"
+              >
+                <Info className="size-8" />
+              </Button>
+            </div>
+
+            <label
+              className="flex h-16 items-center justify-between gap-4 rounded-lg border border-input px-5 text-xl font-semibold"
+              htmlFor={loggingId}
+            >
+              <span className="min-w-0 truncate">Enable Rep Tracking</span>
+              <Switch
+                checked={exercise.logging}
+                id={loggingId}
+                onCheckedChange={(checked) =>
+                  onExerciseChange((currentExercise) => ({
+                    ...currentExercise,
+                    logging: checked,
+                  }))
+                }
+              />
+            </label>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {suggestionDialogOpen ? (
+        <IncreaseWeightSuggestionDialog
+          exercise={exercise}
+          onExerciseChange={onExerciseChange}
+          onOpenChange={setSuggestionDialogOpen}
+          open={suggestionDialogOpen}
+        />
+      ) : null}
+
+      <Dialog
+        open={suggestionInfoDialogOpen}
+        onOpenChange={setSuggestionInfoDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="pr-8 text-2xl font-bold">
+              Increase weight suggestion
+            </DialogTitle>
+            <DialogDescription className="text-base leading-6">
+              Set a target rep count for this exercise. When you reach the
+              target, the app can use it as the signal that the weight is ready
+              to increase. Disable it to stop using a target for this exercise.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
