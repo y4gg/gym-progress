@@ -96,16 +96,24 @@ function pluralizeWeightChange(count: number) {
   return count === 1 ? "1 weight change" : `${count} weight changes`;
 }
 
-function EmptyHistoryState({ exerciseId }: { exerciseId: string }) {
+function EmptyHistoryState({
+  exerciseId,
+  showViewLogs,
+}: {
+  exerciseId: string;
+  showViewLogs: boolean;
+}) {
   return (
     <section className="flex min-h-[26rem] flex-1 flex-col items-center justify-center text-center">
       <p className="text-xl font-semibold">No weighted logs yet.</p>
       <p className="mt-2 text-base font-medium text-muted-foreground">
         Log sets with weight to build history.
       </p>
-      <Button asChild className="mt-6 h-12 px-5 text-base font-semibold">
-        <Link href={`/e/${exerciseId}/logs`}>View logs</Link>
-      </Button>
+      {showViewLogs ? (
+        <Button asChild className="mt-6 h-12 px-5 text-base font-semibold">
+          <Link href={`/e/${exerciseId}/logs`}>View logs</Link>
+        </Button>
+      ) : null}
     </section>
   );
 }
@@ -179,11 +187,15 @@ export default function ExerciseHistoryPage({
   );
   const exerciseLogs = useStore((state) => state.exerciseLogs);
 
-  const weightChangePoints = useMemo(() => {
-    return buildWeightChangePoints(
-      exerciseLogs.filter((exerciseLog) => exerciseLog.exerciseId === exerciseId),
+  const currentExerciseLogs = useMemo(() => {
+    return exerciseLogs.filter(
+      (exerciseLog) => exerciseLog.exerciseId === exerciseId,
     );
   }, [exerciseId, exerciseLogs]);
+
+  const weightChangePoints = useMemo(() => {
+    return buildWeightChangePoints(currentExerciseLogs);
+  }, [currentExerciseLogs]);
 
   const { chartPoints, minWeight, maxWeight } = useMemo(
     () => buildChartPoints(weightChangePoints),
@@ -205,7 +217,10 @@ export default function ExerciseHistoryPage({
       </div>
 
       {chartPoints.length === 0 ? (
-        <EmptyHistoryState exerciseId={exercise.id} />
+        <EmptyHistoryState
+          exerciseId={exercise.id}
+          showViewLogs={currentExerciseLogs.length > 0}
+        />
       ) : (
         <WeightHistoryChart
           maxWeight={maxWeight}
