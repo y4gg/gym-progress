@@ -225,64 +225,55 @@ function ExerciseLogsView({
 
       {groupedLogs.length > 0 ? (
         <div className="fixed inset-x-0 bottom-24 z-40 flex justify-center px-6">
-          <div
-            className={cn(
-              "grid w-full max-w-sm gap-2 rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur-md",
-              selectMode && selectedCount > 0 ? "grid-cols-2" : "grid-cols-1",
-            )}
-          >
-            {selectMode ? (
-              selectedCount > 0 ? (
-                <>
-                  <DeleteDialog
-                    description="This permanently deletes the selected set logs."
-                    element={
-                      <Button
-                        className="h-12 text-base font-semibold"
-                        variant="destructive"
-                      >
-                        <Trash2 />
-                        <span>Delete selected</span>
-                      </Button>
-                    }
-                    onConfirm={deleteSelectedLogs}
-                    title="Delete logs?"
-                  />
+          {selectMode && selectedCount > 0 ? (
+            <div className="grid w-full max-w-sm grid-cols-2 gap-2 rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur-md">
+              <DeleteDialog
+                description="This permanently deletes the selected set logs."
+                element={
                   <Button
                     className="h-12 text-base font-semibold"
-                    onClick={clearSelection}
-                    type="button"
-                    variant="outline"
+                    variant="destructive"
                   >
-                    <X />
-                    <span>Clear</span>
+                    <Trash2 className="size-6" />
+                    <span>Delete selected</span>
                   </Button>
-                </>
-              ) : (
-                <Button
-                  asChild
-                  className="h-12 text-base font-semibold"
-                  variant="outline"
-                >
-                  <Link href={`/e/${exerciseId}/logs`}>
-                    <X />
-                    <span>Cancel</span>
-                  </Link>
-                </Button>
-              )
-            ) : (
+                }
+                onConfirm={deleteSelectedLogs}
+                title="Delete logs?"
+              />
               <Button
-                asChild
                 className="h-12 text-base font-semibold"
-                variant="secondary"
-              >
-                <Link href={`/e/${exerciseId}/logs?select=1`}>
-                  <CheckSquare />
-                  <span>Select</span>
-                </Link>
+                onClick={clearSelection}
+                type="button"
+              variant="outline"
+            >
+                <X className="size-6" />
+                <span>Clear</span>
               </Button>
-            )}
-          </div>
+            </div>
+          ) : selectMode ? (
+            <Button
+              asChild
+              className="h-16 w-full max-w-sm text-base font-semibold shadow-lg"
+              variant="outline"
+            >
+              <Link href={`/e/${exerciseId}/logs`}>
+                <X className="size-6" />
+                <span>Cancel</span>
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              asChild
+              className="h-16 w-full max-w-sm text-base font-semibold shadow-lg"
+              variant="secondary"
+            >
+              <Link href={`/e/${exerciseId}/logs?select=1`}>
+                <CheckSquare className="size-6" />
+                <span>Select</span>
+              </Link>
+            </Button>
+          )}
         </div>
       ) : null}
     </main>

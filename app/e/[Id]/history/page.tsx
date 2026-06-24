@@ -10,6 +10,8 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import type { ExerciseLog } from "@/lib/types";
 
+const MAX_WEIGHT_CHANGE_POINTS = 8;
+
 type WeightChangePoint = {
   id: string;
   weight: number;
@@ -64,7 +66,7 @@ function buildWeightChangePoints(exerciseLogs: ExerciseLog[]) {
     weightChangePoints[weightChangePoints.length - 1] = point;
   }
 
-  return weightChangePoints.slice(-10);
+  return weightChangePoints.slice(-MAX_WEIGHT_CHANGE_POINTS);
 }
 
 function buildChartPoints(points: WeightChangePoint[]) {
@@ -90,10 +92,6 @@ function buildChartPoints(points: WeightChangePoint[]) {
     minWeight,
     maxWeight,
   };
-}
-
-function pluralizeWeightChange(count: number) {
-  return count === 1 ? "1 weight change" : `${count} weight changes`;
 }
 
 function EmptyHistoryState({
@@ -166,10 +164,6 @@ function WeightHistoryChart({
           );
         })}
       </div>
-
-      <p className="mt-4 text-center text-sm font-medium text-muted-foreground">
-        Last {pluralizeWeightChange(points.length)}
-      </p>
     </section>
   );
 }
