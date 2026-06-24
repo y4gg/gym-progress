@@ -1,7 +1,8 @@
 "use client";
 
 import { use, useMemo, useState, Suspense } from "react";
-import { Check, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { Check, CheckSquare, Trash2, X } from "lucide-react";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 
 import { DeleteDialog } from "@/components/delete-dialog";
@@ -222,30 +223,57 @@ function ExerciseLogsView({
         </div>
       )}
 
-      {selectMode && selectedCount > 0 ? (
+      {groupedLogs.length > 0 ? (
         <div className="fixed inset-x-0 bottom-24 z-40 flex justify-center px-6">
-          <div className="grid w-full max-w-sm grid-cols-2 gap-2 rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur-md">
-            <DeleteDialog
-              description="This permanently deletes the selected set logs."
-              element={
-                <Button className="h-12 text-base font-semibold" variant="destructive">
-                  <Trash2 />
-                  <span>Delete selected</span>
-                </Button>
-              }
-              onConfirm={deleteSelectedLogs}
-              title="Delete logs?"
-            />
-            <Button
-              className="h-12 text-base font-semibold"
-              onClick={clearSelection}
-              type="button"
+          {selectMode && selectedCount > 0 ? (
+            <div className="grid w-full max-w-sm grid-cols-2 gap-2 rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur-md">
+              <DeleteDialog
+                description="This permanently deletes the selected set logs."
+                element={
+                  <Button
+                    className="h-12 text-base font-semibold"
+                    variant="destructive"
+                  >
+                    <Trash2 className="size-6" />
+                    <span>Delete selected</span>
+                  </Button>
+                }
+                onConfirm={deleteSelectedLogs}
+                title="Delete logs?"
+              />
+              <Button
+                className="h-12 text-base font-semibold"
+                onClick={clearSelection}
+                type="button"
               variant="outline"
             >
-              <X />
-              <span>Clear</span>
+                <X className="size-6" />
+                <span>Clear</span>
+              </Button>
+            </div>
+          ) : selectMode ? (
+            <Button
+              asChild
+              className="h-16 w-full max-w-sm text-base font-semibold shadow-lg"
+              variant="outline"
+            >
+              <Link href={`/e/${exerciseId}/logs`}>
+                <X className="size-6" />
+                <span>Cancel</span>
+              </Link>
             </Button>
-          </div>
+          ) : (
+            <Button
+              asChild
+              className="h-16 w-full max-w-sm text-base font-semibold shadow-lg"
+              variant="secondary"
+            >
+              <Link href={`/e/${exerciseId}/logs?select=1`}>
+                <CheckSquare className="size-6" />
+                <span>Select</span>
+              </Link>
+            </Button>
+          )}
         </div>
       ) : null}
     </main>

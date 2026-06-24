@@ -49,6 +49,11 @@ export default function ExercisePage({
     undefined,
   );
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentSet(1);
+  }, [exerciseId]);
+
   const exerciseLogReps = useMemo(() => {
     if (!exercise) return undefined;
 
@@ -105,6 +110,15 @@ export default function ExercisePage({
     router.push(`/e/${nextExercise.id}`);
   };
 
+  const goToPreviousExercise = () => {
+    if (typeof previousExercise === "undefined") {
+      router.push(`/w/${workout.id}`);
+      return;
+    }
+
+    router.push(`/e/${previousExercise.id}`);
+  };
+
   const advanceSet = () => {
     if (isLastSet) {
       goToNextExercise();
@@ -114,9 +128,16 @@ export default function ExercisePage({
     setCurrentSet((set) => Math.min(exercise.sets, set + 1));
   };
 
-  const handleNextSet = () => {
-    if (isLastSet && !canTrackCurrentSet) return;
+  const previousSet = () => {
+    if (currentSet === 1) {
+      goToPreviousExercise();
+      return;
+    }
 
+    setCurrentSet((set) => Math.max(1, set - 1));
+  };
+
+  const handleNextSet = () => {
     if (canTrackCurrentSet) {
       setTrackRepsDialogOpen(true);
       return;
@@ -227,7 +248,6 @@ export default function ExercisePage({
           <Button
             aria-label="Next set"
             className="h-16"
-            disabled={isLastSet && !canTrackCurrentSet}
             onClick={handleNextSet}
             type="button"
             variant="outline"
@@ -254,8 +274,7 @@ export default function ExercisePage({
           <Button
             aria-label="Previous set"
             className="h-16"
-            disabled={currentSet === 1}
-            onClick={() => setCurrentSet((set) => Math.max(1, set - 1))}
+            onClick={previousSet}
             type="button"
             variant="outline"
           >

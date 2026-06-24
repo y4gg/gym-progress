@@ -44,6 +44,7 @@ const exerciseSchema: z.ZodType<Exercise> = z.object({
   id: cuidSchema,
   name: z.string().min(4),
   workoutId: cuidSchema,
+  position: z.number().int().min(0).default(0),
   weight: z.number().min(0),
   sets: z.number().int().min(1),
   maxReps: z.number().int().min(1).optional(),
@@ -168,6 +169,7 @@ function normalizeExerciseForDb(newExercise: Exercise) {
     id: normalizedExercise.id,
     name: normalizedExercise.name,
     workoutId: normalizedExercise.workoutId,
+    position: normalizedExercise.position,
     weight: normalizedExercise.weight,
     sets: normalizedExercise.sets,
     maxReps: normalizedExercise.maxReps ?? null,
@@ -208,6 +210,7 @@ function toClientWorkout(
       id: dbExercise.id,
       name: dbExercise.name,
       workoutId: dbExercise.workoutId,
+      position: dbExercise.position,
       weight: dbExercise.weight,
       sets: dbExercise.sets,
       maxReps: dbExercise.maxReps ?? undefined,
@@ -238,7 +241,13 @@ async function getUserSnapshot(userId: string) {
     db.query.workout.findMany({
       where: eq(workout.userId, userId),
       with: {
-        exercises: true,
+        exercises: {
+          orderBy: (exercises, { asc }) => [
+            asc(exercises.position),
+            asc(exercises.createdAt),
+            asc(exercises.id),
+          ],
+        },
       },
     }),
     db.query.exerciseLog.findMany({
@@ -397,6 +406,7 @@ async function applyAddExercise(
       .set({
         name: dbExercise.name,
         workoutId: dbExercise.workoutId,
+        position: dbExercise.position,
         weight: dbExercise.weight,
         sets: dbExercise.sets,
         maxReps: dbExercise.maxReps,
@@ -432,6 +442,7 @@ async function applyEditExercise(
     .set({
       name: dbExercise.name,
       workoutId: dbExercise.workoutId,
+      position: dbExercise.position,
       weight: dbExercise.weight,
       sets: dbExercise.sets,
       maxReps: dbExercise.maxReps,

@@ -149,26 +149,33 @@ export const workout = pgTable(
   (table) => [index("workout_userId_idx").on(table.userId)],
 );
 
-export const exercise = pgTable("exercise", {
-  id: text("id").primaryKey().unique(),
-  name: text("name").notNull(),
-  workoutId: text("workout_id")
-    .notNull()
-    .references(() => workout.id, { onDelete: "cascade" }),
-  weight: numeric("weight", { precision: 8, scale: 2, mode: "number" }).notNull(),
-  sets: integer("sets").notNull(),
-  maxReps: integer("max_reps"), // If set not null: Increase weight suggestion is enabled
-  logging: boolean("logging").default(false).notNull(),
-  notes: text("notes"),
-  step: numeric("step", { precision: 8, scale: 2, mode: "number" })
-    .default(sql`2.50`)
-    .notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
-});
+export const exercise = pgTable(
+  "exercise",
+  {
+    id: text("id").primaryKey().unique(),
+    name: text("name").notNull(),
+    workoutId: text("workout_id")
+      .notNull()
+      .references(() => workout.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    weight: numeric("weight", { precision: 8, scale: 2, mode: "number" }).notNull(),
+    sets: integer("sets").notNull(),
+    maxReps: integer("max_reps"), // If set not null: Increase weight suggestion is enabled
+    logging: boolean("logging").default(false).notNull(),
+    notes: text("notes"),
+    step: numeric("step", { precision: 8, scale: 2, mode: "number" })
+      .default(sql`2.50`)
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("exercise_workout_position_idx").on(table.workoutId, table.position),
+  ],
+);
 
 export const exerciseLog = pgTable(
   "exercise_log",

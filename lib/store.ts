@@ -20,7 +20,7 @@ import type {
   Workout,
 } from "@/lib/types";
 
-const STORE_VERSION = 2;
+const STORE_VERSION = 3;
 
 function nowIso() {
   return new Date().toISOString();
@@ -48,7 +48,22 @@ function normalizePersistedExerciseLogs(exerciseLogs: unknown): ExerciseLog[] {
   );
 }
 
-function normalizePersistedOperations(operations: unknown): SyncOperation[] {
+function buildExercisePositionMap(workouts: Workout[]) {
+  const exercisePositionsById = new Map<string, number>();
+
+  for (const workout of workouts) {
+    for (const exercise of workout.exercises) {
+      exercisePositionsById.set(exercise.id, exercise.position);
+    }
+  }
+
+  return exercisePositionsById;
+}
+
+function normalizePersistedOperations(
+  operations: unknown,
+  exercisePositionsById: Map<string, number>,
+): SyncOperation[] {
   if (!Array.isArray(operations)) return [];
 
   const normalizedOperations: SyncOperation[] = [];
@@ -66,9 +81,19 @@ function normalizePersistedOperations(operations: unknown): SyncOperation[] {
     }
 
     if ("exercise" in syncOperation) {
+      const persistedExercise = syncOperation.exercise as Exercise & {
+        position?: number;
+      };
+
       normalizedOperations.push({
         ...syncOperation,
-        exercise: normalizeExercise(syncOperation.exercise),
+        exercise: normalizeExercise({
+          ...persistedExercise,
+          position:
+            persistedExercise.position ??
+            exercisePositionsById.get(persistedExercise.id) ??
+            0,
+        }),
         queuedAt: syncOperation.queuedAt ?? nowIso(),
       });
       continue;
@@ -94,14 +119,17 @@ function normalizePersistedOperations(operations: unknown): SyncOperation[] {
 
 function migratePersistedState(persistedState: unknown) {
   const state = (persistedState ?? {}) as Partial<Store>;
+  const workouts = normalizePersistedWorkouts(state.workouts);
+  const exercisePositionsById = buildExercisePositionMap(workouts);
 
   return {
     ...state,
-    workouts: normalizePersistedWorkouts(state.workouts),
+    workouts,
     exerciseLogs: normalizePersistedExerciseLogs(state.exerciseLogs),
     syncUserId: state.syncUserId ?? null,
     pendingSyncOperations: normalizePersistedOperations(
       state.pendingSyncOperations,
+      exercisePositionsById,
     ),
     syncStatus: state.syncStatus ?? "idle",
     lastSyncedAt: state.lastSyncedAt ?? null,
@@ -137,28 +165,97 @@ const useStore = create<Store>()(
       },
       addExercise: (exercise: NewExercise) => {
         const timestamp = nowIso();
-        const updatedExercise = normalizeExercise({
-          ...exercise,
-          updatedAt: timestamp,
-          createdAt: timestamp,
-        });
+        set((state) => {
+          const workout = state.workouts.find(
+            (workout) => workout.id === exercise.workoutId,
+          );
+          if (!workout) return state;
 
-        set((state) => ({
-          workouts: state.workouts.map((workout) => {
-            if (workout.id === exercise.workoutId) {
-              return {
-                ...workout,
-                exercises: [...workout.exercises, updatedExercise],
-              };
+          const updatedExercise = normalizeExercise({
+            ...exercise,
+            position: exercise.position ?? workout.exercises.length,
+            updatedAt: timestamp,
+            createdAt: timestamp,
+          });
+
+          return {
+            workouts: state.workouts.map((workout) => {
+              if (workout.id === exercise.workoutId) {
+                return normalizeWorkout({
+                  ...workout,
+                  exercises: [...workout.exercises, updatedExercise],
+                });
+              }
+
+              return workout;
+            }),
+            pendingSyncOperations: compactSyncQueue(
+              state.pendingSyncOperations,
+              createOperation({ type: "addExercise", exercise: updatedExercise }),
+            ),
+          };
+        });
+      },
+      reorderWorkoutExercises: (workoutId: string, exerciseIds: string[]) => {
+        set((state) => {
+          const workout = state.workouts.find((workout) => workout.id === workoutId);
+          if (!workout) return state;
+
+          const currentIds = workout.exercises.map((exercise) => exercise.id);
+          const nextIds = new Set(exerciseIds);
+          const idsMatch =
+            exerciseIds.length === currentIds.length &&
+            nextIds.size === currentIds.length &&
+            currentIds.every((exerciseId) => nextIds.has(exerciseId));
+
+          if (!idsMatch) return state;
+
+          const timestamp = nowIso();
+          const exercisesById = new Map(
+            workout.exercises.map((exercise) => [exercise.id, exercise]),
+          );
+          const changedExercises: Exercise[] = [];
+
+          const reorderedExercises = exerciseIds.map((exerciseId, index) => {
+            const exercise = exercisesById.get(exerciseId);
+            if (!exercise) return undefined;
+
+            if (exercise.position === index) {
+              return exercise;
             }
 
-            return workout;
-          }),
-          pendingSyncOperations: compactSyncQueue(
+            const changedExercise = normalizeExercise({
+              ...exercise,
+              position: index,
+              updatedAt: timestamp,
+            });
+            changedExercises.push(changedExercise);
+            return changedExercise;
+          });
+
+          if (reorderedExercises.some((exercise) => !exercise)) return state;
+
+          const pendingSyncOperations = changedExercises.reduce(
+            (operations, exercise) =>
+              compactSyncQueue(
+                operations,
+                createOperation({ type: "editExercise", exercise }),
+              ),
             state.pendingSyncOperations,
-            createOperation({ type: "addExercise", exercise: updatedExercise }),
-          ),
-        }));
+          );
+
+          return {
+            workouts: state.workouts.map((workout) =>
+              workout.id === workoutId
+                ? normalizeWorkout({
+                    ...workout,
+                    exercises: reorderedExercises as Exercise[],
+                  })
+                : workout,
+            ),
+            pendingSyncOperations,
+          };
+        });
       },
       editWorkout: (updatedWorkout: Workout) => {
         const updatedWorkoutWithTime = normalizeWorkout({
@@ -190,16 +287,18 @@ const useStore = create<Store>()(
         });
 
         set((state) => ({
-          workouts: state.workouts.map((workout) => ({
-            ...workout,
-            exercises: workout.exercises.map((exercise) => {
-              if (exercise.id === updatedExercise.id) {
-                return updatedExerciseWithTime;
-              }
+          workouts: state.workouts.map((workout) =>
+            normalizeWorkout({
+              ...workout,
+              exercises: workout.exercises.map((exercise) => {
+                if (exercise.id === updatedExercise.id) {
+                  return updatedExerciseWithTime;
+                }
 
-              return exercise;
+                return exercise;
+              }),
             }),
-          })),
+          ),
           pendingSyncOperations: compactSyncQueue(
             state.pendingSyncOperations,
             createOperation({
@@ -241,12 +340,14 @@ const useStore = create<Store>()(
         })),
       deleteExercise: (exerciseId: string) =>
         set((state) => ({
-          workouts: state.workouts.map((workout) => ({
-            ...workout,
-            exercises: workout.exercises.filter(
-              (exercise) => exercise.id !== exerciseId,
-            ),
-          })),
+          workouts: state.workouts.map((workout) =>
+            normalizeWorkout({
+              ...workout,
+              exercises: workout.exercises.filter(
+                (exercise) => exercise.id !== exerciseId,
+              ),
+            }),
+          ),
           exerciseLogs: state.exerciseLogs.filter(
             (exerciseLog) => exerciseLog.exerciseId !== exerciseId,
           ),
