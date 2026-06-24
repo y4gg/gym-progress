@@ -28,7 +28,7 @@ export default function CreateExercisePage({
     weight: 0,
     notes: "",
     sets: 3,
-    logging: false,
+    logging: true,
     step: 2.5,
     workoutId: id,
   });
