@@ -9,10 +9,11 @@ import { useStore } from "@/lib/store";
 import {
   applyPendingOperations,
   mergeInitialData,
+  normalizeExercise,
   normalizeExerciseLog,
   normalizeWorkout,
 } from "@/lib/sync";
-import type { ExerciseLog, SyncOperation, Workout } from "@/lib/types";
+import type { Exercise, ExerciseLog, SyncOperation, Workout } from "@/lib/types";
 import { getSyncSnapshot, syncOperations } from "@/server/sync";
 
 const MAX_RETRY_ATTEMPTS = 5;
@@ -43,6 +44,60 @@ function getSyncFailureMessage(status: string) {
   }
 
   return "Sync failed.";
+}
+
+function getExercisePositionsById(workouts: Workout[]) {
+  const exercisePositionsById = new Map<string, number>();
+
+  for (const workout of workouts.map(normalizeWorkout)) {
+    for (const exercise of workout.exercises) {
+      exercisePositionsById.set(exercise.id, exercise.position);
+    }
+  }
+
+  return exercisePositionsById;
+}
+
+function normalizeOperationsForSync(
+  operations: SyncOperation[],
+  workouts: Workout[],
+) {
+  const exercisePositionsById = getExercisePositionsById(workouts);
+
+  return operations.map((operation) => {
+    if ("workout" in operation) {
+      return {
+        ...operation,
+        workout: normalizeWorkout(operation.workout),
+      };
+    }
+
+    if ("exercise" in operation) {
+      const legacyExercise = operation.exercise as Exercise & {
+        position?: number;
+      };
+
+      return {
+        ...operation,
+        exercise: normalizeExercise({
+          ...legacyExercise,
+          position:
+            legacyExercise.position ??
+            exercisePositionsById.get(legacyExercise.id) ??
+            0,
+        }),
+      };
+    }
+
+    if ("exerciseLog" in operation) {
+      return {
+        ...operation,
+        exerciseLog: normalizeExerciseLog(operation.exerciseLog),
+      };
+    }
+
+    return operation;
+  });
 }
 
 function hasSyncSnapshotResult(
@@ -132,7 +187,10 @@ export function SyncProvider() {
       return;
     }
 
-    const operations = state.pendingSyncOperations;
+    const operations = normalizeOperationsForSync(
+      state.pendingSyncOperations,
+      state.workouts,
+    );
     if (operations.length === 0) {
       state.setSyncStatus("synced");
       clearRetry();

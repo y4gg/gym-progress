@@ -44,7 +44,7 @@ const exerciseSchema: z.ZodType<Exercise> = z.object({
   id: cuidSchema,
   name: z.string().min(4),
   workoutId: cuidSchema,
-  position: z.number().int().min(0),
+  position: z.number().int().min(0).default(0),
   weight: z.number().min(0),
   sets: z.number().int().min(1),
   maxReps: z.number().int().min(1).optional(),
