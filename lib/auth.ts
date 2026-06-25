@@ -43,7 +43,7 @@ export const auth = betterAuth({
         to: user.email,
         subject: "Verify your email address",
         html: renderAppActionEmail({
-          actionLabel: "Verify email",
+          actionLabel: "Verify account",
           actionUrl: url,
           body: "Confirm this email address to finish setting up your Gym Ladder account and start syncing your workouts.",
           preview: "Verify your Gym Ladder email address.",

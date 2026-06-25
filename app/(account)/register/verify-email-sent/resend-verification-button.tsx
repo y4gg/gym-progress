@@ -5,7 +5,7 @@ import { Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
+import { resendVerificationEmail } from "./actions";
 
 export function ResendVerificationButton({ email }: { email: string }) {
   const [isPending, setIsPending] = useState(false);
@@ -14,13 +14,17 @@ export function ResendVerificationButton({ email }: { email: string }) {
     setIsPending(true);
 
     try {
-      const result = await authClient.sendVerificationEmail({
-        email,
-        callbackURL: new URL("/", window.location.origin).toString(),
-      });
+      const result = await resendVerificationEmail(email);
 
-      if (result.error) {
-        toast.error(result.error.message ?? "Could not resend email.");
+      if (result.status === "invalid") {
+        toast.error("This email is not pending verification.");
+        return;
+      }
+
+      if (result.status === "cooldown") {
+        toast.error(
+          `Please wait ${result.retryAfterSeconds} seconds before resending.`,
+        );
         return;
       }
 

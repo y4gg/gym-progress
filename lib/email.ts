@@ -68,22 +68,21 @@ export function renderAppActionEmail({
             </tr>
             <tr>
               <td style="padding:26px 0 0;">
-                <a href="${safeActionUrl}" style="display:block;width:100%;border-radius:10px;background:#f5f5f5;color:#202020;font-size:16px;font-weight:700;line-height:56px;text-align:center;text-decoration:none;">
-                  ${safeActionLabel}
-                </a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:12px 0 0;">
-                <a href="${safeActionUrl}" style="display:block;width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,0.15);border-radius:10px;background:transparent;color:#fafafa;font-size:16px;font-weight:700;line-height:54px;text-align:center;text-decoration:none;">
-                  Open link
-                </a>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td align="center" bgcolor="#e5e5e5" style="border:1px solid transparent;border-radius:10px;background:#e5e5e5;mso-padding-alt:17px 18px;">
+                      <a href="${safeActionUrl}" style="display:block;border-radius:10px;color:#333333;font-size:16px;font-weight:500;line-height:56px;text-align:center;text-decoration:none;">
+                        ${safeActionLabel}
+                      </a>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>
               <td align="center" style="padding:18px 0 0;">
                 <p style="margin:0;color:#737373;font-size:13px;line-height:1.5;text-align:center;">
-                  If the buttons do not work, paste this link into your browser:<br>
+                  If the button does not work, paste this link into your browser:<br>
                   <a href="${safeActionUrl}" style="color:#fafafa;text-decoration:underline;word-break:break-all;">${safeActionUrl}</a>
                 </p>
               </td>

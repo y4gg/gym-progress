@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft, LogIn, MailCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { getPendingVerificationEmail } from "./actions";
 import { ResendVerificationButton } from "./resend-verification-button";
 
 function getEmail(value: string | string[] | undefined) {
@@ -14,7 +16,12 @@ export default async function VerifyEmailSentPage({
 }: {
   searchParams: Promise<{ email?: string | string[] | undefined }>;
 }) {
-  const email = getEmail((await searchParams).email);
+  const requestedEmail = getEmail((await searchParams).email);
+  const email = await getPendingVerificationEmail(requestedEmail);
+
+  if (!email) {
+    redirect("/register");
+  }
 
   return (
     <main className="min-h-dvh px-6 py-10 pb-28">
@@ -28,19 +35,14 @@ export default async function VerifyEmailSentPage({
         <div className="space-y-3 text-center">
           <h1 className="text-4xl font-bold">Check your email</h1>
           <p className="text-base leading-7 text-muted-foreground">
-            We sent a verification link
-            {email ? (
-              <>
-                {" "}
-                to <span className="font-semibold text-foreground">{email}</span>
-              </>
-            ) : null}
-            . Verify your email before logging in.
+            We sent a verification link to{" "}
+            <span className="font-semibold text-foreground">{email}</span>.
+            Verify your email before logging in.
           </p>
         </div>
 
         <div className="flex flex-col gap-3 pt-2">
-          {email ? <ResendVerificationButton email={email} /> : null}
+          <ResendVerificationButton email={email} />
 
           <Button
             asChild
