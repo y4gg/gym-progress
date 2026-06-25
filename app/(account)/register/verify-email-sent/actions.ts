@@ -78,7 +78,7 @@ export async function resendVerificationEmail(
   await auth.api.sendVerificationEmail({
     body: {
       email: pendingEmail,
-      callbackURL: new URL("/", origin).toString(),
+      callbackURL: new URL("/?emailVerified=true", origin).toString(),
     },
     headers: requestHeaders,
   });

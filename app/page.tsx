@@ -1,13 +1,31 @@
 "use client";
+import { useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { Workout } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { EditWorkoutDialog } from "@/components/edit-workout-dialog";
 import Link from "next/link";
 import { Edit } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Home() {
   const workouts = useStore((state) => state.workouts);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+
+    if (searchParams.get("emailVerified") !== "true") {
+      return;
+    }
+
+    toast.success("Email verified.");
+    searchParams.delete("emailVerified");
+
+    const nextSearch = searchParams.toString();
+    const nextURL = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
+
+    window.history.replaceState(null, "", nextURL);
+  }, []);
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-7 pb-28">

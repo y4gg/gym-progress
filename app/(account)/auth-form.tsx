@@ -69,6 +69,10 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     event.preventDefault();
     const trimmedEmail = email.trim();
     const homeURL = new URL("/", window.location.origin).toString();
+    const verificationSuccessURL = new URL(
+      "/?emailVerified=true",
+      window.location.origin,
+    ).toString();
     const verificationSentURL = `/register/verify-email-sent?email=${encodeURIComponent(trimmedEmail)}`;
 
     setError(null);
@@ -80,7 +84,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             name: getDisplayName(trimmedEmail),
             email: trimmedEmail,
             password,
-            callbackURL: homeURL,
+            callbackURL: verificationSuccessURL,
           })
         : await authClient.signIn.email(
             {
