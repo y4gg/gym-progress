@@ -67,22 +67,25 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const trimmedEmail = email.trim();
+    const homeURL = new URL("/", window.location.origin).toString();
+
     setError(null);
     setPendingAction("email");
 
     try {
       const result = isRegister
         ? await authClient.signUp.email({
-            name: getDisplayName(email.trim()),
-            email: email.trim(),
+            name: getDisplayName(trimmedEmail),
+            email: trimmedEmail,
             password,
-            callbackURL: "/",
+            callbackURL: homeURL,
           })
         : await authClient.signIn.email(
             {
-              email: email.trim(),
+              email: trimmedEmail,
               password,
-              callbackURL: "/",
+              callbackURL: homeURL,
             },
             {
               onError: (ctx) => {
@@ -100,7 +103,15 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         return;
       }
 
-      toast.success(isRegister ? "Account created." : "Logged in.");
+      if (isRegister) {
+        toast.success("Verification email sent.");
+        router.push(
+          `/register/verify-email-sent?email=${encodeURIComponent(trimmedEmail)}`,
+        );
+        return;
+      }
+
+      toast.success("Logged in.");
       router.push("/");
       router.refresh();
     } catch {
@@ -119,7 +130,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: new URL("/", window.location.origin).toString(),
       });
 
       if (result.error) {
