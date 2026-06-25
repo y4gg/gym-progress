@@ -43,18 +43,18 @@ export function renderAppActionEmail({
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${safePreview}</div>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#171717;">
       <tr>
-        <td align="center" style="padding:40px 24px 56px;">
+        <td align="center" style="padding:44px 24px 56px;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:384px;">
             <tr>
-              <td align="center" style="padding:0 0 16px;">
-                <div style="width:64px;height:64px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;background:#2b2b2b;color:#fafafa;font-size:31px;font-weight:800;line-height:64px;text-align:center;">
-                  &#10003;
-                </div>
+              <td align="center" style="padding:0 0 24px;">
+                <p style="margin:0;color:#737373;font-size:14px;font-weight:600;line-height:1.4;text-align:center;">
+                  Gym Ladder
+                </p>
               </td>
             </tr>
             <tr>
               <td align="center" style="padding:0;">
-                <h1 style="margin:0;color:#fafafa;font-size:40px;line-height:1.08;font-weight:800;letter-spacing:0;text-align:center;">
+                <h1 style="margin:0;color:#fafafa;font-size:40px;line-height:1.1;font-weight:700;letter-spacing:0;text-align:center;">
                   ${safeTitle}
                 </h1>
               </td>
@@ -67,11 +67,11 @@ export function renderAppActionEmail({
               </td>
             </tr>
             <tr>
-              <td style="padding:26px 0 0;">
+              <td style="padding:28px 0 0;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                   <tr>
                     <td align="center" bgcolor="#e5e5e5" style="border:1px solid transparent;border-radius:10px;background:#e5e5e5;mso-padding-alt:17px 18px;">
-                      <a href="${safeActionUrl}" style="display:block;border-radius:10px;color:#333333;font-size:16px;font-weight:500;line-height:56px;text-align:center;text-decoration:none;">
+                      <a href="${safeActionUrl}" style="display:block;border-radius:10px;color:#333333;font-size:16px;font-weight:600;line-height:56px;text-align:center;text-decoration:none;">
                         ${safeActionLabel}
                       </a>
                     </td>
@@ -80,17 +80,25 @@ export function renderAppActionEmail({
               </td>
             </tr>
             <tr>
-              <td align="center" style="padding:18px 0 0;">
-                <p style="margin:0;color:#737373;font-size:13px;line-height:1.5;text-align:center;">
-                  If the button does not work, paste this link into your browser:<br>
-                  <a href="${safeActionUrl}" style="color:#fafafa;text-decoration:underline;word-break:break-all;">${safeActionUrl}</a>
-                </p>
+              <td style="padding:16px 0 0;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #303030;border-radius:10px;background:#202020;">
+                  <tr>
+                    <td style="padding:14px 16px;">
+                      <p style="margin:0;color:#a3a3a3;font-size:13px;line-height:1.5;text-align:left;">
+                        If the button does not work, paste this link into your browser:
+                      </p>
+                      <p style="margin:6px 0 0;color:#fafafa;font-size:13px;line-height:1.5;text-align:left;word-break:break-all;">
+                        <a href="${safeActionUrl}" style="color:#fafafa;text-decoration:underline;word-break:break-all;">${safeActionUrl}</a>
+                      </p>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>
-              <td align="center" style="padding:24px 0 0;">
+              <td align="center" style="padding:20px 0 0;">
                 <p style="margin:0;color:#737373;font-size:12px;line-height:1.4;text-align:center;">
-                  Gym Ladder
+                  You can ignore this email if you did not request it.
                 </p>
               </td>
             </tr>

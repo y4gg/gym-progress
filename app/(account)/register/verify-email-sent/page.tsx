@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft, LogIn, MailCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { getEmailVerificationResendCooldown } from "@/lib/email-verification-rate-limit";
 import { getPendingVerificationEmail } from "./actions";
 import { ResendVerificationButton } from "./resend-verification-button";
 
@@ -23,6 +24,8 @@ export default async function VerifyEmailSentPage({
     redirect("/register");
   }
 
+  const cooldown = await getEmailVerificationResendCooldown(email);
+
   return (
     <main className="min-h-dvh px-6 py-10 pb-28">
       <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
@@ -42,7 +45,10 @@ export default async function VerifyEmailSentPage({
         </div>
 
         <div className="flex flex-col gap-3 pt-2">
-          <ResendVerificationButton email={email} />
+          <ResendVerificationButton
+            email={email}
+            initialRetryAfterSeconds={cooldown.retryAfterSeconds}
+          />
 
           <Button
             asChild

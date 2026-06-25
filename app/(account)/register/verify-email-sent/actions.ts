@@ -4,13 +4,15 @@ import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { user, verification } from "@/db/schema";
+import { user } from "@/db/schema";
 import { auth } from "@/lib/auth";
-
-const RESEND_COOLDOWN_MS = 2 * 60 * 1000;
+import {
+  getEmailVerificationResendCooldown,
+  startEmailVerificationResendCooldown,
+} from "@/lib/email-verification-rate-limit";
 
 type ResendVerificationResult =
-  | { status: "sent" }
+  | { retryAfterSeconds: number; status: "sent" }
   | { retryAfterSeconds: number; status: "cooldown" }
   | { status: "invalid" };
 
@@ -46,48 +48,6 @@ export async function getPendingVerificationEmail(email: string | undefined) {
   return pendingUser?.email ?? null;
 }
 
-async function getResendCooldown(identifier: string) {
-  const now = new Date();
-  const [existingAttempt] = await db
-    .select({ expiresAt: verification.expiresAt, id: verification.id })
-    .from(verification)
-    .where(eq(verification.identifier, identifier))
-    .limit(1);
-
-  if (existingAttempt && existingAttempt.expiresAt > now) {
-    return {
-      attemptId: existingAttempt.id,
-      retryAfterSeconds: Math.ceil(
-        (existingAttempt.expiresAt.getTime() - now.getTime()) / 1000,
-      ),
-    };
-  }
-
-  return {
-    attemptId: existingAttempt?.id ?? null,
-    retryAfterSeconds: 0,
-  };
-}
-
-async function setResendCooldown(identifier: string, attemptId: string | null) {
-  const expiresAt = new Date(Date.now() + RESEND_COOLDOWN_MS);
-
-  if (attemptId) {
-    await db
-      .update(verification)
-      .set({ expiresAt, value: "cooldown" })
-      .where(eq(verification.id, attemptId));
-    return;
-  }
-
-  await db.insert(verification).values({
-    id: crypto.randomUUID(),
-    identifier,
-    value: "cooldown",
-    expiresAt,
-  });
-}
-
 export async function resendVerificationEmail(
   email: string,
 ): Promise<ResendVerificationResult> {
@@ -97,8 +57,7 @@ export async function resendVerificationEmail(
     return { status: "invalid" };
   }
 
-  const cooldownIdentifier = `verification-email-resend:${pendingEmail}`;
-  const cooldown = await getResendCooldown(cooldownIdentifier);
+  const cooldown = await getEmailVerificationResendCooldown(pendingEmail);
 
   if (cooldown.retryAfterSeconds > 0) {
     return {
@@ -107,7 +66,8 @@ export async function resendVerificationEmail(
     };
   }
 
-  await setResendCooldown(cooldownIdentifier, cooldown.attemptId);
+  const nextCooldown =
+    await startEmailVerificationResendCooldown(pendingEmail);
 
   const requestHeaders = await headers();
   const origin =
@@ -123,5 +83,5 @@ export async function resendVerificationEmail(
     headers: requestHeaders,
   });
 
-  return { status: "sent" };
+  return { ...nextCooldown, status: "sent" };
 }

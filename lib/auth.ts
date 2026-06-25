@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+import { startEmailVerificationResendCooldown } from "@/lib/email-verification-rate-limit";
 import { renderAppActionEmail, sendEmail } from "./email";
 import { passkey } from "@better-auth/passkey";
 
@@ -14,7 +15,7 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
-      void sendEmail({
+      await sendEmail({
         to: user.email,
         subject: "Reset your password",
         html: renderAppActionEmail({
@@ -39,7 +40,7 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     sendVerificationEmail: async ({ user, url }) => {
-      void sendEmail({
+      await sendEmail({
         to: user.email,
         subject: "Verify your email address",
         html: renderAppActionEmail({
@@ -51,6 +52,7 @@ export const auth = betterAuth({
         }),
         text: `Verify your Gym Ladder email address: ${url}`,
       });
+      await startEmailVerificationResendCooldown(user.email);
     },
   },
   socialProviders: {

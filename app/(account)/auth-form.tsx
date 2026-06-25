@@ -69,6 +69,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     event.preventDefault();
     const trimmedEmail = email.trim();
     const homeURL = new URL("/", window.location.origin).toString();
+    const verificationSentURL = `/register/verify-email-sent?email=${encodeURIComponent(trimmedEmail)}`;
 
     setError(null);
     setPendingAction("email");
@@ -97,6 +98,12 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           );
 
       if (result.error) {
+        if (!isRegister && result.error.status === 403) {
+          toast.error("Please verify your email first.");
+          router.push(verificationSentURL);
+          return;
+        }
+
         const message = result.error.message ?? "Authentication failed.";
         setError(message);
         toast.error(message);
@@ -105,9 +112,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
       if (isRegister) {
         toast.success("Verification email sent.");
-        router.push(
-          `/register/verify-email-sent?email=${encodeURIComponent(trimmedEmail)}`,
-        );
+        router.push(verificationSentURL);
         return;
       }
 
