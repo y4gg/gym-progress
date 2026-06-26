@@ -246,9 +246,19 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           </div>
 
           <div>
-            <Label className="text-base" htmlFor="password">
-              Password
-            </Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-base" htmlFor="password">
+                Password
+              </Label>
+              {!isRegister ? (
+                <Link
+                  className="text-base hover:text-muted-foreground"
+                  href="/reset-password"
+                >
+                  Forgot Password?
+                </Link>
+              ) : null}
+            </div>
             <Input
               autoComplete={
                 isRegister ? "new-password" : "current-password webauthn"
