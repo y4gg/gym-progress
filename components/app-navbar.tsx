@@ -60,7 +60,10 @@ function getExerciseId(pathname: string) {
 
 function isAccountPath(pathname: string) {
   return (
-    pathname === "/account" || pathname === "/login" || pathname === "/register"
+    pathname === "/account" ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname.startsWith("/register/")
   );
 }
 

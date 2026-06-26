@@ -67,22 +67,30 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const trimmedEmail = email.trim();
+    const homeURL = new URL("/", window.location.origin).toString();
+    const verificationSuccessURL = new URL(
+      "/?emailVerified=true",
+      window.location.origin,
+    ).toString();
+    const verificationSentURL = `/register/verify-email-sent?email=${encodeURIComponent(trimmedEmail)}`;
+
     setError(null);
     setPendingAction("email");
 
     try {
       const result = isRegister
         ? await authClient.signUp.email({
-            name: getDisplayName(email.trim()),
-            email: email.trim(),
+            name: getDisplayName(trimmedEmail),
+            email: trimmedEmail,
             password,
-            callbackURL: "/",
+            callbackURL: verificationSuccessURL,
           })
         : await authClient.signIn.email(
             {
-              email: email.trim(),
+              email: trimmedEmail,
               password,
-              callbackURL: "/",
+              callbackURL: homeURL,
             },
             {
               onError: (ctx) => {
@@ -94,13 +102,25 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           );
 
       if (result.error) {
+        if (!isRegister && result.error.status === 403) {
+          toast.error("Please verify your email first.");
+          router.push(verificationSentURL);
+          return;
+        }
+
         const message = result.error.message ?? "Authentication failed.";
         setError(message);
         toast.error(message);
         return;
       }
 
-      toast.success(isRegister ? "Account created." : "Logged in.");
+      if (isRegister) {
+        toast.success("Verification email sent.");
+        router.push(verificationSentURL);
+        return;
+      }
+
+      toast.success("Logged in.");
       router.push("/");
       router.refresh();
     } catch {
@@ -119,7 +139,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: new URL("/", window.location.origin).toString(),
       });
 
       if (result.error) {
@@ -226,9 +246,19 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           </div>
 
           <div>
-            <Label className="text-base" htmlFor="password">
-              Password
-            </Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-base" htmlFor="password">
+                Password
+              </Label>
+              {!isRegister ? (
+                <Link
+                  className="text-base hover:text-muted-foreground"
+                  href="/reset-password"
+                >
+                  Forgot Password?
+                </Link>
+              ) : null}
+            </div>
             <Input
               autoComplete={
                 isRegister ? "new-password" : "current-password webauthn"
