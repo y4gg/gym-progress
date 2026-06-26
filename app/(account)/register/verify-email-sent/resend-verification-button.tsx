@@ -75,26 +75,19 @@ export function ResendVerificationButton({
   }
 
   return (
-    <div className="space-y-2">
-      <Button
-        className="h-14 w-full gap-3 px-4 text-base"
-        disabled={isDisabled}
-        onClick={handleResend}
-        type="button"
-        variant="secondary"
-      >
-        <Send />
-        {isPending
-          ? "Sending"
-          : isRateLimited
-            ? `Resend in ${formatRetryAfter(retryAfterSeconds)}`
-            : "Resend verification email"}
-      </Button>
-      {isRateLimited ? (
-        <p className="text-center text-sm text-muted-foreground">
-          You can resend the email in {formatRetryAfter(retryAfterSeconds)}.
-        </p>
-      ) : null}
-    </div>
+    <Button
+      className="h-14 w-full gap-3 px-4 text-base"
+      disabled={isDisabled}
+      onClick={handleResend}
+      type="button"
+      variant="secondary"
+    >
+      <Send />
+      {isPending
+        ? "Sending"
+        : isRateLimited
+          ? `Resend in ${formatRetryAfter(retryAfterSeconds)}`
+          : "Resend verification email"}
+    </Button>
   );
 }
