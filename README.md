@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gym Progress
 
-## Getting Started
+This is a gym progress tracker, build to suit my style of web apps. The focus in this project was definetily on mobile UI, because that is where this website shall be used the most.
+No one is gonna bring a pc to the gym, but the website is still freindily to PC's to desgin splits in front of the big screen, which is again a preference of mine.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## AI usage disclaimer:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This project was started before I even knew about stardance, aswell with a goal that did not account for stardance, but better to ship than not to ship right? My original goal with this project was not just to design a gym tracker tailored to me, but also to expiriment with "vibe engeneering" - a term used to describe using AI alongside strict guidance to create producation ready apps, which diffres from vibe coding where you just let AI agents do whatever, as long as the goal is achived. I did not do that from the start tho, because the stack, frontend page layout & functionallity where implemented by me, which might not seems like much but the app has a full client side store & functions without account (no backend involved). The server tho, was almost exclusivily made with vibe engeneering, aswell as the mobile friendily redesign. The vibe engeneering was done in t3code, and I got the vibe engeneering idea from @t3.gg, according to him, the future will consist of engeneers who will be able to use AI correctily, and according to him, vibe engeneering is that way.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+0. Client side store
+1. Exercise tracking grouped into workouts
+2. Mobile friendily UI
+3. Multi device sync
+4. Weight incrase suggestions
+5. Wight & Set logging
 
-## Learn More
+## How to deploy
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+0. Install bun
+1. cd into project dir
+2. Get enviroment variables
+3. ’bun i’
+4. ’bun run build’
+5. ’bun run start’
