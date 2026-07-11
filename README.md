@@ -23,6 +23,6 @@ This project was started before I even knew about stardance, aswell with a goal 
 0. Install bun
 1. cd into project dir
 2. Get enviroment variables
-3. ’bun i’
-4. ’bun run build’
-5. ’bun run start’
+3. `bun i`
+4. `bun run build`
+5. `bun run start`
