@@ -26,3 +26,35 @@ This project was started before I even knew about stardance, aswell with a goal 
 3. `bun i`
 4. `bun run build`
 5. `bun run start`
+
+### Dokploy
+
+Select **Dockerfile** as the build type, set the Dockerfile path to `Dockerfile`
+and the Docker context path to `.`. Leave the build stage unset to use the final
+runtime stage, and set your domain's container port to **3000**.
+
+In Dokploy's Environment tab, configure the runtime variables listed in
+`.env.example`. Set `BETTER_AUTH_URL` to your public HTTPS URL and
+`BETTER_AUTH_SECRET` to a random secret of at least 32 characters. Use a PostgreSQL
+connection URL reachable from the container for `DATABASE_URL`, and configure
+Resend and Google OAuth with your production credentials. The Resend account must
+be able to send from `noreply@updates.y4.gg`, the sender currently used by the app.
+
+Apply the committed database migrations to your PostgreSQL database separately
+before using account and sync features; the container does not run migrations.
+From a checkout with dependencies installed and `DATABASE_URL` configured, run
+`bunx drizzle-kit migrate`.
+
+To build and run the same image locally:
+
+```sh
+docker build -t gym-progress .
+docker run --rm -p 3000:3000 --env-file .env gym-progress
+```
+
+The image installs dependencies using the Bun lockfile and runs the Next.js
+standalone server as a non-root user. Local `.env` files are excluded from the
+build context, so no production credentials are needed to build the image. The
+build uses placeholders solely to initialize auth and email during compilation;
+set the real auth and email credentials at runtime. Building also requires
+network access to download the Google fonts used by the app.
