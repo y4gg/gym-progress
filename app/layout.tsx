@@ -8,6 +8,8 @@ import { Toaster } from "@/components/ui/sonner";
 import Hydration from "@/components/hydration";
 import { AppNavbar } from "@/components/app-navbar";
 import { SyncProvider } from "@/components/sync-provider";
+import { AppNavigation } from "@/components/app-navigation";
+import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -51,12 +53,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Hydration />
-          <SyncProvider />
-          {children}
-          <Suspense fallback={null}>
-            <AppNavbar />
-          </Suspense>
+          <AppNavigation>
+            <Hydration />
+            <SyncProvider />
+            <ServiceWorkerRegistration />
+            {children}
+            <Suspense fallback={null}>
+              <AppNavbar />
+            </Suspense>
+          </AppNavigation>
           <Toaster />
         </ThemeProvider>
       </body>

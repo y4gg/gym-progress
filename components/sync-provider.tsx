@@ -8,12 +8,18 @@ import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
 import {
   applyPendingOperations,
+  getUnchangedOperationIds,
   mergeInitialData,
   normalizeExercise,
   normalizeExerciseLog,
   normalizeWorkout,
 } from "@/lib/sync";
-import type { Exercise, ExerciseLog, SyncOperation, Workout } from "@/lib/types";
+import type {
+  Exercise,
+  ExerciseLog,
+  SyncOperation,
+  Workout,
+} from "@/lib/types";
 import { getSyncSnapshot, syncOperations } from "@/server/sync";
 
 const MAX_RETRY_ATTEMPTS = 5;
@@ -100,9 +106,7 @@ function normalizeOperationsForSync(
   });
 }
 
-function hasSyncSnapshotResult(
-  result: unknown,
-): result is {
+function hasSyncSnapshotResult(result: unknown): result is {
   appliedOperationIds: string[];
   exerciseLogs: ExerciseLog[];
   workouts: Workout[];
@@ -151,29 +155,26 @@ export function SyncProvider() {
     toast.error(message);
   }, []);
 
-  const scheduleRetry = useCallback(
-    () => {
-      if (retryAttemptsRef.current >= MAX_RETRY_ATTEMPTS) {
-        useStore
-          .getState()
-          .setSyncStatus("error", "Sync failed. Changes will retry.");
-        showToastOnce("sync-failed", "Sync failed. Changes will retry.");
-        return;
-      }
+  const scheduleRetry = useCallback(() => {
+    if (retryAttemptsRef.current >= MAX_RETRY_ATTEMPTS) {
+      useStore
+        .getState()
+        .setSyncStatus("error", "Sync failed. Changes will retry.");
+      showToastOnce("sync-failed", "Sync failed. Changes will retry.");
+      return;
+    }
 
-      retryAttemptsRef.current += 1;
-      const delay = Math.min(30_000, 1000 * 2 ** retryAttemptsRef.current);
+    retryAttemptsRef.current += 1;
+    const delay = Math.min(30_000, 1000 * 2 ** retryAttemptsRef.current);
 
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+    }
 
-      retryTimeoutRef.current = setTimeout(() => {
-        flushQueueRef.current();
-      }, delay);
-    },
-    [showToastOnce],
-  );
+    retryTimeoutRef.current = setTimeout(() => {
+      flushQueueRef.current();
+    }, delay);
+  }, [showToastOnce]);
 
   const flushQueue = useCallback(async () => {
     if (!hydrated || !userId || isFlushingRef.current) return;
@@ -187,8 +188,9 @@ export function SyncProvider() {
       return;
     }
 
+    const sentOperations = state.pendingSyncOperations;
     const operations = normalizeOperationsForSync(
-      state.pendingSyncOperations,
+      sentOperations,
       state.workouts,
     );
     if (operations.length === 0) {
@@ -202,15 +204,30 @@ export function SyncProvider() {
 
     try {
       const result = await syncOperations(operations);
+      if (useStore.getState().syncUserId !== userId) return;
 
       if (result.success) {
         const latestState = useStore.getState();
-        latestState.removeSyncedOperations(result.appliedOperationIds);
-        latestState.replaceWorkouts(result.workouts);
-        latestState.replaceExerciseLogs(result.exerciseLogs);
+        latestState.removeSyncedOperations(
+          getUnchangedOperationIds(
+            sentOperations,
+            latestState.pendingSyncOperations,
+            result.appliedOperationIds,
+          ),
+        );
+        const snapshotWithPending = applyPendingOperations(
+          result.workouts,
+          result.exerciseLogs,
+          useStore.getState().pendingSyncOperations,
+        );
+        latestState.replaceWorkouts(snapshotWithPending.workouts);
+        latestState.replaceExerciseLogs(snapshotWithPending.exerciseLogs);
         latestState.setSyncStatus("synced");
         clearRetry();
         lastToastRef.current = null;
+        if (useStore.getState().pendingSyncOperations.length > 0) {
+          queueMicrotask(() => flushQueueRef.current());
+        }
         return;
       }
 
@@ -232,9 +249,20 @@ export function SyncProvider() {
           : result.appliedOperationIds;
         const latestState = useStore.getState();
 
-        latestState.removeSyncedOperations(operationIdsToRemove);
-        latestState.replaceWorkouts(result.workouts);
-        latestState.replaceExerciseLogs(result.exerciseLogs);
+        latestState.removeSyncedOperations(
+          getUnchangedOperationIds(
+            sentOperations,
+            latestState.pendingSyncOperations,
+            operationIdsToRemove,
+          ),
+        );
+        const snapshotWithPending = applyPendingOperations(
+          result.workouts,
+          result.exerciseLogs,
+          useStore.getState().pendingSyncOperations,
+        );
+        latestState.replaceWorkouts(snapshotWithPending.workouts);
+        latestState.replaceExerciseLogs(snapshotWithPending.exerciseLogs);
 
         if (result.status === "not_found") {
           latestState.setSyncStatus(
@@ -263,14 +291,7 @@ export function SyncProvider() {
     } finally {
       isFlushingRef.current = false;
     }
-  }, [
-    clearRetry,
-    hydrated,
-    isOnline,
-    scheduleRetry,
-    showToastOnce,
-    userId,
-  ]);
+  }, [clearRetry, hydrated, isOnline, scheduleRetry, showToastOnce, userId]);
 
   useEffect(() => {
     function handleOnline() {
@@ -303,7 +324,21 @@ export function SyncProvider() {
   }, [flushQueue, isOnline, pendingOperationCount]);
 
   useEffect(() => {
-    if (!hydrated || session.isPending || isReconcilingRef.current) return;
+    if (!hydrated) return;
+    if (!isOnline) {
+      useStore.getState().setSyncStatus("offline");
+      return;
+    }
+    if (session.isPending || isReconcilingRef.current) return;
+    if (session.error) {
+      useStore
+        .getState()
+        .setSyncStatus(
+          "error",
+          "Could not connect. Changes are saved on this device.",
+        );
+      return;
+    }
 
     let cancelled = false;
 
@@ -311,10 +346,9 @@ export function SyncProvider() {
       const state = useStore.getState();
 
       if (!userId) {
-        if (state.syncUserId) {
-          state.clearData();
-        }
-        useStore.getState().setSyncStatus("idle");
+        // An expired or unavailable session must not discard unsynced local edits.
+        // Explicit sign-out and account deletion already clear this device's data.
+        state.setSyncStatus(state.syncUserId ? "unauthorized" : "idle");
         return;
       }
 
@@ -404,6 +438,7 @@ export function SyncProvider() {
     hydrated,
     isOnline,
     scheduleRetry,
+    session.error,
     session.isPending,
     showToastOnce,
     syncUserId,
