@@ -2,6 +2,19 @@ import type { Exercise, ExerciseLog, SyncOperation, Workout } from "@/lib/types"
 
 const DEFAULT_STEP = 2.5;
 
+export function getUnchangedOperationIds(
+  sentOperations: SyncOperation[],
+  currentOperations: SyncOperation[],
+  acknowledgedIds: string[],
+) {
+  const sentById = new Map(sentOperations.map((operation) => [operation.id, operation]));
+  const acknowledged = new Set(acknowledgedIds);
+  // Queue compaction can update an operation's payload while keeping its ID.
+  return currentOperations
+    .filter((operation) => acknowledged.has(operation.id) && sentById.get(operation.id) === operation)
+    .map((operation) => operation.id);
+}
+
 function toIsoString(value: unknown): string {
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? new Date().toISOString() : value.toISOString();

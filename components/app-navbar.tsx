@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import {
+  AppLink as Link,
+  useAppPathname,
+  useAppRouter,
+} from "@/components/app-navigation";
 import {
   ArrowLeft,
   Home,
@@ -74,7 +77,7 @@ function AccountPageNavItem({
   isLoggedIn: boolean;
   isSessionPending: boolean;
 }) {
-  const router = useRouter();
+  const router = useAppRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   async function handleSignOut() {
@@ -215,12 +218,14 @@ function PageSpecificNavItem({
 }
 
 export function AppNavbar() {
-  const pathname = usePathname();
+  const pathname = useAppPathname();
   const session = authClient.useSession();
   const isLoggedIn = Boolean(session.data);
   const accountHref = !session.isPending && !isLoggedIn ? "/login" : "/account";
   const accountLabel = accountHref === "/login" ? "Login" : "Account";
   const AccountIcon = accountHref === "/login" ? LogIn : UserRound;
+
+  if (pathname === "/offline") return null;
 
   return (
     <nav

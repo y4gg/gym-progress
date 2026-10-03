@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/generate-service-worker.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:offline": "node --test scripts/service-worker.test.mjs && bun test lib/sync.test.ts"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.6.18",

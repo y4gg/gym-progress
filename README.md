@@ -17,6 +17,26 @@ This project was started before I even knew about stardance, aswell with a goal 
 3. Multi device sync
 4. Weight incrase suggestions
 5. Wight & Set logging
+6. Offline workout tracking
+
+## Offline use
+
+Open the production app once while connected and allow the service worker to
+finish installing. After that, you can reopen or refresh the app, create workouts
+and exercises, log sets, and view history without a connection. Screens do not
+need to have been visited first. Set logging also works without an account.
+
+Workouts, logs, and pending sync changes stay in this browser's local storage.
+Signed-in accounts resume syncing when the connection returns. Sign-in and account
+management require a connection. The offline app has a Reconnect button to reopen
+the current screen from the server when it is available again.
+
+Offline support requires HTTPS or localhost and a browser with service worker
+support. It runs in production builds only. Use `bun run build` and `bun run start`
+to test it locally. The build generates `public/sw.js` with a versioned cache of
+the offline app, JavaScript, CSS, and locally served fonts. Updates activate after
+existing app tabs close. Clearing browser site data removes offline files and
+locally saved workouts, so sync any changes first.
 
 ## How to deploy
 
