@@ -10,6 +10,7 @@ import { AppNavbar } from "@/components/app-navbar";
 import { SyncProvider } from "@/components/sync-provider";
 import { AppNavigation } from "@/components/app-navigation";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
+import { PageTransition } from "@/components/page-transition";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -57,7 +58,7 @@ export default function RootLayout({
             <Hydration />
             <SyncProvider />
             <ServiceWorkerRegistration />
-            {children}
+            <PageTransition>{children}</PageTransition>
             <Suspense fallback={null}>
               <AppNavbar />
             </Suspense>
