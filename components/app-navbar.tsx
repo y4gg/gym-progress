@@ -9,15 +9,14 @@ import {
 import {
   ArrowLeft,
   Home,
-  LogIn,
   LogOut,
   Plus,
   Settings,
-  UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
+import { Launchpad } from "@/components/launchpad";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { authClient } from "@/lib/auth-client";
@@ -221,9 +220,6 @@ export function AppNavbar() {
   const pathname = useAppPathname();
   const session = authClient.useSession();
   const isLoggedIn = Boolean(session.data);
-  const accountHref = !session.isPending && !isLoggedIn ? "/login" : "/account";
-  const accountLabel = accountHref === "/login" ? "Login" : "Account";
-  const AccountIcon = accountHref === "/login" ? LogIn : UserRound;
 
   if (pathname === "/offline") return null;
 
@@ -247,15 +243,13 @@ export function AppNavbar() {
           isSessionPending={session.isPending}
           pathname={pathname}
         />
-        <NavLink
-          active={pathname === accountHref}
-          className="mr-1"
-          href={accountHref}
-          label={accountLabel}
-        >
-          <AccountIcon />
-          <span>{accountLabel}</span>
-        </NavLink>
+        <Launchpad
+          key={pathname}
+          pathname={pathname}
+          session={session.data}
+          isSessionPending={session.isPending}
+          triggerClassName={cn(navItemClass(false), "mr-1 cursor-pointer")}
+        />
       </div>
     </nav>
   );
