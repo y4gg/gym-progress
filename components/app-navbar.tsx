@@ -22,27 +22,20 @@ import { useStore } from "@/lib/store";
 import { authClient } from "@/lib/auth-client";
 
 type NavLinkProps = {
-  active?: boolean;
   children: React.ReactNode;
   className?: string;
   href: string;
   label: string;
 };
 
-function navItemClass(active?: boolean) {
-  return cn(
-    "flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-colors",
-    "text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50",
-    active &&
-      "text-foreground [&>span]:underline [&>span]:decoration-2 [&>span]:underline-offset-4",
-  );
-}
+const navItemClassName =
+  "flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold text-muted-foreground disabled:pointer-events-none disabled:opacity-50";
 
-function NavLink({ active, children, className, href, label }: NavLinkProps) {
+function NavLink({ children, className, href, label }: NavLinkProps) {
   return (
     <Link
       aria-label={label}
-      className={cn(navItemClass(active), className)}
+      className={cn(navItemClassName, className)}
       href={href}
     >
       {children}
@@ -102,13 +95,13 @@ function AccountPageNavItem({
   }
 
   if (isSessionPending || !isLoggedIn) {
-    return <div aria-hidden className={cn(navItemClass(false), "invisible")} />;
+    return <div aria-hidden className={cn(navItemClassName, "invisible")} />;
   }
 
   return (
     <button
       aria-label="Sign out"
-      className={navItemClass(false)}
+      className={navItemClassName}
       disabled={isSigningOut}
       onClick={handleSignOut}
       type="button"
@@ -140,7 +133,7 @@ function PageSpecificNavItem({
         trigger={
           <button
             aria-label="Create workout"
-            className={navItemClass(false) + " cursor-pointer"}
+            className={navItemClassName + " cursor-pointer"}
             type="button"
           >
             <Plus className="size-6" />
@@ -209,7 +202,7 @@ function PageSpecificNavItem({
   }
 
   return (
-    <NavLink active={pathname === "/account"} href="/account" label="Account">
+    <NavLink href="/account" label="Account">
       <Settings />
       <span>Manage</span>
     </NavLink>
@@ -230,7 +223,6 @@ export function AppNavbar() {
     >
       <div className="pointer-events-auto grid h-16 w-full max-w-sm grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md">
         <NavLink
-          active={pathname === "/"}
           className="ml-1"
           href="/"
           label="Home"
@@ -248,7 +240,7 @@ export function AppNavbar() {
           pathname={pathname}
           session={session.data}
           isSessionPending={session.isPending}
-          triggerClassName={cn(navItemClass(false), "mr-1 cursor-pointer")}
+          triggerClassName={cn(navItemClassName, "mr-1 cursor-pointer")}
         />
       </div>
     </nav>

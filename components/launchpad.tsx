@@ -90,7 +90,7 @@ export function Launchpad({
         <button
           type="button"
           aria-label="Menu"
-          className={cn(triggerClassName, "data-[state=open]:text-foreground")}
+          className={triggerClassName}
         >
           <Menu aria-hidden="true" />
           <span>Menu</span>
