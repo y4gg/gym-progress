@@ -23,7 +23,10 @@ export default function AccountPage() {
           currentEmail={currentEmail}
           disabled={actionsDisabled}
         />
-        <ChangePasswordDialog disabled={actionsDisabled} />
+        <ChangePasswordDialog
+          key={session.data?.user.id ?? "signed-out"}
+          disabled={actionsDisabled}
+        />
         <PasskeysDialog disabled={actionsDisabled} />
         <SignOutButton disabled={actionsDisabled} />
         <DeleteAccountDialog disabled={actionsDisabled} />
