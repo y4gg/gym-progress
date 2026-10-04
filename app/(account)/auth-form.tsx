@@ -4,7 +4,7 @@ import type { FormEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fingerprint, KeyRound, LogIn, UserPlus } from "lucide-react";
+import { Fingerprint, KeyRound, LogIn, Mail, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,79 @@ function AuthButton({
   );
 }
 
+function AlternativeSignInMethods({
+  mode,
+  email,
+  pendingAction,
+  onGoogleSignIn,
+  onPasskeySignIn,
+}: {
+  mode: "login" | "register";
+  email: string;
+  pendingAction: PendingAction;
+  onGoogleSignIn: () => void;
+  onPasskeySignIn: () => void;
+}) {
+  const isRegister = mode === "register";
+  const isPending = pendingAction !== null;
+
+  return (
+    <>
+      {isRegister ? (
+        <AuthButton
+          disabled={isPending}
+          onClick={onGoogleSignIn}
+          type="button"
+          variant="outline"
+        >
+          <span className="text-lg font-semibold">G</span>
+          {pendingAction === "google" ? "Please wait" : "Sign up with Google"}
+        </AuthButton>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <AuthButton
+            disabled={isPending}
+            onClick={onGoogleSignIn}
+            type="button"
+            variant="outline"
+          >
+            <span className="text-lg font-semibold" aria-hidden="true">
+              G
+            </span>
+            {pendingAction === "google" ? "Waiting" : "Sign in with Google"}
+          </AuthButton>
+          <AuthButton
+            disabled={isPending}
+            onClick={onPasskeySignIn}
+            type="button"
+            variant="outline"
+          >
+            <Fingerprint />
+            {pendingAction === "passkey" ? "Waiting" : "Sign in with passkey"}
+          </AuthButton>
+          <AuthButton asChild variant="outline">
+            <Link
+              aria-disabled={isPending}
+              tabIndex={isPending ? -1 : undefined}
+              onClick={(event) => {
+                if (isPending) event.preventDefault();
+              }}
+              href={
+                email.trim()
+                  ? `/login/magic-link?email=${encodeURIComponent(email.trim())}`
+                  : "/login/magic-link"
+              }
+            >
+              <Mail />
+              Sign in with magic link
+            </Link>
+          </AuthButton>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const isRegister = mode === "register";
@@ -62,7 +135,6 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const switchAction = isRegister
     ? "Login with existing account"
     : "Create new account";
-  const googleLabel = isRegister ? "Sign up with Google" : "Sign in with Google";
   const isPending = pendingAction !== null;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -102,6 +174,14 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           );
 
       if (result.error) {
+        if (!isRegister && result.error.code === "MAGIC_LINK_REQUIRED") {
+          setPassword("");
+          router.push(
+            `/login/magic-link?email=${encodeURIComponent(trimmedEmail)}`,
+          );
+          return;
+        }
+
         if (!isRegister && result.error.status === 403) {
           toast.error("Please verify your email first.");
           router.push(verificationSentURL);
@@ -295,38 +375,13 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
         <AuthDivider />
 
-        {isRegister ? (
-          <AuthButton
-            disabled={isPending}
-            onClick={handleGoogleSignIn}
-            type="button"
-            variant="outline"
-          >
-            <span className="text-lg font-semibold">G</span>
-            {pendingAction === "google" ? "Please wait" : googleLabel}
-          </AuthButton>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            <AuthButton
-              disabled={isPending}
-              onClick={handlePasskeySignIn}
-              type="button"
-              variant="outline"
-            >
-              <Fingerprint />
-              {pendingAction === "passkey" ? "Waiting" : "Passkey"}
-            </AuthButton>
-            <AuthButton
-              disabled={isPending}
-              onClick={handleGoogleSignIn}
-              type="button"
-              variant="outline"
-            >
-              <span className="text-lg font-semibold">G</span>
-              {pendingAction === "google" ? "Waiting" : "Google"}
-            </AuthButton>
-          </div>
-        )}
+        <AlternativeSignInMethods
+          mode={mode}
+          email={email}
+          pendingAction={pendingAction}
+          onGoogleSignIn={handleGoogleSignIn}
+          onPasskeySignIn={handlePasskeySignIn}
+        />
       </div>
     </main>
   );

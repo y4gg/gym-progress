@@ -5,6 +5,7 @@ import * as schema from "@/db/schema";
 import { startEmailVerificationResendCooldown } from "@/lib/email-verification-rate-limit";
 import { renderAppActionEmail, sendEmail } from "./email";
 import { passkey } from "@better-auth/passkey";
+import { magicLinkAuth, redirectPasswordlessSignIn } from "@/lib/magic-link";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -62,5 +63,6 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
   },
-  plugins: [passkey()],
+  hooks: { before: redirectPasswordlessSignIn },
+  plugins: [passkey(), magicLinkAuth],
 });

@@ -7,6 +7,8 @@
     "build": "next build && node scripts/generate-service-worker.mjs",
     "start": "next start",
     "lint": "eslint",
+    "test:account": "bun test components/account/change-password-dialog.test.tsx && bun test 'app/(account)/account/actions.test.ts'",
+    "test:auth": "bun test 'app/(account)/auth-form.test.tsx' && bun test lib/magic-link.test.ts",
     "test:exercise": "bun test components/screens/exercise.test.tsx",
     "test:offline": "node --test scripts/service-worker.test.mjs && bun test lib/sync.test.ts"
   },
