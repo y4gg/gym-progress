@@ -16,10 +16,10 @@ export function PageTransition({ children }: { children: ReactNode }) {
 
     const animation = container.current?.animate(
       [
-        { opacity: 0, transform: "translateY(8px)" },
+        { opacity: 0, transform: "translateY(32px)" },
         { opacity: 1, transform: "translateY(0)" },
       ],
-      { duration: 220, easing: "cubic-bezier(0.16, 1, 0.3, 1)" },
+      { duration: 360, easing: "cubic-bezier(0.22, 0.61, 0.36, 1)" },
     );
 
     return () => animation?.cancel();
