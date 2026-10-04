@@ -15,13 +15,23 @@ export function useLaunchpadGestures(
 ) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const suppressClickUntil = useRef(0);
+  const dragFrame = useRef<number | null>(null);
+  const dragPosition = useRef(0);
   const dragRef = useRef<{
     pointerId: number;
     x: number;
     y: number;
     startedAt: number;
     dragging: boolean;
+    offsetX: number;
   } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (dragFrame.current !== null)
+        window.cancelAnimationFrame(dragFrame.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (open) return;
@@ -130,15 +140,37 @@ export function useLaunchpadGestures(
     };
   }, [open, setOpen]);
 
+  function cancelDragFrame() {
+    if (dragFrame.current !== null) {
+      window.cancelAnimationFrame(dragFrame.current);
+      dragFrame.current = null;
+    }
+  }
+
+  function prepareClose() {
+    cancelDragFrame();
+    dragRef.current = null;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    // Continue from the visible position, including an interrupted entrance or snap-back.
+    sheet.style.setProperty(
+      "--launchpad-exit-transform",
+      getComputedStyle(sheet).transform || "translate3d(0, 0, 0)",
+    );
+    sheet.style.transition = "none";
+    sheet.style.removeProperty("animation");
+  }
+
   function resetDrag() {
+    cancelDragFrame();
     dragRef.current = null;
     if (sheetRef.current) {
       sheetRef.current.style.transition = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches
         ? "none"
-        : "translate 180ms ease-out";
-      sheetRef.current.style.translate = "0 0";
+        : "transform 180ms ease-out";
+      sheetRef.current.style.transform = "translate3d(0, 0, 0)";
     }
   }
 
@@ -160,6 +192,7 @@ export function useLaunchpadGestures(
       y: event.clientY,
       startedAt: event.timeStamp,
       dragging: false,
+      offsetX: 0,
     };
   }
 
@@ -176,10 +209,25 @@ export function useLaunchpadGestures(
         return;
       }
       drag.dragging = true;
+      const transform = getComputedStyle(sheetRef.current).transform;
+      drag.offsetX =
+        transform && transform !== "none"
+          ? new DOMMatrixReadOnly(transform).m41
+          : 0;
       event.currentTarget.setPointerCapture(event.pointerId);
       sheetRef.current.style.transition = "none";
+      if (transform && transform !== "none")
+        sheetRef.current.style.transform = transform;
+      sheetRef.current.style.animation = "none";
     }
-    sheetRef.current.style.translate = `${Math.max(0, distance)}px 0`;
+    dragPosition.current = Math.max(0, drag.offsetX + distance);
+    if (dragFrame.current === null) {
+      dragFrame.current = window.requestAnimationFrame(() => {
+        dragFrame.current = null;
+        if (sheetRef.current)
+          sheetRef.current.style.transform = `translate3d(${dragPosition.current}px, 0, 0)`;
+      });
+    }
   }
 
   function endDrag(event: PointerEvent<HTMLDivElement>) {
@@ -193,7 +241,7 @@ export function useLaunchpadGestures(
       distance > Math.abs(event.clientY - drag.y) * 1.2 &&
       (distance >= 80 || (distance >= 24 && velocity >= 0.5))
     ) {
-      dragRef.current = null;
+      prepareClose();
       setOpen(false);
     } else {
       resetDrag();
@@ -207,6 +255,7 @@ export function useLaunchpadGestures(
     suppressClickUntil,
     dragRef,
     resetDrag,
+    prepareClose,
     startDrag,
     moveDrag,
     endDrag,

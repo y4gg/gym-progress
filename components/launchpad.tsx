@@ -50,6 +50,7 @@ export function Launchpad({
     suppressClickUntil,
     dragRef,
     resetDrag,
+    prepareClose,
     startDrag,
     moveDrag,
     endDrag,
@@ -67,6 +68,7 @@ export function Launchpad({
         return;
       }
       useStore.getState().clearData();
+      prepareClose();
       setOpen(false);
       toast.success("Signed out.");
       router.push("/login");
@@ -82,7 +84,8 @@ export function Launchpad({
     <Dialog.Root
       open={open}
       onOpenChange={(nextOpen) => {
-        resetDrag();
+        if (nextOpen) resetDrag();
+        else prepareClose();
         setOpen(nextOpen);
       }}
     >
@@ -97,7 +100,7 @@ export function Launchpad({
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/50 transition-opacity data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 duration-200 motion-reduce:animate-none" />
+        <Dialog.Overlay className="launchpad-overlay fixed inset-0 z-[60] bg-black/50" />
         <Dialog.Content
           ref={sheetRef}
           aria-describedby={undefined}
@@ -118,7 +121,7 @@ export function Launchpad({
               event.stopPropagation();
             }
           }}
-          className="fixed z-[60] top-[max(0.5rem,env(safe-area-inset-top))] right-[max(0.5rem,env(safe-area-inset-right))] bottom-[max(0.5rem,env(safe-area-inset-bottom))] flex w-[calc(100%-1rem)] max-w-md flex-col touch-pan-y overflow-hidden rounded-3xl border bg-background shadow-2xl outline-none transition-[translate] data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=open]:duration-200 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=closed]:duration-200 motion-reduce:animate-none"
+          className="launchpad-sheet fixed z-[60] top-[max(0.5rem,env(safe-area-inset-top))] right-[max(0.5rem,env(safe-area-inset-right))] bottom-[max(0.5rem,env(safe-area-inset-bottom))] flex w-[calc(100%-1rem)] max-w-md flex-col touch-pan-y overflow-hidden rounded-3xl border bg-background shadow-2xl outline-none"
         >
           <div className="flex shrink-0 select-none items-center justify-between gap-3 border-b px-5 py-3">
             <Dialog.Title className="flex min-w-0 items-center gap-2.5 text-base font-bold">
