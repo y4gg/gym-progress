@@ -21,6 +21,7 @@ export function useLaunchpadGestures(
     y: number;
     startedAt: number;
     dragging: boolean;
+    offset: number;
   } | null>(null);
 
   useEffect(() => {
@@ -137,9 +138,25 @@ export function useLaunchpadGestures(
         "(prefers-reduced-motion: reduce)",
       ).matches
         ? "none"
-        : "translate 180ms ease-out";
-      sheetRef.current.style.translate = "0 0";
+        : "transform 180ms ease-out";
+      sheetRef.current.style.setProperty("--launchpad-drag-x", "0px");
     }
+  }
+
+  function currentOffset(sheet: HTMLDivElement) {
+    const transform = getComputedStyle(sheet).transform;
+    return transform === "none" ? 0 : new DOMMatrixReadOnly(transform).m41;
+  }
+
+  function prepareClose() {
+    dragRef.current = null;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    // Start dismissal at the visible position, including an interrupted snap-back.
+    const offset = currentOffset(sheet);
+    sheet.style.transition = "none";
+    sheet.style.setProperty("--launchpad-drag-x", `${offset}px`);
+    sheet.style.removeProperty("animation");
   }
 
   function startDrag(event: PointerEvent<HTMLDivElement>) {
@@ -160,6 +177,7 @@ export function useLaunchpadGestures(
       y: event.clientY,
       startedAt: event.timeStamp,
       dragging: false,
+      offset: 0,
     };
   }
 
@@ -176,10 +194,16 @@ export function useLaunchpadGestures(
         return;
       }
       drag.dragging = true;
+      // Take over an in-flight entrance without adding a second translation.
+      drag.offset = currentOffset(sheetRef.current);
       event.currentTarget.setPointerCapture(event.pointerId);
       sheetRef.current.style.transition = "none";
+      sheetRef.current.style.animation = "none";
     }
-    sheetRef.current.style.translate = `${Math.max(0, distance)}px 0`;
+    sheetRef.current.style.setProperty(
+      "--launchpad-drag-x",
+      `${Math.max(0, drag.offset + distance)}px`,
+    );
   }
 
   function endDrag(event: PointerEvent<HTMLDivElement>) {
@@ -193,7 +217,7 @@ export function useLaunchpadGestures(
       distance > Math.abs(event.clientY - drag.y) * 1.2 &&
       (distance >= 80 || (distance >= 24 && velocity >= 0.5))
     ) {
-      dragRef.current = null;
+      prepareClose();
       setOpen(false);
     } else {
       resetDrag();
@@ -207,6 +231,7 @@ export function useLaunchpadGestures(
     suppressClickUntil,
     dragRef,
     resetDrag,
+    prepareClose,
     startDrag,
     moveDrag,
     endDrag,

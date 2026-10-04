@@ -1,0 +1,38 @@
+.sheet {
+  --launchpad-offscreen-x: calc(100% + max(0.5rem, env(safe-area-inset-right)));
+  transform: translate3d(var(--launchpad-drag-x, 0px), 0, 0);
+  will-change: transform;
+}
+
+.sheet[data-state="open"] {
+  animation: launchpad-in 200ms ease-out;
+}
+
+.sheet[data-state="closed"] {
+  animation: launchpad-out 300ms ease-in-out forwards;
+}
+
+@keyframes launchpad-in {
+  from {
+    transform: translate3d(var(--launchpad-offscreen-x), 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes launchpad-out {
+  from {
+    transform: translate3d(var(--launchpad-drag-x, 0px), 0, 0);
+  }
+  to {
+    transform: translate3d(var(--launchpad-offscreen-x), 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet[data-state] {
+    animation: none;
+    transition: none;
+  }
+}
