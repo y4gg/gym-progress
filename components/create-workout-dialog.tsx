@@ -58,11 +58,11 @@ export function CreateWorkoutDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="name" className="sr-only">
-            Name
+          <Label htmlFor="workout-name" className="sr-only">
+            Workout name
           </Label>
           <Input
-            id="name"
+            id="workout-name"
             placeholder="Workout name"
             value={workoutName}
             onChange={(e) => setWorkoutName(e.target.value)}
