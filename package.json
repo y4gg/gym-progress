@@ -7,6 +7,7 @@
     "build": "next build && node scripts/generate-service-worker.mjs",
     "start": "next start",
     "lint": "eslint",
+    "test:exercise": "bun test components/screens/exercise.test.tsx",
     "test:offline": "node --test scripts/service-worker.test.mjs && bun test lib/sync.test.ts"
   },
   "dependencies": {
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/react": "^16.3.3",
     "@types/bun": "^1.3.14",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
@@ -47,6 +49,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
+    "happy-dom": "^20.14.5",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"

@@ -37,18 +37,43 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
 
   const { addExerciseLog, deleteExercise, editExercise } = useStore();
 
-  const [currentSet, setCurrentSet] = useState(1);
+  const today = new Date().toDateString();
+  const [setSelection, setSetSelection] = useState<{
+    exerciseId: string;
+    day: string;
+    set: number | null;
+  }>({ exerciseId, day: today, set: null });
+
+  const selectionMatches =
+    setSelection.exerciseId === exerciseId && setSelection.day === today;
+
+  if (!selectionMatches) {
+    setSetSelection({ exerciseId, day: today, set: null });
+  }
+
+  const completedSetsToday = useMemo(
+    () =>
+      exerciseLogs.filter(
+        (log) =>
+          log.exerciseId === exerciseId &&
+          new Date(log.performedAt).toDateString() === today,
+      ).length,
+    [exerciseId, exerciseLogs, today],
+  );
+  const restoredSet = exercise?.logging ? completedSetsToday + 1 : 1;
+  const currentSet = Math.min(
+    exercise?.sets ?? 1,
+    (selectionMatches ? setSelection.set : null) ?? restoredSet,
+  );
+  const setCurrentSet = (set: number) => {
+    setSetSelection({ exerciseId, day: today, set });
+  };
   const [trackRepsDialogOpen, setTrackRepsDialogOpen] = useState(false);
   const [weightSuggestionPending, setWeightSuggestionPending] = useState(false);
   const [newExercise, setNewExercise] = useState<Exercise | undefined>(
     undefined,
   );
   const immediateExerciseSaveRef = useRef<Exercise | null>(null);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCurrentSet(1);
-  }, [exerciseId]);
 
   const exerciseLogReps = useMemo(() => {
     if (!exercise) return undefined;
@@ -141,7 +166,7 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
       return;
     }
 
-    setCurrentSet((set) => Math.min(exercise.sets, set + 1));
+    setCurrentSet(Math.min(exercise.sets, currentSet + 1));
   };
 
   const previousSet = () => {
@@ -150,7 +175,7 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
       return;
     }
 
-    setCurrentSet((set) => Math.max(1, set - 1));
+    setCurrentSet(Math.max(1, currentSet - 1));
   };
 
   const handleNextSet = () => {
@@ -163,6 +188,8 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
   };
 
   const handleConfirmReps = (reps: number) => {
+    // Hold this set until advanceSet runs, including after a weight suggestion.
+    setCurrentSet(currentSet);
     addExerciseLog({
       id: createId(),
       exerciseId: exercise.id,
