@@ -33,8 +33,7 @@ function navItemClass(active?: boolean) {
   return cn(
     "flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-colors",
     "text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50",
-    active &&
-      "bg-muted text-foreground hover:bg-muted/80 hover:text-foreground",
+    active && "[&>svg]:text-foreground",
   );
 }
 
