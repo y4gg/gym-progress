@@ -41,7 +41,7 @@ export default function Home() {
           >
             <CreateWorkoutDialog
               trigger={
-                <Button className="h-12 w-full gap-2 text-base" type="button">
+                <Button className="h-12 px-6 text-base" type="button">
                   Create workout
                 </Button>
               }
