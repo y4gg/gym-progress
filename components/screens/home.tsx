@@ -8,7 +8,7 @@ import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { AppLink as Link } from "@/components/app-navigation";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
-import { Dumbbell, Edit, Plus } from "lucide-react";
+import { Edit } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Home() {
@@ -35,15 +35,10 @@ export default function Home() {
     <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-7 pb-28">
       {hydrated && workouts.length === 0 ? (
         <div className="flex min-h-[calc(100svh-8.75rem)] items-center">
-          <EmptyState
-            icon={<Dumbbell className="size-7" />}
-            title="No workouts yet"
-            description="Create your first workout to start tracking your exercises and progress."
-          >
+          <EmptyState title="No workouts yet">
             <CreateWorkoutDialog
               trigger={
                 <Button className="h-12 w-full gap-2 text-base" type="button">
-                  <Plus aria-hidden="true" className="size-5" />
                   Create workout
                 </Button>
               }
