@@ -76,10 +76,6 @@ export function MagicLinkForm({
     <main className="min-h-dvh px-6 py-10">
       <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
         <h1 className="mb-5 text-center text-4xl font-bold">Magic Link</h1>
-        <p className="text-center text-sm text-muted-foreground">
-          Sign in to your account with a link sent to your email. No password
-          needed.
-        </p>
         <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
           <div>
             <Label className="text-base" htmlFor="email">
@@ -143,12 +139,6 @@ export function MagicLinkForm({
             Back to login
           </Link>
         </Button>
-        <Link
-          className="text-center text-sm text-muted-foreground hover:underline"
-          href="/register"
-        >
-          Create new account
-        </Link>
       </div>
     </main>
   );
