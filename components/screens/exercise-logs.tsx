@@ -25,9 +25,9 @@ type LogGroup = {
 
 function formatDate(value: string) {
   const date = new Date(value);
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
     year: "numeric",
   }).format(date);
 }
@@ -53,50 +53,49 @@ function ExerciseLogSummary({
   exerciseLog: ExerciseLog & { setNumber: number };
   selected: boolean;
 }) {
-  const hasWeight = exerciseLog.weight > 0;
-
   return (
-    <span className="grid min-w-0 flex-1 grid-cols-3 items-center gap-2">
+    <span className="flex min-w-0 flex-1 items-center justify-between gap-3 text-sm">
       <span
         className={cn(
-          "min-w-0 justify-self-start truncate text-base font-semibold text-muted-foreground",
+          "text-muted-foreground",
           selected && "text-primary-foreground/80",
         )}
       >
-        Set {exerciseLog.setNumber}
+        Set {exerciseLog.setNumber} · {exerciseLog.reps} reps
       </span>
-
-      <span className="flex min-w-0 items-baseline justify-self-center gap-1.5 whitespace-nowrap">
-        <span className="text-2xl font-bold leading-none tabular-nums">
-          {exerciseLog.reps}
+      {exerciseLog.weight > 0 ? (
+        <span className="shrink-0 font-medium tabular-nums">
+          {formatWeight(exerciseLog.weight)} kg
         </span>
-        <span
-          className={cn(
-            "text-sm font-semibold text-muted-foreground",
-            selected && "text-primary-foreground/75",
-          )}
-        >
-          reps
+      ) : null}
+    </span>
+  );
+}
+
+function DaySummary({ group }: { group: LogGroup }) {
+  const totalReps = group.logs.reduce((total, log) => total + log.reps, 0);
+  const weights = group.logs.map((log) => log.weight);
+  const minWeight = Math.min(...weights);
+  const maxWeight = Math.max(...weights);
+  const weightLabel =
+    minWeight === maxWeight
+      ? `${formatWeight(maxWeight)} kg`
+      : `${formatWeight(minWeight)}–${formatWeight(maxWeight)} kg`;
+
+  return (
+    <span className="flex items-center justify-between gap-3 py-3">
+      <span>
+        <span className="block text-sm font-semibold">{group.dateLabel}</span>
+        <span className="mt-1 block text-xs text-muted-foreground">
+          {group.logs.length} {group.logs.length === 1 ? "set" : "sets"} ·{" "}
+          {totalReps} reps
         </span>
       </span>
-
-      {hasWeight ? (
-        <span className="flex min-w-0 items-baseline justify-self-end gap-1.5 whitespace-nowrap">
-          <span className="text-2xl font-bold leading-none tabular-nums">
-            {formatWeight(exerciseLog.weight)}
-          </span>
-          <span
-            className={cn(
-              "text-sm font-semibold text-muted-foreground",
-              selected && "text-primary-foreground/75",
-            )}
-          >
-            kg
-          </span>
+      {maxWeight > 0 ? (
+        <span className="shrink-0 text-sm font-semibold tabular-nums">
+          {weightLabel}
         </span>
-      ) : (
-        <span aria-hidden className="justify-self-end" />
-      )}
+      ) : null}
     </span>
   );
 }
@@ -141,12 +140,10 @@ function ExerciseLogsView({
   exerciseId,
   groupedLogs,
   selectMode,
-  workoutName,
 }: {
   exerciseId: string;
   groupedLogs: LogGroup[];
   selectMode: boolean;
-  workoutName: string;
 }) {
   const router = useAppRouter();
   const deleteExerciseLogs = useStore((state) => state.deleteExerciseLogs);
@@ -173,7 +170,7 @@ function ExerciseLogsView({
   };
 
   return (
-    <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32">
+    <main className="mx-auto w-full max-w-md px-6 py-9 pb-32">
       <h1 className="mb-6 truncate text-center text-3xl font-bold">Logs</h1>
 
       {groupedLogs.length === 0 ? (
@@ -181,14 +178,14 @@ function ExerciseLogsView({
           No logs yet.
         </p>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="divide-y">
           {groupedLogs.map((group) => (
-            <section className="flex flex-col gap-2" key={group.dateLabel}>
-              <h2 className="px-1 text-2xl font-semibold">
-                {group.dateLabel} ({workoutName})
-              </h2>
+            <details key={group.dateLabel} open={selectMode ? true : undefined}>
+              <summary className="cursor-pointer list-none rounded-sm focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                <DaySummary group={group} />
+              </summary>
 
-              <div className="flex flex-col gap-2">
+              <div className="mb-3 flex flex-col divide-y border-t">
                 {group.logs.map((exerciseLog) => {
                   const selected = selectedLogIds.includes(exerciseLog.id);
 
@@ -197,7 +194,7 @@ function ExerciseLogsView({
                       aria-label={buildLogLabel(exerciseLog)}
                       aria-pressed={selectMode ? selected : undefined}
                       className={cn(
-                        "flex h-16 w-full items-center justify-between gap-3 rounded-lg border border-input bg-background px-4 text-left transition-colors",
+                        "flex min-h-11 w-full items-center justify-between gap-3 rounded-sm bg-background px-2 text-left transition-colors",
                         "hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                         !selectMode && "cursor-default hover:bg-background",
                         selected &&
@@ -224,7 +221,7 @@ function ExerciseLogsView({
                   );
                 })}
               </div>
-            </section>
+            </details>
           ))}
         </div>
       )}
@@ -314,7 +311,6 @@ function ExerciseLogsPageContent({ exerciseId }: { exerciseId: string }) {
       groupedLogs={groupedLogs}
       key={selectMode ? "select" : "read"}
       selectMode={selectMode}
-      workoutName={workout.name}
     />
   );
 }
