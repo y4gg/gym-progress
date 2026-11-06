@@ -215,7 +215,6 @@ export default function ExerciseHistoryPage({
       <header className="mb-7 text-center">
         <h1 className="text-3xl font-bold">History</h1>
         <p className="mt-3 truncate text-xl font-semibold">{exercise.name}</p>
-        <p className="text-sm text-muted-foreground">{workout.name}</p>
       </header>
       {sessions.length === 0 ? (
         <section className="rounded-xl border border-dashed px-6 py-14 text-center">
@@ -251,7 +250,7 @@ export default function ExerciseHistoryPage({
               </button>
             ))}
           </div>
-          <section className="rounded-xl border p-4">
+          <section>
             <div className="flex gap-2" aria-label="Progress metric">
               {(Object.keys(metrics) as HistoryMetric[])
                 .filter((key) => hasWeight || key === "reps")
@@ -283,19 +282,15 @@ export default function ExerciseHistoryPage({
             )}
           </section>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <section className="rounded-xl bg-muted/50 p-4">
+            <section>
               <p className="text-xs text-muted-foreground">Change in period</p>
               <p className="mt-2 text-xl font-bold tabular-nums">
                 {visible.length > 1
                   ? `${change > 0 ? "+" : ""}${number.format(change)} ${metrics[activeMetric].unit}`
                   : "—"}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {visible.length} training{" "}
-                {visible.length === 1 ? "day" : "days"}
-              </p>
             </section>
-            <section className="rounded-xl bg-muted/50 p-4">
+            <section>
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Trophy className="size-3.5" />
                 All-time best
@@ -305,9 +300,6 @@ export default function ExerciseHistoryPage({
                 <span className="text-sm font-medium">
                   {metrics[activeMetric].unit}
                 </span>
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {metrics[activeMetric].label} in one day
               </p>
             </section>
           </div>
