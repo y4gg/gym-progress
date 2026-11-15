@@ -170,7 +170,7 @@ function ExerciseLogsView({
   };
 
   return (
-    <main className="mx-auto w-full max-w-md px-6 py-9 pb-32">
+    <main className="mx-auto w-full max-w-md px-6 py-9 pb-32 md:max-w-3xl md:px-10 md:py-12 md:pb-16">
       <h1 className="mb-6 truncate text-center text-3xl font-bold">Logs</h1>
 
       {groupedLogs.length === 0 ? (
@@ -227,7 +227,7 @@ function ExerciseLogsView({
       )}
 
       {groupedLogs.length > 0 ? (
-        <div className="fixed inset-x-0 bottom-24 z-40 flex justify-center px-6">
+        <div className="fixed inset-x-0 bottom-24 z-40 flex justify-center px-6 md:left-[17rem] md:bottom-6">
           {selectMode && selectedCount > 0 ? (
             <div className="grid w-full max-w-sm grid-cols-2 gap-2 rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur-md">
               <DeleteDialog

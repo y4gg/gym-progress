@@ -8,6 +8,7 @@ import {
 } from "@/components/app-navigation";
 import {
   ArrowLeft,
+  Dumbbell,
   Home,
   LogOut,
   Plus,
@@ -219,9 +220,15 @@ export function AppNavbar() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-6 pointer-events-none"
+      className="app-navbar pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-6"
     >
-      <div className="pointer-events-auto grid h-16 w-full max-w-sm grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md">
+      <div className="app-navbar-panel pointer-events-auto grid h-16 w-full max-w-sm grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md">
+        <div className="app-navbar-brand hidden items-center gap-3 px-3 pb-5 text-lg font-bold">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Dumbbell className="size-5" aria-hidden="true" />
+          </span>
+          <span>Gym Ladder</span>
+        </div>
         <NavLink
           className="ml-1"
           href="/"

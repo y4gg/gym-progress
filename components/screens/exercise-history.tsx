@@ -211,7 +211,7 @@ export default function ExerciseHistoryPage({
     0,
   );
   return (
-    <main className="mx-auto w-full max-w-md px-6 py-9 pb-32">
+    <main className="mx-auto w-full max-w-md px-6 py-9 pb-32 md:max-w-3xl md:px-10 md:py-12 md:pb-16">
       <header className="mb-7 text-center">
         <h1 className="text-3xl font-bold">History</h1>
         <p className="mt-3 truncate text-xl font-semibold">{exercise.name}</p>

@@ -131,8 +131,8 @@ export default function WorkoutOverview({ id }: { id: string }) {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-9 pb-28">
-      <h1 className="mb-2 truncate text-center text-3xl font-bold">
+    <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-9 pb-28 md:max-w-3xl md:gap-4 md:px-10 md:py-12 md:pb-16">
+      <h1 className="mb-2 truncate text-center text-3xl font-bold md:text-left md:text-4xl">
         {workout.name}
       </h1>
       {sorting ? (

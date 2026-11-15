@@ -64,7 +64,7 @@ export default function CreateExercisePage({ id }: { id: string }) {
   };
 
   return (
-    <main className="mx-auto w-full max-w-sm px-6 py-9 pb-28">
+    <main className="mx-auto w-full max-w-sm px-6 py-9 pb-28 md:max-w-xl md:px-10 md:py-12 md:pb-16">
       <form
         className="flex flex-col gap-4"
         id="create-exercise-form"

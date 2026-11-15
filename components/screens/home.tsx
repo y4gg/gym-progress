@@ -32,9 +32,12 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-7 pb-28">
+    <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-7 pb-28 md:max-w-5xl md:gap-5 md:px-10 md:py-12 md:pb-16">
+      <h1 className="hidden text-4xl font-bold tracking-tight md:block">
+        Workouts
+      </h1>
       {hydrated && workouts.length === 0 ? (
-        <div className="flex min-h-[calc(100svh-8.75rem)] items-center">
+        <div className="flex min-h-[calc(100svh-8.75rem)] items-center md:min-h-[calc(100svh-12rem)]">
           <EmptyState
             icon={<Dumbbell className="size-10" />}
             title="No workouts yet"
@@ -49,31 +52,33 @@ export default function Home() {
           </EmptyState>
         </div>
       ) : null}
-      {workouts.map((workout: Workout) => (
-        <div className="flex w-full gap-2" key={workout.id}>
-          <Button
-            asChild
-            variant="outline"
-            className="h-16 min-w-0 flex-1 justify-start px-5 text-left text-2xl font-semibold"
-          >
-            <Link href={`/w/${workout.id}?redirect=true`}>
-              <span className="min-w-0 truncate">{workout.name}</span>
-            </Link>
-          </Button>
-          <EditWorkoutDialog
-            id={workout.id}
-            trigger={
-              <Button
-                aria-label={`Edit ${workout.name}`}
-                className="h-16 w-16"
-                variant="secondary"
-              >
-                <Edit />
-              </Button>
-            }
-          />
-        </div>
-      ))}
+      <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+        {workouts.map((workout: Workout) => (
+          <div className="flex w-full gap-2" key={workout.id}>
+            <Button
+              asChild
+              variant="outline"
+              className="h-16 min-w-0 flex-1 justify-start px-5 text-left text-2xl font-semibold md:h-[4.5rem] md:text-xl"
+            >
+              <Link href={`/w/${workout.id}?redirect=true`}>
+                <span className="min-w-0 truncate">{workout.name}</span>
+              </Link>
+            </Button>
+            <EditWorkoutDialog
+              id={workout.id}
+              trigger={
+                <Button
+                  aria-label={`Edit ${workout.name}`}
+                  className="h-16 w-16 md:h-[4.5rem] md:w-[4.5rem]"
+                  variant="secondary"
+                >
+                  <Edit />
+                </Button>
+              }
+            />
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
