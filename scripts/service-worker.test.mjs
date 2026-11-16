@@ -13,6 +13,7 @@ const urls = ["/offline", "/_next/static/app.js", "/_next/static/font.woff2"];
 
 function worker({
   failInstall = false,
+  online = true,
   fetch = async () => {
     throw new TypeError("Offline");
   },
@@ -49,6 +50,7 @@ function worker({
     PRECACHE_URLS: urls,
     self: {
       location: { origin },
+      navigator: { onLine: online },
       addEventListener: (type, handler) => handlers.set(type, handler),
       clients: {
         claim: async () => {
@@ -149,15 +151,17 @@ test("offline navigation serves the app for unvisited IDs, query strings, and ac
   }
 });
 
-test("navigation uses the server when it responds, including genuine 404 responses", async () => {
+test("account and unknown routes use the server, including genuine 404 responses", async () => {
   for (const status of [200, 404]) {
     const sw = worker({
       fetch: async () => new Response("server", { status }),
     });
     await sw.lifecycle("install");
-    const response = await sw.request("/w/new");
-    assert.equal(response.status, status);
-    assert.equal(await response.text(), "server");
+    for (const path of ["/account", "/login", "/missing", "/w/new/missing"]) {
+      const response = await sw.request(path);
+      assert.equal(response.status, status);
+      assert.equal(await response.text(), "server");
+    }
   }
 });
 
@@ -166,7 +170,7 @@ test("server failures fall back to the offline app", async () => {
     fetch: async () => new Response("unavailable", { status: 503 }),
   });
   await sw.lifecycle("install");
-  assert.equal(await (await sw.request("/w/new")).text(), "/offline");
+  assert.equal(await (await sw.request("/account")).text(), "/offline");
 });
 
 test("an unresponsive server times out and opens the offline app", async () => {
@@ -177,7 +181,46 @@ test("an unresponsive server times out and opens the offline app", async () => {
       }),
   });
   await sw.lifecycle("install");
-  assert.equal(await (await sw.request("/w/new")).text(), "/offline");
+  assert.equal(await (await sw.request("/account")).text(), "/offline");
+});
+
+test("workout launches and reloads use the cached app without starting a network request", async () => {
+  let fetches = 0;
+  const sw = worker({
+    // A dead connection can leave navigator.onLine true and fetch pending.
+    online: true,
+    fetch: () => {
+      fetches += 1;
+      return new Promise(() => {});
+    },
+  });
+  await sw.lifecycle("install");
+  for (const path of [
+    "/", "/offline", "/w/new", "/w/new/create/", "/e/new",
+    "/e/new/history", "/e/new/logs?select=1",
+  ]) {
+    assert.equal(await (await sw.request(path)).text(), "/offline");
+  }
+  assert.equal(fetches, 0);
+});
+
+test("known offline navigation skips the network even for account pages", async () => {
+  let fetches = 0;
+  const sw = worker({
+    online: false,
+    fetch: async () => {
+      fetches += 1;
+      return new Response("server");
+    },
+  });
+  await sw.lifecycle("install");
+  assert.equal(await (await sw.request("/account")).text(), "/offline");
+  assert.equal(fetches, 0);
+});
+
+test("a missing cached app falls back to the server", async () => {
+  const sw = worker({ fetch: async () => new Response("server") });
+  assert.equal(await (await sw.request("/w/new")).text(), "server");
 });
 
 test("JavaScript and fonts come from the cache even with query strings and no network", async () => {

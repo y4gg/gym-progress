@@ -47,10 +47,14 @@ finish installing. After that, you can reopen or refresh the app, create workout
 and exercises, log sets, and view history without a connection. Screens do not
 need to have been visited first. Set logging also works without an account.
 
+Workout screens open directly from the cached app, and navigation between them
+stays on this device. Losing a connection does not make you wait for a network
+request to time out, even if the browser still reports that it is online.
+
 Workouts, logs, and pending sync changes stay in this browser's local storage.
 Signed-in accounts resume syncing when the connection returns. Sign-in and account
-management require a connection. The offline app has a Reconnect button to reopen
-the current screen from the server when it is available again.
+management require a connection. Connection and sync status appear on the account
+page; syncing resumes automatically when you reconnect.
 
 Offline support requires HTTPS or localhost and a browser with service worker
 support. It runs in production builds only. Use `bun run build` and `bun run start`

@@ -15,6 +15,7 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
+import { isWorkoutPathname } from "@/lib/workout-routes";
 
 const LOCATION_CHANGED = "gym-location-changed";
 
@@ -47,13 +48,8 @@ const OfflineNavigationContext = createContext<OfflineNavigation | null>(null);
 const offlineNavigation: OfflineNavigation = {
   navigate(destination, { replace = false, scroll = true } = {}) {
     const url = new URL(destination, window.location.href);
-    const isOfflineRoute =
-      url.pathname === "/" ||
-      url.pathname === "/offline" ||
-      /^\/w\/[^/]+(?:\/create)?\/?$/.test(url.pathname) ||
-      /^\/e\/[^/]+(?:\/(?:history|logs))?\/?$/.test(url.pathname);
     // Account pages need a server document once the connection returns.
-    if (url.origin !== window.location.origin || !isOfflineRoute) {
+    if (url.origin !== window.location.origin || !isWorkoutPathname(url.pathname)) {
       window.location[replace ? "replace" : "assign"](url.href);
       return;
     }
@@ -63,13 +59,19 @@ const offlineNavigation: OfflineNavigation = {
   },
 };
 
-// The cached /offline document can render any workout URL without an RSC request.
+// Workout screens use local data on every connection. Keep navigation local even
+// when the browser still reports online after losing internet access.
 export function AppNavigation({ children }: { children: ReactNode }) {
   const segment = useSelectedLayoutSegment();
+  const pathname = usePathname();
 
   return (
     <OfflineNavigationContext.Provider
-      value={segment === "offline" ? offlineNavigation : null}
+      value={
+        segment === "offline" || isWorkoutPathname(pathname)
+          ? offlineNavigation
+          : null
+      }
     >
       {children}
     </OfflineNavigationContext.Provider>

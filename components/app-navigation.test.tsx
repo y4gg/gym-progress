@@ -8,6 +8,7 @@ for (const name of [
   "window",
   "document",
   "navigator",
+  "localStorage",
   "HTMLElement",
   "Node",
   "Event",
@@ -19,13 +20,25 @@ for (const name of [
 }
 
 let segment = "offline";
+let serverPathname = "/offline";
 const router = { push: mock(), replace: mock(), refresh: mock() };
 mock.module("next/navigation", () => ({
   useSelectedLayoutSegment: () => segment,
-  usePathname: () => "/server-path",
+  usePathname: () => serverPathname,
   useSearchParams: () => new URLSearchParams(),
   useRouter: () => router,
 }));
+mock.module("@/lib/use-store-hydrated", () => ({ useStoreHydrated: () => true }));
+mock.module("@/components/screens/home", () => ({
+  default: () => <p>Workouts screen</p>,
+}));
+mock.module("@/components/screens/workout", () => ({
+  default: ({ id }: { id: string }) => <p>Workout screen: {id}</p>,
+}));
+mock.module("@/components/screens/create-exercise", () => ({ default: () => null }));
+mock.module("@/components/screens/exercise", () => ({ default: () => null }));
+mock.module("@/components/screens/exercise-history", () => ({ default: () => null }));
+mock.module("@/components/screens/exercise-logs", () => ({ default: () => null }));
 mock.module("next/link", () => ({
   default: ({
     href,
@@ -43,16 +56,20 @@ mock.module("next/link", () => ({
   ),
 }));
 
-const { cleanup, fireEvent, render } = await import("@testing-library/react");
-const { AppLink, AppNavigation, useAppPathname, useAppRouter } =
+const { act, cleanup, fireEvent, render } = await import("@testing-library/react");
+const { AppLink, AppNavigation, useAppPathname, useAppRouter, useAppSearchParams } =
   await import("./app-navigation");
+const { AppScreen } = await import("./offline-app");
+const { useStore } = await import("@/lib/store");
 
 function RouterControls() {
   const appRouter = useAppRouter();
   const pathname = useAppPathname();
+  const searchParams = useAppSearchParams();
   return (
     <>
       <output>{pathname}</output>
+      <p data-testid="query">{searchParams.toString()}</p>
       <button onClick={() => appRouter.push("/e/bench", { scroll: false })}>
         Push
       </button>
@@ -65,6 +82,7 @@ function RouterControls() {
 
 beforeEach(() => {
   segment = "offline";
+  serverPathname = "/offline";
   browser.history.replaceState(null, "", "/offline");
   Object.defineProperty(browser.navigator, "onLine", {
     configurable: true,
@@ -73,6 +91,7 @@ beforeEach(() => {
   router.push.mockClear();
   router.replace.mockClear();
   router.refresh.mockClear();
+  useStore.getState().clearData();
 });
 afterEach(() => {
   cleanup();
@@ -150,8 +169,9 @@ test("the offline router preserves replacement and scroll behavior", () => {
   expect(browser.location.pathname).toBe("/e/bench");
 });
 
-test("the online router preserves navigation options", () => {
-  segment = "home";
+test("the account router preserves navigation options", () => {
+  segment = "(account)";
+  serverPathname = "/account";
   const view = render(
     <AppNavigation>
       <RouterControls />
@@ -161,4 +181,69 @@ test("the online router preserves navigation options", () => {
   fireEvent.click(view.getByRole("button", { name: "Replace" }));
   expect(router.push).toHaveBeenCalledWith("/e/bench", { scroll: false });
   expect(router.replace).toHaveBeenCalledWith("/e/bench", { scroll: false });
+});
+
+test.each([true, false])(
+  "a server-rendered workout page navigates locally before any network timeout (onLine: %s)",
+  (online) => {
+    segment = "home";
+    serverPathname = "/";
+    browser.history.replaceState(null, "", "/");
+    Object.defineProperty(browser.navigator, "onLine", {
+      configurable: true,
+      value: online,
+    });
+    const timestamp = "2026-11-16T10:00:00.000Z";
+    useStore.setState({
+      syncStatus: online ? "synced" : "offline",
+      workouts: [{
+        id: "saved",
+        name: "Saved",
+        exercises: [],
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      }],
+    });
+    const assign = spyOn(browser.location, "assign").mockImplementation(() => {});
+    const view = render(
+      <AppNavigation>
+        <AppLink href="/w/saved?test=1">Workout</AppLink>
+        <AppScreen>
+          <p>Server screen</p>
+        </AppScreen>
+        <RouterControls />
+      </AppNavigation>,
+    );
+    expect(view.getByText("Workouts screen")).toBeTruthy();
+    expect(
+      view.queryByText("Offline mode. Changes saved on this device."),
+    ).toBeNull();
+    fireEvent.click(view.getByRole("link"));
+    expect(view.getByText("Workout screen: saved")).toBeTruthy();
+    expect(view.queryByText("Workouts screen")).toBeNull();
+    expect(view.getByTestId("query").textContent).toBe("test=1");
+    expect(router.push).not.toHaveBeenCalled();
+    expect(assign).not.toHaveBeenCalled();
+
+    // Next's native history integration must also keep back/forward local.
+    act(() => {
+      browser.history.replaceState(null, "", "/");
+      browser.dispatchEvent(new browser.Event("popstate"));
+    });
+    expect(view.getByText("Workouts screen")).toBeTruthy();
+  },
+);
+
+test("account pages keep their server-rendered screen", () => {
+  segment = "(account)";
+  serverPathname = "/account";
+  browser.history.replaceState(null, "", "/account");
+  const view = render(
+    <AppNavigation>
+      <AppScreen>
+        <p>Account screen</p>
+      </AppScreen>
+    </AppNavigation>,
+  );
+  expect(view.getByText("Account screen")).toBeTruthy();
 });
