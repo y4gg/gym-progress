@@ -246,7 +246,7 @@ export function AppNavbar() {
       </aside>
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-6 pointer-events-none lg:hidden"
+        className="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 flex justify-center px-6 pointer-events-none lg:hidden"
       >
         <div className="pointer-events-auto grid h-16 w-full max-w-sm grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md">
           <NavLink className="ml-1" href="/" label="Home">

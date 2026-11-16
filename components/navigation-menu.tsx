@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { usePwaOnboarding } from "@/components/pwa-context";
+import { PwaInstallButton } from "@/components/pwa-install-button";
 
 const linkClassName =
   "flex min-h-12 min-w-0 items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring";
@@ -36,6 +38,7 @@ export function NavigationMenu({
   isSessionPending,
   onNavigate,
 }: NavigationMenuProps) {
+  const { replay } = usePwaOnboarding();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const workouts = useStore((state) => state.workouts);
   const router = useAppRouter();
@@ -132,6 +135,19 @@ export function NavigationMenu({
             </ul>
           </div>
         ) : null}
+        <div className="mt-5 space-y-2 border-t pt-4">
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={() => {
+              onNavigate?.();
+              replay();
+            }}
+          >
+            Replay onboarding
+          </Button>
+          <PwaInstallButton />
+        </div>
       </nav>
       <div className="flex shrink-0 items-center gap-2 border-t bg-muted/20 p-4">
         <AppLink

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type SetStateAction } from "react";
 import { Dialog } from "radix-ui";
-import { Dumbbell, Menu, X } from "lucide-react";
+import { Check, Dumbbell, Menu, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useLaunchpadGestures } from "@/components/use-launchpad-gestures";
@@ -13,6 +13,7 @@ import {
 
 type LaunchpadProps = NavigationMenuProps & {
   triggerClassName: string;
+  onTutorialComplete?: () => void;
 };
 
 export function Launchpad({
@@ -20,8 +21,17 @@ export function Launchpad({
   session,
   isSessionPending,
   triggerClassName,
+  onTutorialComplete,
 }: LaunchpadProps) {
   const [open, setOpen] = useState(false);
+  const setMenuOpen = useCallback(
+    (action: SetStateAction<boolean>) => {
+      const nextOpen = typeof action === "function" ? action(open) : action;
+      setOpen(nextOpen);
+      if (open && !nextOpen) onTutorialComplete?.();
+    },
+    [open, onTutorialComplete],
+  );
   const {
     sheetRef,
     suppressClickUntil,
@@ -31,15 +41,16 @@ export function Launchpad({
     startDrag,
     moveDrag,
     endDrag,
-  } = useLaunchpadGestures(open, setOpen);
+  } = useLaunchpadGestures(open, setMenuOpen);
   useEffect(() => {
+    if (onTutorialComplete) return;
     const desktop = window.matchMedia("(min-width: 1024px)");
     function closeOnDesktop() {
       if (desktop.matches) setOpen(false);
     }
     desktop.addEventListener("change", closeOnDesktop);
     return () => desktop.removeEventListener("change", closeOnDesktop);
-  }, []);
+  }, [onTutorialComplete]);
 
   return (
     <Dialog.Root
@@ -47,7 +58,7 @@ export function Launchpad({
       onOpenChange={(nextOpen) => {
         if (nextOpen) resetDrag();
         else prepareClose();
-        setOpen(nextOpen);
+        setMenuOpen(nextOpen);
       }}
     >
       <Dialog.Trigger asChild>
@@ -101,15 +112,29 @@ export function Launchpad({
               </Button>
             </Dialog.Close>
           </div>
-          <NavigationMenu
+          {onTutorialComplete ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
+              <Check className="size-16" aria-hidden="true" />
+              <h2 className="text-2xl font-bold">You found your launchpad</h2>
+              <p className="max-w-xs leading-7 text-muted-foreground">
+                Jump between workouts, manage your account, and switch themes
+                here. Swipe right or close the menu to continue.
+              </p>
+              <Dialog.Close asChild>
+                <Button size="lg">Continue</Button>
+              </Dialog.Close>
+            </div>
+          ) : (
+            <NavigationMenu
             pathname={pathname}
             session={session}
             isSessionPending={isSessionPending}
             onNavigate={() => {
               prepareClose();
-              setOpen(false);
+              setMenuOpen(false);
             }}
           />
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

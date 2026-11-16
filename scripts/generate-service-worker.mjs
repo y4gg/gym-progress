@@ -24,7 +24,16 @@ const [buildId, worker, assets] = await Promise.all([
 ]);
 // Fail the build if the offline document was not successfully prerendered.
 await readFile(".next/server/app/offline.html");
-const urls = ["/offline", ...assets];
+const urls = [
+  "/offline",
+  "/manifest.webmanifest",
+  "/icons/icon.svg",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/icon-maskable-512.png",
+  "/icons/apple-touch-icon.png",
+  ...assets,
+];
 const version = createHash("sha256")
   .update(buildId)
   .update(worker)
