@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useTheme } from "next-themes";
 import {
   ChevronRight,
-  Dumbbell,
   Home,
   LogIn,
   LogOut,
@@ -21,6 +20,7 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { usePwaOnboarding } from "@/components/pwa-context";
 import { PwaInstallButton } from "@/components/pwa-install-button";
+import { WorkoutIcon } from "@/components/workout-icon";
 
 const linkClassName =
   "flex min-h-12 min-w-0 items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring";
@@ -117,9 +117,9 @@ export function NavigationMenu({
                           "border-primary/30 bg-primary/10 text-primary",
                       )}
                     >
-                      <Dumbbell
+                      <WorkoutIcon
+                        name={workout.icon}
                         className="size-5 shrink-0"
-                        aria-hidden="true"
                       />
                       <span className="min-w-0 flex-1 truncate">
                         {workout.name}

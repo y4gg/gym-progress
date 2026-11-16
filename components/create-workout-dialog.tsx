@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Dialog,
   DialogClose,
@@ -15,6 +17,8 @@ import { useStore } from "@/lib/store";
 import { createId } from "@paralleldrive/cuid2";
 import { workoutFieldsSchema } from "@/lib/workout-validation";
 import { toast } from "sonner";
+import { WorkoutIconPicker } from "@/components/workout-icon-picker";
+import { DEFAULT_WORKOUT_ICON, type WorkoutIconName } from "@/lib/workout-icons";
 
 export function CreateWorkoutDialog({
   trigger,
@@ -23,11 +27,16 @@ export function CreateWorkoutDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
+  const [workoutIcon, setWorkoutIcon] =
+    useState<WorkoutIconName>(DEFAULT_WORKOUT_ICON);
 
   const addWorkout = useStore((state) => state.addWorkout);
 
   const handleCreateWorkout = () => {
-    const result = workoutFieldsSchema.safeParse({ name: workoutName });
+    const result = workoutFieldsSchema.safeParse({
+      name: workoutName,
+      icon: workoutIcon,
+    });
     if (!result.success) {
       toast.error(result.error.issues[0].message);
       return;
@@ -35,6 +44,7 @@ export function CreateWorkoutDialog({
     const id = createId();
     addWorkout({ id, ...result.data, exercises: [] });
     setWorkoutName("");
+    setWorkoutIcon(DEFAULT_WORKOUT_ICON);
     setOpen(false);
   };
 
@@ -67,6 +77,7 @@ export function CreateWorkoutDialog({
             }}
           />
         </div>
+        <WorkoutIconPicker value={workoutIcon} onChange={setWorkoutIcon} />
         <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">
           <DialogClose asChild>
             <Button className="h-14 text-lg font-semibold" variant="outline">

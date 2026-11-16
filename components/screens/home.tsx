@@ -10,6 +10,7 @@ import { AppLink as Link } from "@/components/app-navigation";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { Dumbbell, Edit } from "lucide-react";
 import { toast } from "sonner";
+import { WorkoutIcon } from "@/components/workout-icon";
 
 export default function Home() {
   const workouts = useStore((state) => state.workouts);
@@ -57,6 +58,7 @@ export default function Home() {
             className="h-16 min-w-0 flex-1 justify-start px-5 text-left text-2xl font-semibold"
           >
             <Link href={`/w/${workout.id}?redirect=true`}>
+              <WorkoutIcon name={workout.icon} className="mr-2 size-6 shrink-0" />
               <span className="min-w-0 truncate">{workout.name}</span>
             </Link>
           </Button>

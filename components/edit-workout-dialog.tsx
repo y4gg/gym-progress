@@ -15,6 +15,12 @@ import { useStore } from "@/lib/store";
 import { workoutFieldsSchema } from "@/lib/workout-validation";
 import { toast } from "sonner";
 import { DeleteDialog } from "@/components/delete-dialog";
+import { WorkoutIconPicker } from "@/components/workout-icon-picker";
+import {
+  DEFAULT_WORKOUT_ICON,
+  normalizeWorkoutIcon,
+  type WorkoutIconName,
+} from "@/lib/workout-icons";
 
 export function EditWorkoutDialog({
   id,
@@ -25,13 +31,18 @@ export function EditWorkoutDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
+  const [workoutIcon, setWorkoutIcon] =
+    useState<WorkoutIconName>(DEFAULT_WORKOUT_ICON);
 
   const workout = useStore((state) => state.getWorkoutById(id));
   const editWorkout = useStore((state) => state.editWorkout);
   const deleteWorkout = useStore((state) => state.deleteWorkout);
 
   const handleEditWorkout = () => {
-    const result = workoutFieldsSchema.safeParse({ name: workoutName });
+    const result = workoutFieldsSchema.safeParse({
+      name: workoutName,
+      icon: workoutIcon,
+    });
     if (!result.success) {
       toast.error(result.error.issues[0].message);
       return;
@@ -55,6 +66,7 @@ export function EditWorkoutDialog({
         setOpen(nextOpen);
         if (nextOpen) {
           setWorkoutName(workout?.name ?? "");
+          setWorkoutIcon(normalizeWorkoutIcon(workout?.icon));
         }
       }}
     >
@@ -83,6 +95,7 @@ export function EditWorkoutDialog({
             }}
           />
         </div>
+        <WorkoutIconPicker value={workoutIcon} onChange={setWorkoutIcon} />
         <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">
           <DeleteDialog
             onConfirm={handleDeleteWorkout}

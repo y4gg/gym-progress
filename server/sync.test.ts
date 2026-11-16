@@ -1,5 +1,6 @@
 import { beforeEach, expect, mock, test } from "bun:test";
 import type { SyncOperation } from "@/lib/types";
+import type { workout as workoutTable } from "@/db/schema";
 
 const getSession = mock(async () => ({ user: { id: "account-a" } }));
 mock.module("@/lib/auth", () => ({ auth: { api: { getSession } } }));
@@ -15,7 +16,9 @@ const insertValues = mock(async (values: unknown) => values);
 const insert = mock(() => ({ values: insertValues }));
 const updateValues = mock((values: unknown) => ({ where: async () => values }));
 const update = mock(() => ({ set: updateValues }));
-const findWorkouts = mock(async () => []);
+const findWorkouts = mock(
+  async (): Promise<(typeof workoutTable.$inferSelect & { exercises: [] })[]> => [],
+);
 const findLogs = mock(async () => []);
 const transaction = mock(
   async (
@@ -205,5 +208,76 @@ test("invalid step values still fail validation before database writes", async (
     ]);
     expect(result).toEqual({ success: false, status: "invalid_payload" });
   }
+  expect(transaction).not.toHaveBeenCalled();
+});
+
+test.each(["addWorkout", "editWorkout", "upsertWorkout"] as const)(
+  "%s persists the chosen workout icon and returns it in the snapshot",
+  async (type) => {
+    if (type !== "addWorkout") {
+      ownerRows.push([{ userId: "account-a", updatedAt: new Date(0) }]);
+    }
+    findWorkouts.mockResolvedValueOnce([
+      {
+        id: workoutId,
+        userId: "account-a",
+        name: "Cardio",
+        icon: "flame",
+        exercises: [],
+        createdAt: new Date(timestamp),
+        updatedAt: new Date(timestamp),
+      },
+    ]);
+    const result = await syncOperations([
+      {
+        id: "workout-icon",
+        type: type === "editWorkout" ? "editWorkout" : "addWorkout",
+        queuedAt: timestamp,
+        workout: {
+          id: workoutId,
+          name: "Cardio",
+          icon: "flame",
+          exercises: [],
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        },
+      },
+    ]);
+
+    expect(result.success).toBe(true);
+    expect(
+      type === "addWorkout" ? insertValues : updateValues,
+    ).toHaveBeenCalledWith(expect.objectContaining({ icon: "flame" }));
+    expect("workouts" in result && result.workouts[0].icon).toBe("flame");
+  },
+);
+
+test("legacy workout payloads get the default icon and unknown icons are rejected", async () => {
+  const operation: SyncOperation = {
+    id: "legacy-workout",
+    type: "addWorkout",
+    queuedAt: timestamp,
+    workout: {
+      id: workoutId,
+      name: "Push",
+      exercises: [],
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+  };
+  expect((await syncOperations([operation])).success).toBe(true);
+  expect(insertValues).toHaveBeenCalledWith(
+    expect.objectContaining({ icon: "dumbbell" }),
+  );
+
+  transaction.mockClear();
+  const invalid = {
+    ...operation,
+    workout: { ...operation.workout, icon: "unknown" },
+  };
+  expect(await syncOperations([invalid as SyncOperation])).toEqual({
+    success: false,
+    status: "invalid_payload",
+  });
   expect(transaction).not.toHaveBeenCalled();
 });

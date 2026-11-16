@@ -1,6 +1,9 @@
+import type { WorkoutIconName } from "@/lib/workout-icons";
+
 interface Workout {
   id: string;
   name: string;
+  icon?: WorkoutIconName;
   exercises: Exercise[];
 
   updatedAt: string;

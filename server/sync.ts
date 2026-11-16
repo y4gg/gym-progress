@@ -8,6 +8,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { exercise, exerciseLog, workout } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { normalizeWorkoutIcon } from "@/lib/workout-icons";
 import {
   SYNC_BATCH_SIZE,
   normalizeExercise,
@@ -163,6 +164,7 @@ function normalizeWorkoutForDb(newWorkout: Workout, userId: string) {
     id: normalizedWorkout.id,
     userId,
     name: normalizedWorkout.name,
+    icon: normalizedWorkout.icon,
     createdAt: toDate(normalizedWorkout.createdAt),
     updatedAt: toDate(normalizedWorkout.updatedAt),
   };
@@ -213,6 +215,7 @@ function toClientWorkout(
   return normalizeWorkout({
     id: dbWorkout.id,
     name: dbWorkout.name,
+    icon: normalizeWorkoutIcon(dbWorkout.icon),
     createdAt: dbWorkout.createdAt.toISOString(),
     updatedAt: dbWorkout.updatedAt.toISOString(),
     exercises: dbWorkout.exercises.map((dbExercise) => ({
@@ -345,6 +348,7 @@ async function applyAddWorkout(
       .update(workout)
       .set({
         name: dbWorkout.name,
+        icon: dbWorkout.icon,
         createdAt: dbWorkout.createdAt,
         updatedAt: dbWorkout.updatedAt,
       })
@@ -376,6 +380,7 @@ async function applyEditWorkout(
     .update(workout)
     .set({
       name: dbWorkout.name,
+      icon: dbWorkout.icon,
       updatedAt: dbWorkout.updatedAt,
     })
     .where(
