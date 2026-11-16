@@ -54,21 +54,23 @@ test("a chosen icon is created, queued, displayed, and restored from local stora
     (view.getByRole("radio", { name: "Dumbbell" }) as HTMLInputElement).checked,
   ).toBe(true);
   fireEvent.change(view.getByLabelText("Workout name"), {
-    target: { value: "Cardio" },
+    target: { value: "Push" },
   });
-  fireEvent.click(view.getByRole("radio", { name: "Flame" }));
+  fireEvent.click(view.getByRole("radio", { name: "Chest" }));
   fireEvent.click(view.getByRole("button", { name: "Create" }));
 
   expect(useStore.getState().workouts[0]).toMatchObject({
-    name: "Cardio",
-    icon: "flame",
+    name: "Push",
+    icon: "chest",
   });
   expect(useStore.getState().pendingSyncOperations[0]).toMatchObject({
     type: "addWorkout",
-    workout: { icon: "flame" },
+    workout: { icon: "chest" },
   });
   expect(
-    view.getByRole("link", { name: "Cardio" }).querySelector(".lucide-flame"),
+    view
+      .getByRole("link", { name: "Push" })
+      .querySelector('[data-workout-icon="chest"]'),
   ).toBeTruthy();
 
   const saved = localStorage.getItem("store");
@@ -79,7 +81,7 @@ test("a chosen icon is created, queued, displayed, and restored from local stora
     localStorage.setItem("store", saved!);
     await useStore.persist.rehydrate();
   });
-  expect(useStore.getState().workouts[0].icon).toBe("flame");
+  expect(useStore.getState().workouts[0].icon).toBe("chest");
 
   fireEvent.click(view.getByRole("button", { name: "Create Workout" }));
   expect(
@@ -105,7 +107,7 @@ test("editing a legacy workout defaults to dumbbell, discards cancelled choices,
   expect(
     (view.getByRole("radio", { name: "Dumbbell" }) as HTMLInputElement).checked,
   ).toBe(true);
-  fireEvent.click(view.getByRole("radio", { name: "Footprints" }));
+  fireEvent.click(view.getByRole("radio", { name: "Legs" }));
   fireEvent.click(view.getByRole("button", { name: "Close" }));
   expect(useStore.getState().pendingSyncOperations).toHaveLength(0);
 
@@ -113,19 +115,19 @@ test("editing a legacy workout defaults to dumbbell, discards cancelled choices,
   expect(
     (view.getByRole("radio", { name: "Dumbbell" }) as HTMLInputElement).checked,
   ).toBe(true);
-  fireEvent.click(view.getByRole("radio", { name: "Footprints" }));
+  fireEvent.click(view.getByRole("radio", { name: "Legs" }));
   fireEvent.click(view.getByRole("button", { name: "Save" }));
   expect(useStore.getState().workouts[0]).toMatchObject({
     name: "Legs",
-    icon: "footprints",
+    icon: "legs",
   });
   expect(useStore.getState().pendingSyncOperations[0]).toMatchObject({
     type: "editWorkout",
-    workout: { icon: "footprints" },
+    workout: { icon: "legs" },
   });
 
   fireEvent.click(view.getByRole("button", { name: "Edit Legs" }));
   expect(
-    (view.getByRole("radio", { name: "Footprints" }) as HTMLInputElement).checked,
+    (view.getByRole("radio", { name: "Legs" }) as HTMLInputElement).checked,
   ).toBe(true);
 });

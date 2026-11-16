@@ -148,9 +148,12 @@ test("replaying a pending workout add preserves exercises already present in the
 test("legacy and unknown icons fall back while offline icon edits survive queue replay", () => {
   expect(normalizeWorkout(workout).icon).toBe("dumbbell");
   expect(
+    normalizeWorkout({ ...workout, icon: "biceps-flexed" } as unknown as Workout).icon,
+  ).toBe("arms");
+  expect(
     normalizeWorkout({ ...workout, icon: "unknown" } as unknown as Workout).icon,
   ).toBe("dumbbell");
-  const edited: Workout = { ...workout, icon: "bike" };
+  const edited: Workout = { ...workout, icon: "back" };
   const queue = compactSyncQueue([sent], {
     id: "edit-icon",
     type: "editWorkout",
@@ -158,6 +161,6 @@ test("legacy and unknown icons fall back while offline icon edits survive queue 
     queuedAt: workout.createdAt,
   });
   expect(applyPendingOperations([workout], [], queue).workouts[0].icon).toBe(
-    "bike",
+    "back",
   );
 });

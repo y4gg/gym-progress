@@ -1,36 +1,23 @@
-import {
-  Activity,
-  BicepsFlexed,
-  Bike,
-  Dumbbell,
-  Flame,
-  Footprints,
-  HeartPulse,
-  Mountain,
-  PersonStanding,
-  Target,
-  Waves,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
+import { BicepsFlexed, Dumbbell } from "lucide-react";
+import { MuscleGroupIcon } from "@/components/muscle-group-icon";
 import { normalizeWorkoutIcon, type WorkoutIconName } from "@/lib/workout-icons";
 
 export const workoutIcons: Record<
   WorkoutIconName,
-  { icon: LucideIcon; label: string }
+  { label: string }
 > = {
-  dumbbell: { icon: Dumbbell, label: "Dumbbell" },
-  "biceps-flexed": { icon: BicepsFlexed, label: "Biceps" },
-  "person-standing": { icon: PersonStanding, label: "Full body" },
-  footprints: { icon: Footprints, label: "Footprints" },
-  activity: { icon: Activity, label: "Activity" },
-  "heart-pulse": { icon: HeartPulse, label: "Heart" },
-  flame: { icon: Flame, label: "Flame" },
-  zap: { icon: Zap, label: "Lightning" },
-  bike: { icon: Bike, label: "Cycling" },
-  waves: { icon: Waves, label: "Waves" },
-  mountain: { icon: Mountain, label: "Mountain" },
-  target: { icon: Target, label: "Target" },
+  dumbbell: { label: "Dumbbell" },
+  arms: { label: "Arms" },
+  legs: { label: "Legs" },
+  chest: { label: "Chest" },
+  back: { label: "Back" },
+  shoulders: { label: "Shoulders" },
+  core: { label: "Core" },
+  "upper-body": { label: "Upper body" },
+  "lower-body": { label: "Lower body" },
+  glutes: { label: "Glutes" },
+  calves: { label: "Calves" },
+  "full-body": { label: "Full body" },
 };
 
 export function WorkoutIcon({
@@ -40,6 +27,10 @@ export function WorkoutIcon({
   name?: string;
   className?: string;
 }) {
-  const Icon = workoutIcons[normalizeWorkoutIcon(name)].icon;
-  return <Icon className={className} aria-hidden="true" />;
+  const icon = normalizeWorkoutIcon(name);
+  if (icon === "dumbbell" || icon === "arms") {
+    const Icon = icon === "arms" ? BicepsFlexed : Dumbbell;
+    return <Icon className={className} aria-hidden="true" />;
+  }
+  return <MuscleGroupIcon group={icon} className={className} />;
 }

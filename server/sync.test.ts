@@ -221,8 +221,8 @@ test.each(["addWorkout", "editWorkout", "upsertWorkout"] as const)(
       {
         id: workoutId,
         userId: "account-a",
-        name: "Cardio",
-        icon: "flame",
+        name: "Push",
+        icon: "chest",
         exercises: [],
         createdAt: new Date(timestamp),
         updatedAt: new Date(timestamp),
@@ -235,8 +235,8 @@ test.each(["addWorkout", "editWorkout", "upsertWorkout"] as const)(
         queuedAt: timestamp,
         workout: {
           id: workoutId,
-          name: "Cardio",
-          icon: "flame",
+          name: "Push",
+          icon: "chest",
           exercises: [],
           createdAt: timestamp,
           updatedAt: timestamp,
@@ -247,8 +247,8 @@ test.each(["addWorkout", "editWorkout", "upsertWorkout"] as const)(
     expect(result.success).toBe(true);
     expect(
       type === "addWorkout" ? insertValues : updateValues,
-    ).toHaveBeenCalledWith(expect.objectContaining({ icon: "flame" }));
-    expect("workouts" in result && result.workouts[0].icon).toBe("flame");
+    ).toHaveBeenCalledWith(expect.objectContaining({ icon: "chest" }));
+    expect("workouts" in result && result.workouts[0].icon).toBe("chest");
   },
 );
 
