@@ -139,6 +139,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pendingAction !== null) return;
     const trimmedEmail = email.trim();
     const homeURL = new URL("/", window.location.origin).toString();
     const verificationSuccessURL = new URL(
@@ -292,11 +293,23 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       return;
     }
 
-    void credential.isConditionalMediationAvailable().then((isAvailable) => {
-      if (isAvailable) {
-        void signInWithPasskey({ autoFill: true, silent: true });
-      }
-    });
+    let cancelled = false;
+
+    void credential
+      .isConditionalMediationAvailable()
+      .then((isAvailable) => {
+        if (isAvailable && !cancelled) {
+          void signInWithPasskey({ autoFill: true, silent: true });
+        }
+      })
+      .catch(() => {
+        // Capability checks can fail in restricted browser contexts. Manual
+        // sign-in methods remain available.
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isRegister, signInWithPasskey]);
 
   function handlePasskeySignIn() {

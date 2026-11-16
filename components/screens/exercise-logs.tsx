@@ -309,7 +309,7 @@ function ExerciseLogsPageContent({ exerciseId }: { exerciseId: string }) {
     <ExerciseLogsView
       exerciseId={exercise.id}
       groupedLogs={groupedLogs}
-      key={selectMode ? "select" : "read"}
+      key={`${exercise.id}:${selectMode ? "select" : "read"}`}
       selectMode={selectMode}
     />
   );

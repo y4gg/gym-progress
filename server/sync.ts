@@ -9,11 +9,21 @@ import { db } from "@/db";
 import { exercise, exerciseLog, workout } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import {
+  SYNC_BATCH_SIZE,
   normalizeExercise,
   normalizeExerciseLog,
   normalizeWorkout,
 } from "@/lib/sync";
-import type { Exercise, ExerciseLog, SyncOperation, Workout } from "@/lib/types";
+import type {
+  Exercise,
+  ExerciseLog,
+  SyncOperation,
+  Workout,
+} from "@/lib/types";
+import {
+  exerciseFieldsSchema,
+  workoutFieldsSchema,
+} from "@/lib/workout-validation";
 
 type SyncFailureStatus =
   | "unauthorized"
@@ -40,24 +50,24 @@ const isoDateSchema = z.string().refine((value) => {
 
 const cuidSchema = z.string().refine(isCuid, "invalid_id");
 
-const exerciseSchema: z.ZodType<Exercise> = z.object({
+const exerciseSchema: z.ZodType<Exercise> = exerciseFieldsSchema.extend({
+  step: z.preprocess((value) => {
+    // Older offline clients accepted any positive step. Fit those payloads to
+    // numeric(8, 2) before validation, without rounding small steps to zero.
+    if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+      return value;
+    }
+    return Math.max(0.01, Math.round((value + Number.EPSILON) * 100) / 100);
+  }, exerciseFieldsSchema.shape.step),
   id: cuidSchema,
-  name: z.string().min(4),
   workoutId: cuidSchema,
   position: z.number().int().min(0).default(0),
-  weight: z.number().min(0),
-  sets: z.number().int().min(1),
-  maxReps: z.number().int().min(1).optional(),
-  logging: z.boolean(),
-  notes: z.string(),
-  step: z.number().positive(),
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
 });
 
-const workoutSchema: z.ZodType<Workout> = z.object({
+const workoutSchema: z.ZodType<Workout> = workoutFieldsSchema.extend({
   id: cuidSchema,
-  name: z.string().min(1),
   exercises: z.array(exerciseSchema),
   createdAt: isoDateSchema,
   updatedAt: isoDateSchema,
@@ -128,7 +138,7 @@ const syncOperationSchema: z.ZodType<SyncOperation> = z.discriminatedUnion(
   ],
 );
 
-const syncOperationsSchema = z.array(syncOperationSchema).max(200);
+const syncOperationsSchema = z.array(syncOperationSchema).max(SYNC_BATCH_SIZE);
 
 function statusFailure(status: SyncFailureStatus) {
   return { success: false, status } as const;
@@ -140,10 +150,6 @@ async function getRequiredUserId() {
   });
 
   return session?.user.id ?? null;
-}
-
-function assertCuid(id: string) {
-  return isCuid(id);
 }
 
 function toDate(value: string) {
@@ -181,7 +187,10 @@ function normalizeExerciseForDb(newExercise: Exercise) {
   };
 }
 
-function normalizeExerciseLogForDb(newExerciseLog: ExerciseLog, userId: string) {
+function normalizeExerciseLogForDb(
+  newExerciseLog: ExerciseLog,
+  userId: string,
+) {
   const normalizedExerciseLog = normalizeExerciseLog(newExerciseLog);
 
   return {
@@ -303,7 +312,10 @@ async function findExerciseOwner(client: SyncDbClient, exerciseId: string) {
   return rows[0] ?? null;
 }
 
-async function findExerciseLogOwner(client: SyncDbClient, exerciseLogId: string) {
+async function findExerciseLogOwner(
+  client: SyncDbClient,
+  exerciseLogId: string,
+) {
   const rows = await client
     .select({ userId: exerciseLog.userId })
     .from(exerciseLog)
@@ -317,7 +329,7 @@ async function applyAddWorkout(
   client: SyncDbClient,
   newWorkout: Workout,
   userId: string,
-) {
+): Promise<"success" | SyncFailureStatus> {
   const dbWorkout = normalizeWorkoutForDb(newWorkout, userId);
   const existing = await findWorkoutOwner(client, dbWorkout.id);
 
@@ -336,7 +348,13 @@ async function applyAddWorkout(
         createdAt: dbWorkout.createdAt,
         updatedAt: dbWorkout.updatedAt,
       })
-      .where(and(eq(workout.id, dbWorkout.id), eq(workout.userId, userId)));
+      .where(
+        and(
+          eq(workout.id, dbWorkout.id),
+          eq(workout.userId, userId),
+          lt(workout.updatedAt, dbWorkout.updatedAt),
+        ),
+      );
   }
 
   return "success";
@@ -346,7 +364,7 @@ async function applyEditWorkout(
   client: SyncDbClient,
   updatedWorkout: Workout,
   userId: string,
-) {
+): Promise<"success" | SyncFailureStatus> {
   const dbWorkout = normalizeWorkoutForDb(updatedWorkout, userId);
   const existing = await findWorkoutOwner(client, dbWorkout.id);
 
@@ -360,7 +378,13 @@ async function applyEditWorkout(
       name: dbWorkout.name,
       updatedAt: dbWorkout.updatedAt,
     })
-    .where(and(eq(workout.id, dbWorkout.id), eq(workout.userId, userId)));
+    .where(
+      and(
+        eq(workout.id, dbWorkout.id),
+        eq(workout.userId, userId),
+        lt(workout.updatedAt, dbWorkout.updatedAt),
+      ),
+    );
 
   return "success";
 }
@@ -369,7 +393,7 @@ async function applyDeleteWorkout(
   client: SyncDbClient,
   workoutId: string,
   userId: string,
-) {
+): Promise<"success" | SyncFailureStatus> {
   const existing = await findWorkoutOwner(client, workoutId);
 
   if (existing && existing.userId !== userId) return "conflict";
@@ -386,7 +410,7 @@ async function applyAddExercise(
   client: SyncDbClient,
   newExercise: Exercise,
   userId: string,
-) {
+): Promise<"success" | SyncFailureStatus> {
   const dbExercise = normalizeExerciseForDb(newExercise);
   const parent = await findWorkoutOwner(client, dbExercise.workoutId);
 
@@ -416,7 +440,13 @@ async function applyAddExercise(
         createdAt: dbExercise.createdAt,
         updatedAt: dbExercise.updatedAt,
       })
-      .where(eq(exercise.id, dbExercise.id));
+      .where(
+        and(
+          eq(exercise.id, dbExercise.id),
+          eq(exercise.workoutId, existing.workoutId),
+          lt(exercise.updatedAt, dbExercise.updatedAt),
+        ),
+      );
   }
 
   return "success";
@@ -426,7 +456,7 @@ async function applyEditExercise(
   client: SyncDbClient,
   updatedExercise: Exercise,
   userId: string,
-) {
+): Promise<"success" | SyncFailureStatus> {
   const dbExercise = normalizeExerciseForDb(updatedExercise);
   const parent = await findWorkoutOwner(client, dbExercise.workoutId);
 
@@ -466,7 +496,7 @@ async function applyDeleteExercise(
   client: SyncDbClient,
   exerciseId: string,
   userId: string,
-) {
+): Promise<"success" | SyncFailureStatus> {
   const existing = await findExerciseOwner(client, exerciseId);
 
   if (!existing) return "success";
@@ -480,7 +510,7 @@ async function applyAddExerciseLog(
   client: SyncDbClient,
   newExerciseLog: ExerciseLog,
   userId: string,
-) {
+): Promise<"success" | SyncFailureStatus> {
   const dbExerciseLog = normalizeExerciseLogForDb(newExerciseLog, userId);
   const parent = await findExerciseOwner(client, dbExerciseLog.exerciseId);
 
@@ -502,7 +532,7 @@ async function applyDeleteExerciseLog(
   client: SyncDbClient,
   exerciseLogId: string,
   userId: string,
-) {
+): Promise<"success" | SyncFailureStatus> {
   const existing = await findExerciseLogOwner(client, exerciseLogId);
 
   if (!existing) return "success";
@@ -510,7 +540,9 @@ async function applyDeleteExerciseLog(
 
   await client
     .delete(exerciseLog)
-    .where(and(eq(exerciseLog.id, exerciseLogId), eq(exerciseLog.userId, userId)));
+    .where(
+      and(eq(exerciseLog.id, exerciseLogId), eq(exerciseLog.userId, userId)),
+    );
   return "success";
 }
 
@@ -518,7 +550,7 @@ async function applyOperation(
   client: SyncDbClient,
   operation: SyncOperation,
   userId: string,
-) {
+): Promise<"success" | SyncFailureStatus> {
   switch (operation.type) {
     case "addWorkout":
       return applyAddWorkout(client, operation.workout, userId);
@@ -539,10 +571,15 @@ async function applyOperation(
   }
 }
 
-export async function getSyncSnapshot() {
+export async function getSyncSnapshot(expectedUserId?: string) {
   try {
     const userId = await getRequiredUserId();
-    if (!userId) return syncUnauthorized;
+    if (
+      !userId ||
+      (expectedUserId !== undefined && expectedUserId !== userId)
+    ) {
+      return syncUnauthorized;
+    }
 
     return {
       ...syncSuccess,
@@ -555,31 +592,39 @@ export async function getSyncSnapshot() {
   }
 }
 
-export async function syncOperations(operations: SyncOperation[]) {
+export async function syncOperations(
+  operations: SyncOperation[],
+  expectedUserId?: string,
+) {
   try {
     const userId = await getRequiredUserId();
-    if (!userId) return syncUnauthorized;
+    if (
+      !userId ||
+      (expectedUserId !== undefined && expectedUserId !== userId)
+    ) {
+      return syncUnauthorized;
+    }
 
     const validated = validateOperations(operations);
     if (!validated.success) {
-      return validated.status === "invalid_id" ? syncInvalidId : syncInvalidPayload;
+      return validated.status === "invalid_id"
+        ? syncInvalidId
+        : syncInvalidPayload;
     }
 
-    const appliedOperationIds: string[] = [];
-    let failureStatus: SyncFailureStatus | null = null;
-
-    await db.transaction(async (transaction) => {
-      for (const operation of validated.operations) {
-        const status = await applyOperation(transaction, operation, userId);
-
-        if (status !== "success") {
-          failureStatus = status;
-          break;
+    const { appliedOperationIds, failureStatus } = await db.transaction(
+      async (transaction) => {
+        const appliedOperationIds: string[] = [];
+        for (const operation of validated.operations) {
+          const status = await applyOperation(transaction, operation, userId);
+          if (status !== "success") {
+            return { appliedOperationIds, failureStatus: status };
+          }
+          appliedOperationIds.push(operation.id);
         }
-
-        appliedOperationIds.push(operation.id);
-      }
-    });
+        return { appliedOperationIds, failureStatus: null };
+      },
+    );
 
     const snapshot = await getUserSnapshot(userId);
     const serverTime = new Date().toISOString();
@@ -604,94 +649,4 @@ export async function syncOperations(operations: SyncOperation[]) {
     console.error("syncOperations failed", error);
     return statusFailure("server_error");
   }
-}
-
-export async function addWorkout(newWorkout: Workout) {
-  if (!assertCuid(newWorkout?.id)) return syncInvalidId;
-  const result = await syncOperations([
-    {
-      id: `add-workout-${newWorkout.id}`,
-      type: "addWorkout",
-      workout: normalizeWorkout(newWorkout),
-      queuedAt: new Date().toISOString(),
-    },
-  ]);
-
-  return result.success ? syncSuccess : statusFailure(result.status);
-}
-
-export async function addExercise(newExercise: Exercise) {
-  if (!assertCuid(newExercise?.id) || !assertCuid(newExercise?.workoutId)) {
-    return syncInvalidId;
-  }
-
-  const result = await syncOperations([
-    {
-      id: `add-exercise-${newExercise.id}`,
-      type: "addExercise",
-      exercise: normalizeExercise(newExercise),
-      queuedAt: new Date().toISOString(),
-    },
-  ]);
-
-  return result.success ? syncSuccess : statusFailure(result.status);
-}
-
-export async function editWorkout(updatedWorkout: Workout) {
-  if (!assertCuid(updatedWorkout?.id)) return syncInvalidId;
-  const result = await syncOperations([
-    {
-      id: `edit-workout-${updatedWorkout.id}`,
-      type: "editWorkout",
-      workout: normalizeWorkout(updatedWorkout),
-      queuedAt: new Date().toISOString(),
-    },
-  ]);
-
-  return result.success ? syncSuccess : statusFailure(result.status);
-}
-
-export async function editExercise(updatedExercise: Exercise) {
-  if (!assertCuid(updatedExercise?.id) || !assertCuid(updatedExercise?.workoutId)) {
-    return syncInvalidId;
-  }
-
-  const result = await syncOperations([
-    {
-      id: `edit-exercise-${updatedExercise.id}`,
-      type: "editExercise",
-      exercise: normalizeExercise(updatedExercise),
-      queuedAt: new Date().toISOString(),
-    },
-  ]);
-
-  return result.success ? syncSuccess : statusFailure(result.status);
-}
-
-export async function deleteWorkout(workoutId: string) {
-  if (!assertCuid(workoutId)) return syncInvalidId;
-  const result = await syncOperations([
-    {
-      id: `delete-workout-${workoutId}`,
-      type: "deleteWorkout",
-      workoutId,
-      queuedAt: new Date().toISOString(),
-    },
-  ]);
-
-  return result.success ? syncSuccess : statusFailure(result.status);
-}
-
-export async function deleteExercise(exerciseId: string) {
-  if (!assertCuid(exerciseId)) return syncInvalidId;
-  const result = await syncOperations([
-    {
-      id: `delete-exercise-${exerciseId}`,
-      type: "deleteExercise",
-      exerciseId,
-      queuedAt: new Date().toISOString(),
-    },
-  ]);
-
-  return result.success ? syncSuccess : statusFailure(result.status);
 }

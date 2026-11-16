@@ -62,7 +62,14 @@ export function Launchpad({
         setMenuOpen(nextOpen);
       }}
     >
-      {!onTutorialComplete && (
+      {onTutorialComplete ? (
+        <Dialog.Trigger asChild>
+          <Button variant="outline" size="lg">
+            <Menu aria-hidden="true" />
+            Open menu
+          </Button>
+        </Dialog.Trigger>
+      ) : (
         <Dialog.Trigger asChild>
           <button type="button" aria-label="Menu" className={triggerClassName}>
             <Menu aria-hidden="true" />

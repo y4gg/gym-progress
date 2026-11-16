@@ -36,6 +36,7 @@ export function ChangeEmailDialog({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isPending || disabled) return;
     setError(null);
     setIsPending(true);
 
@@ -52,7 +53,7 @@ export function ChangeEmailDialog({
         return;
       }
 
-      toast.success("Email updated.");
+      toast.success("Check your new email address to confirm the change.");
       setNewEmail("");
       setOpen(false);
     } catch {
@@ -105,7 +106,11 @@ export function ChangeEmailDialog({
           ) : null}
           <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">
             <DialogClose asChild>
-              <Button className="h-14 text-lg font-semibold" variant="outline">
+              <Button
+                className="h-14 text-lg font-semibold"
+                type="button"
+                variant="outline"
+              >
                 Cancel
               </Button>
             </DialogClose>

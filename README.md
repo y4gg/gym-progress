@@ -52,6 +52,25 @@ the offline app, JavaScript, CSS, and locally served fonts. Updates activate aft
 existing app tabs close. Clearing browser site data removes offline files and
 locally saved workouts, so sync any changes first.
 
+## Development checks
+
+Install the locked dependencies with `bun install --frozen-lockfile`, then run:
+
+```sh
+bun run lint
+bun run typecheck
+bun run test
+bun run build
+```
+
+`bun run test` discovers all test files and runs them in separate processes so
+module mocks and browser globals cannot leak between suites. The production build
+also generates the offline service worker. Auth and email configuration is needed
+for builds; the Dockerfile shows build-only placeholders.
+
+See [the codebase review](docs/code-review.md) for the fixes, verification scope,
+and remaining dependency advisories.
+
 ## How to deploy
 
 0. Install bun
@@ -60,6 +79,31 @@ locally saved workouts, so sync any changes first.
 3. `bun i`
 4. `bun run build`
 5. `bun run start`
+
+### Upgrading authentication from 1.6
+
+Keep `better-auth` and `@better-auth/passkey` on the same version and install with
+`bun install --frozen-lockfile`. The upgrade to 1.7.25 uses the existing user,
+session, account, verification, and passkey tables; it requires no additional
+database migration for this app. The temporary `account.issuer` requirement in
+1.7.0–1.7.2 was removed in 1.7.3. See the
+[version-specific upgrade guide](https://github.com/better-auth/better-auth/blob/v1.7.25/docs/content/docs/guides/1-7-upgrade-guide.mdx).
+
+Before deploying against existing data, check for ambiguous account identities:
+
+```sql
+SELECT provider_id, account_id, count(*)
+FROM account
+GROUP BY provider_id, account_id
+HAVING count(*) > 1;
+```
+
+If this returns rows, resolve the duplicate identities while preserving each
+user's data before upgrading; Better Auth rejects ambiguous account lookups.
+Keep `BETTER_AUTH_URL` set to the public HTTPS origin behind Dokploy or another
+reverse proxy. After deployment, verify Google and password sign-in, email
+verification, password reset, magic links, and existing passkeys. Account deletion
+without a password requires a recent sign-in; older sessions must sign in again.
 
 ### Dokploy
 

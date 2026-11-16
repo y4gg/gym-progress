@@ -55,3 +55,91 @@ test("only unchanged acknowledged operations are removed while new offline chang
     next.workout.id,
   ]);
 });
+
+const exercise = {
+  id: "exercise",
+  name: "Bench press",
+  workoutId: workout.id,
+  position: 0,
+  weight: 20,
+  sets: 3,
+  logging: false,
+  notes: "",
+  step: 2.5,
+  createdAt: workout.createdAt,
+  updatedAt: workout.updatedAt,
+};
+const exerciseLog = {
+  id: "log",
+  exerciseId: exercise.id,
+  workoutId: workout.id,
+  reps: 8,
+  weight: 20,
+  performedAt: workout.createdAt,
+  createdAt: workout.createdAt,
+};
+const deletionCases: { add: SyncOperation; deletion: SyncOperation }[] = [
+  {
+    add: sent,
+    deletion: {
+      id: "delete-workout",
+      type: "deleteWorkout",
+      workoutId: workout.id,
+      queuedAt: workout.createdAt,
+    },
+  },
+  {
+    add: {
+      id: "add-exercise",
+      type: "addExercise",
+      exercise,
+      queuedAt: workout.createdAt,
+    },
+    deletion: {
+      id: "delete-exercise",
+      type: "deleteExercise",
+      exerciseId: exercise.id,
+      queuedAt: workout.createdAt,
+    },
+  },
+  {
+    add: {
+      id: "add-log",
+      type: "addExerciseLog",
+      exerciseLog,
+      queuedAt: workout.createdAt,
+    },
+    deletion: {
+      id: "delete-log",
+      type: "deleteExerciseLog",
+      exerciseLogId: exerciseLog.id,
+      queuedAt: workout.createdAt,
+    },
+  },
+];
+
+test.each(deletionCases)(
+  "$add.type followed by $deletion.type retains a delete for an in-flight add",
+  ({ add, deletion }) => {
+    expect(compactSyncQueue([add], deletion)).toEqual([deletion]);
+  },
+);
+
+test("replaying a pending workout add preserves exercises already present in the server snapshot", () => {
+  const exercise = {
+    id: "exercise",
+    name: "Bench press",
+    workoutId: workout.id,
+    position: 0,
+    weight: 20,
+    sets: 3,
+    logging: false,
+    notes: "",
+    step: 2.5,
+    createdAt: workout.createdAt,
+    updatedAt: workout.updatedAt,
+  };
+  const snapshot = { ...workout, exercises: [exercise] };
+  const replayed = applyPendingOperations([snapshot], [], [sent]);
+  expect(replayed.workouts[0].exercises).toEqual([exercise]);
+});

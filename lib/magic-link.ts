@@ -48,20 +48,20 @@ export const magicLinkAuth = magicLink({
       });
     }
 
-    const result = await sendEmail({
-      to: user.user.email,
-      subject: "Sign in to Gym Ladder",
-      html: renderAppActionEmail({
-        actionLabel: "Sign in",
-        actionUrl: url,
-        body: "Use this link to sign in to your Gym Ladder account. The link expires in 10 minutes and can only be used once.",
-        preview: "Your Gym Ladder sign-in link.",
-        title: "Sign in",
-      }),
-      text: `Sign in to Gym Ladder: ${url}\nThis link expires in 10 minutes and can only be used once.`,
-    });
-
-    if (result.error) {
+    try {
+      await sendEmail({
+        to: user.user.email,
+        subject: "Sign in to Gym Ladder",
+        html: renderAppActionEmail({
+          actionLabel: "Sign in",
+          actionUrl: url,
+          body: "Use this link to sign in to your Gym Ladder account. The link expires in 10 minutes and can only be used once.",
+          preview: "Your Gym Ladder sign-in link.",
+          title: "Sign in",
+        }),
+        text: `Sign in to Gym Ladder: ${url}\nThis link expires in 10 minutes and can only be used once.`,
+      });
+    } catch {
       throw new APIError("INTERNAL_SERVER_ERROR", {
         code: "MAGIC_LINK_EMAIL_FAILED",
         message: "Sign-in email could not be sent. Please try again.",

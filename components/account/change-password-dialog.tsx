@@ -218,7 +218,11 @@ export function ChangePasswordDialog({ disabled }: { disabled?: boolean }) {
           ) : null}
           <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">
             <DialogClose asChild>
-              <Button className="h-14 text-lg font-semibold" variant="outline">
+              <Button
+                className="h-14 text-lg font-semibold"
+                type="button"
+                variant="outline"
+              >
                 Cancel
               </Button>
             </DialogClose>

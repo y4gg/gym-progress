@@ -1,28 +1,45 @@
-import type { Exercise, ExerciseLog, SyncOperation, Workout } from "@/lib/types";
+import type {
+  Exercise,
+  ExerciseLog,
+  SyncOperation,
+  Workout,
+} from "@/lib/types";
 
 const DEFAULT_STEP = 2.5;
+
+export const SYNC_BATCH_SIZE = 200;
 
 export function getUnchangedOperationIds(
   sentOperations: SyncOperation[],
   currentOperations: SyncOperation[],
   acknowledgedIds: string[],
 ) {
-  const sentById = new Map(sentOperations.map((operation) => [operation.id, operation]));
+  const sentById = new Map(
+    sentOperations.map((operation) => [operation.id, operation]),
+  );
   const acknowledged = new Set(acknowledgedIds);
   // Queue compaction can update an operation's payload while keeping its ID.
   return currentOperations
-    .filter((operation) => acknowledged.has(operation.id) && sentById.get(operation.id) === operation)
+    .filter(
+      (operation) =>
+        acknowledged.has(operation.id) &&
+        sentById.get(operation.id) === operation,
+    )
     .map((operation) => operation.id);
 }
 
 function toIsoString(value: unknown): string {
   if (value instanceof Date) {
-    return Number.isNaN(value.getTime()) ? new Date().toISOString() : value.toISOString();
+    return Number.isNaN(value.getTime())
+      ? new Date().toISOString()
+      : value.toISOString();
   }
 
   if (typeof value === "string" || typeof value === "number") {
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+    return Number.isNaN(date.getTime())
+      ? new Date().toISOString()
+      : date.toISOString();
   }
 
   return new Date().toISOString();
@@ -150,7 +167,8 @@ export function compactSyncQueue(
   if (nextOperation.type === "deleteWorkout") {
     queue = queue.filter((operation) => {
       if (
-        (operation.type === "addExercise" || operation.type === "editExercise") &&
+        (operation.type === "addExercise" ||
+          operation.type === "editExercise") &&
         operation.exercise.workoutId === nextOperation.workoutId
       ) {
         return false;
@@ -188,8 +206,10 @@ export function compactSyncQueue(
     }
 
     if (entityKind === "exerciseLog") {
-      if ("exerciseLog" in operation) return operation.exerciseLog.id === targetId;
-      if ("exerciseLogId" in operation) return operation.exerciseLogId === targetId;
+      if ("exerciseLog" in operation)
+        return operation.exerciseLog.id === targetId;
+      if ("exerciseLogId" in operation)
+        return operation.exerciseLogId === targetId;
       return false;
     }
 
@@ -214,10 +234,12 @@ export function compactSyncQueue(
       ...before,
       {
         ...previous,
-        ...(previous.type === "addWorkout" && nextOperation.type === "editWorkout"
+        ...(previous.type === "addWorkout" &&
+        nextOperation.type === "editWorkout"
           ? { workout: nextOperation.workout }
           : {}),
-        ...(previous.type === "addExercise" && nextOperation.type === "editExercise"
+        ...(previous.type === "addExercise" &&
+        nextOperation.type === "editExercise"
           ? { exercise: nextOperation.exercise }
           : {}),
         queuedAt: previous.queuedAt,
@@ -234,17 +256,23 @@ export function compactSyncQueue(
   }
 
   if (
-    (previous.type === "addWorkout" && nextOperation.type === "deleteWorkout") ||
-    (previous.type === "addExercise" && nextOperation.type === "deleteExercise") ||
+    (previous.type === "addWorkout" &&
+      nextOperation.type === "deleteWorkout") ||
+    (previous.type === "addExercise" &&
+      nextOperation.type === "deleteExercise") ||
     (previous.type === "addExerciseLog" &&
       nextOperation.type === "deleteExerciseLog")
   ) {
-    return [...before, ...after];
+    // The add may already be in flight (or committed before a lost response).
+    // Keep an idempotent delete so the server cannot resurrect local data.
+    return [...before, nextOperation, ...after];
   }
 
   if (
-    (previous.type === "editWorkout" && nextOperation.type === "deleteWorkout") ||
-    (previous.type === "editExercise" && nextOperation.type === "deleteExercise")
+    (previous.type === "editWorkout" &&
+      nextOperation.type === "deleteWorkout") ||
+    (previous.type === "editExercise" &&
+      nextOperation.type === "deleteExercise")
   ) {
     return [...before, nextOperation, ...after];
   }
@@ -300,7 +328,10 @@ export function mergeInitialData(
     }
 
     const remoteExercisesById = new Map(
-      (remoteWorkout?.exercises ?? []).map((exercise) => [exercise.id, exercise]),
+      (remoteWorkout?.exercises ?? []).map((exercise) => [
+        exercise.id,
+        exercise,
+      ]),
     );
 
     for (const localExercise of localWorkout.exercises) {
@@ -368,10 +399,14 @@ export function applyPendingOperations(
   for (const operation of operations) {
     if (operation.type === "addWorkout") {
       const normalizedWorkout = normalizeWorkout(operation.workout);
-      const existing = workouts.find((workout) => workout.id === normalizedWorkout.id);
+      const existing = workouts.find(
+        (workout) => workout.id === normalizedWorkout.id,
+      );
       workouts = existing
         ? workouts.map((workout) =>
-            workout.id === normalizedWorkout.id ? normalizedWorkout : workout,
+            workout.id === normalizedWorkout.id
+              ? { ...normalizedWorkout, exercises: workout.exercises }
+              : workout,
           )
         : [...workouts, normalizedWorkout];
     }
@@ -386,7 +421,9 @@ export function applyPendingOperations(
     }
 
     if (operation.type === "deleteWorkout") {
-      workouts = workouts.filter((workout) => workout.id !== operation.workoutId);
+      workouts = workouts.filter(
+        (workout) => workout.id !== operation.workoutId,
+      );
       exerciseLogs = exerciseLogs.filter(
         (exerciseLog) => exerciseLog.workoutId !== operation.workoutId,
       );
@@ -402,7 +439,9 @@ export function applyPendingOperations(
                 (exercise) => exercise.id === normalizedExercise.id,
               )
                 ? workout.exercises.map((exercise) =>
-                    exercise.id === normalizedExercise.id ? normalizedExercise : exercise,
+                    exercise.id === normalizedExercise.id
+                      ? normalizedExercise
+                      : exercise,
                   )
                 : [...workout.exercises, normalizedExercise],
             }

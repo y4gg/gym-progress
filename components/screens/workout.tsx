@@ -70,6 +70,10 @@ function SortableExerciseRow({ exercise }: SortableExerciseRowProps) {
 }
 
 export default function WorkoutOverview({ id }: { id: string }) {
+  return <WorkoutScreen key={id} id={id} />;
+}
+
+function WorkoutScreen({ id }: { id: string }) {
   const hydrated = useStoreHydrated();
   const workout = useStore((state) => state.getWorkoutById(id));
   const reorderWorkoutExercises = useStore(
@@ -82,7 +86,15 @@ export default function WorkoutOverview({ id }: { id: string }) {
     () => new Map(exercises.map((exercise) => [exercise.id, exercise])),
     [exercises],
   );
-  const draftExercises = draftExerciseIds
+  // Keep an active sort usable when another device adds or removes exercises.
+  const draftIds = new Set(draftExerciseIds);
+  const orderedExerciseIds = [
+    ...draftExerciseIds.filter((exerciseId) => exercisesById.has(exerciseId)),
+    ...exercises
+      .filter((exercise) => !draftIds.has(exercise.id))
+      .map((exercise) => exercise.id),
+  ];
+  const draftExercises = orderedExerciseIds
     .map((exerciseId) => exercisesById.get(exerciseId))
     .filter((exercise): exercise is Exercise => Boolean(exercise));
 
@@ -110,12 +122,12 @@ export default function WorkoutOverview({ id }: { id: string }) {
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return;
 
-    setDraftExerciseIds((exerciseIds) => {
-      const oldIndex = exerciseIds.indexOf(String(active.id));
-      const newIndex = exerciseIds.indexOf(String(over.id));
+    setDraftExerciseIds(() => {
+      const oldIndex = orderedExerciseIds.indexOf(String(active.id));
+      const newIndex = orderedExerciseIds.indexOf(String(over.id));
 
-      if (oldIndex === -1 || newIndex === -1) return exerciseIds;
-      return arrayMove(exerciseIds, oldIndex, newIndex);
+      if (oldIndex === -1 || newIndex === -1) return orderedExerciseIds;
+      return arrayMove(orderedExerciseIds, oldIndex, newIndex);
     });
   };
 
@@ -125,7 +137,7 @@ export default function WorkoutOverview({ id }: { id: string }) {
   };
 
   const handleSortDone = () => {
-    reorderWorkoutExercises(workout.id, draftExerciseIds);
+    reorderWorkoutExercises(workout.id, orderedExerciseIds);
     setSorting(false);
     toast.success("Exercise order saved.");
   };
@@ -143,7 +155,7 @@ export default function WorkoutOverview({ id }: { id: string }) {
             sensors={sensors}
           >
             <SortableContext
-              items={draftExerciseIds}
+              items={orderedExerciseIds}
               strategy={verticalListSortingStrategy}
             >
               <div className="flex flex-col gap-3">

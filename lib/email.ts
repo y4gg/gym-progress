@@ -110,7 +110,7 @@ export function renderAppActionEmail({
 </html>`;
 }
 
-export function sendEmail({
+export async function sendEmail({
   text,
   to,
   subject,
@@ -121,11 +121,19 @@ export function sendEmail({
   subject: string;
   html: string;
 }) {
-  return resend.emails.send({
+  const result = await resend.emails.send({
     from: "noreply@updates.y4.gg",
     to,
     subject,
     html,
     text,
   });
+
+  // Resend resolves API failures instead of rejecting the promise. Treat them
+  // as failures so verification and password-reset callers cannot report success.
+  if (result.error) {
+    throw new Error("Email could not be sent.");
+  }
+
+  return result;
 }

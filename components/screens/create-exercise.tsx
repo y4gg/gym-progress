@@ -11,14 +11,18 @@ import { createId } from "@paralleldrive/cuid2";
 import { notFound } from "next/navigation";
 import { toast } from "sonner";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
-import * as z from "zod";
+import { exerciseFieldsSchema } from "@/lib/workout-validation";
 import { AdvancedExerciseOptionsDialog } from "@/components/advanced-exercise-options-dialog";
 
 export default function CreateExercisePage({ id }: { id: string }) {
+  return <CreateExerciseForm key={id} id={id} />;
+}
+
+function CreateExerciseForm({ id }: { id: string }) {
   const hydrated = useStoreHydrated();
   const router = useAppRouter();
   const workout = useStore((state) => state.getWorkoutById(id));
-  const [newExercise, setNewExercise] = useState<NewExercise>({
+  const [newExercise, setNewExercise] = useState<NewExercise>(() => ({
     id: createId(),
     name: "",
     weight: 0,
@@ -27,7 +31,7 @@ export default function CreateExercisePage({ id }: { id: string }) {
     logging: true,
     step: 2.5,
     workoutId: id,
-  });
+  }));
 
   if (!hydrated) {
     return null;
@@ -37,28 +41,13 @@ export default function CreateExercisePage({ id }: { id: string }) {
     notFound();
   }
 
-  const exerciseSchema = z.object({
-    name: z.string().min(4),
-    weight: z.number().min(0),
-    notes: z.string().optional(),
-    sets: z.number().min(1).multipleOf(1),
-    maxReps: z.number().int().min(1).optional(),
-    logging: z.boolean(),
-    step: z.number().positive().optional(),
-  });
-
   const handleCreateExercise = () => {
-    // TODO: validate input
-    try {
-      exerciseSchema.parse(newExercise);
-    } catch (error) {
-      if (error instanceof z.ZodError)
-        error.issues.forEach((issue) => {
-          toast.error(`${issue.input}: ${issue.code}`);
-        });
+    const result = exerciseFieldsSchema.safeParse(newExercise);
+    if (!result.success) {
+      toast.error(result.error.issues[0].message);
       return;
     }
-    useStore.getState().addExercise(newExercise);
+    useStore.getState().addExercise({ ...newExercise, ...result.data });
     router.push(`/w/${workout.id}`);
     toast.success("Exercise created successfully!");
   };

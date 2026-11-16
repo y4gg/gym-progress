@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { useAppRouter, AppLink as Link } from "@/components/app-navigation";
 import { Input } from "@/components/ui/input";
@@ -13,13 +13,16 @@ import { EditExerciseDialog } from "@/components/edit-exercise-dialog";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { toast } from "sonner";
-import { Exercise } from "@/lib/types";
-import { useDebounce } from "@/lib/use-debounce";
 import { TrackRepsDialog } from "@/components/track-reps-dialog";
 import { createId } from "@paralleldrive/cuid2";
 import { WeightSuggestionReachedDialog } from "@/components/weight-suggestion-reached-dialog";
+import { weightSchema } from "@/lib/workout-validation";
 
 export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
+  return <ExerciseScreen key={exerciseId} exerciseId={exerciseId} />;
+}
+
+function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
   const hydrated = useStoreHydrated();
   const router = useAppRouter();
 
@@ -35,7 +38,9 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
   );
   const exerciseLogs = useStore((state) => state.exerciseLogs);
 
-  const { addExerciseLog, deleteExercise, editExercise } = useStore();
+  const addExerciseLog = useStore((state) => state.addExerciseLog);
+  const deleteExercise = useStore((state) => state.deleteExercise);
+  const editExercise = useStore((state) => state.editExercise);
 
   const today = new Date().toDateString();
   const [setSelection, setSetSelection] = useState<{
@@ -70,10 +75,6 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
   };
   const [trackRepsDialogOpen, setTrackRepsDialogOpen] = useState(false);
   const [weightSuggestionPending, setWeightSuggestionPending] = useState(false);
-  const [newExercise, setNewExercise] = useState<Exercise | undefined>(
-    undefined,
-  );
-  const immediateExerciseSaveRef = useRef<Exercise | null>(null);
 
   const exerciseLogReps = useMemo(() => {
     if (!exercise) return undefined;
@@ -87,56 +88,20 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
       )[0]?.reps;
   }, [exercise, exerciseLogs]);
 
-  useEffect(() => {
-    if (exercise) {
-      // eslint-disable-next-line
-      setNewExercise(exercise);
-    }
-  }, [exercise]);
-
-  const debouncedExercise = useDebounce(newExercise, 1500);
-
-  useEffect(() => {
-    if (!debouncedExercise || !exercise) return;
-
-    const immediateExerciseSave = immediateExerciseSaveRef.current;
-
-    if (
-      immediateExerciseSave?.id === exercise.id &&
-      exercise.weight === immediateExerciseSave.weight &&
-      exercise.notes === immediateExerciseSave.notes
-    ) {
-      if (
-        debouncedExercise.weight !== immediateExerciseSave.weight ||
-        debouncedExercise.notes !== immediateExerciseSave.notes
-      ) {
-        return;
-      }
-
-      immediateExerciseSaveRef.current = null;
-    }
-
-    if (
-      debouncedExercise.weight !== exercise.weight ||
-      debouncedExercise.notes !== exercise.notes
-    ) {
-      editExercise(debouncedExercise);
-    }
-  }, [debouncedExercise, exercise, editExercise]);
-
   if (!hydrated) return null;
   if (!exercise || !workout) notFound();
 
-  const handleDelete = async () => {
-    await deleteExercise(exerciseId);
+  const handleDelete = () => {
+    deleteExercise(exerciseId);
     router.push(`/w/${workout.id}`);
     toast.success("Exercise deleted successfully.");
   };
 
   const step = exercise.step ?? 2.5;
   const defaultReps = exerciseLogReps ?? exercise.maxReps ?? 8;
-  const currentWeight = newExercise?.weight ?? exercise.weight;
-  const suggestedWeight = Number(currentWeight + step);
+  const currentWeight = exercise.weight;
+  const suggestedWeight = Number((currentWeight + step).toFixed(2));
+  const canIncreaseWeight = weightSchema.safeParse(suggestedWeight).success;
   const targetReps = exercise.maxReps;
   const weightSuggestionEnabled = typeof targetReps === "number";
   const canTrackCurrentSet = exercise.logging;
@@ -195,13 +160,13 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
       exerciseId: exercise.id,
       workoutId: workout.id,
       reps,
-      weight: newExercise?.weight ?? exercise.weight,
+      weight: exercise.weight,
       performedAt: new Date().toISOString(),
     });
     setTrackRepsDialogOpen(false);
     toast.success("Set logged.");
 
-    if (weightSuggestionEnabled && reps >= targetReps) {
+    if (weightSuggestionEnabled && reps >= targetReps && canIncreaseWeight) {
       setWeightSuggestionPending(true);
       return;
     }
@@ -215,14 +180,11 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
   };
 
   const handleConfirmWeightSuggestion = () => {
-    const baseExercise = newExercise ?? exercise;
     const updatedExercise = {
-      ...baseExercise,
-      weight: Number(baseExercise.weight + step),
+      ...exercise,
+      weight: suggestedWeight,
     };
 
-    setNewExercise(updatedExercise);
-    immediateExerciseSaveRef.current = updatedExercise;
     editExercise(updatedExercise);
     setWeightSuggestionPending(false);
     advanceSet();
@@ -245,11 +207,11 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
           <Button
             aria-label="Increase weight"
             className="h-16"
+            disabled={!canIncreaseWeight}
             onClick={() => {
-              if (!newExercise) return;
-              setNewExercise({
-                ...newExercise,
-                weight: Number(newExercise.weight + step),
+              editExercise({
+                ...exercise,
+                weight: suggestedWeight,
               });
             }}
             type="button"
@@ -265,16 +227,15 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
               inputMode="decimal"
               min={0}
               onChange={(e) => {
-                if (!newExercise) return;
-                setNewExercise({
-                  ...newExercise,
-                  weight: Number(e.target.value),
-                });
+                const weight = Number(e.target.value);
+                if (weightSchema.safeParse(weight).success) {
+                  editExercise({ ...exercise, weight });
+                }
               }}
               placeholder="0"
               step="any"
               type="number"
-              value={newExercise?.weight ?? ""}
+              value={exercise.weight}
             />
             <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-semibold text-muted-foreground">
               kg
@@ -284,12 +245,14 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
           <Button
             aria-label="Decrease weight"
             className="h-16"
-            disabled={newExercise ? newExercise.weight <= 0 : true}
+            disabled={exercise.weight <= 0}
             onClick={() => {
-              if (!newExercise) return;
-              setNewExercise({
-                ...newExercise,
-                weight: Math.max(0, Number(newExercise.weight - step)),
+              editExercise({
+                ...exercise,
+                weight: Math.max(
+                  0,
+                  Number((exercise.weight - step).toFixed(2)),
+                ),
               });
             }}
             type="button"
@@ -303,14 +266,13 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
           aria-label="Notes"
           className="min-h-36 resize-none px-4 py-4 text-xl"
           onChange={(e) => {
-            if (!newExercise) return;
-            setNewExercise({
-              ...newExercise,
+            editExercise({
+              ...exercise,
               notes: e.target.value,
             });
           }}
           placeholder="Notes"
-          value={newExercise?.notes ?? ""}
+          value={exercise.notes}
         />
 
         <div className="grid grid-cols-[4.5rem_1fr_4.5rem] gap-2">
