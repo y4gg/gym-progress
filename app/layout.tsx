@@ -58,7 +58,9 @@ export default function RootLayout({
             <Hydration />
             <SyncProvider />
             <ServiceWorkerRegistration />
-            <PageTransition>{children}</PageTransition>
+            <div className="min-w-0 flex-1 lg:pl-72">
+              <PageTransition>{children}</PageTransition>
+            </div>
             <Suspense fallback={null}>
               <AppNavbar />
             </Suspense>

@@ -235,7 +235,7 @@ export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
   };
 
   return (
-    <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32">
+    <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32 lg:max-w-xl lg:pb-10">
       <div className="flex flex-col gap-4">
         <h1 className="truncate text-center text-3xl font-bold">
           {exercise.name}
