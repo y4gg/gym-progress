@@ -29,6 +29,13 @@
       "when": 1794854841139,
       "tag": "0003_workout_icons",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794856163512,
+      "tag": "0004_exercise_icons",
+      "breakpoints": true
     }
   ]
 }

@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { exerciseFieldsSchema } from "@/lib/workout-validation";
 import { AdvancedExerciseOptionsDialog } from "@/components/advanced-exercise-options-dialog";
+import { WorkoutIconPicker } from "@/components/workout-icon-picker";
+import { normalizeWorkoutIcon } from "@/lib/workout-icons";
 
 export default function CreateExercisePage({ id }: { id: string }) {
   return <CreateExerciseForm key={id} id={id} />;
@@ -70,6 +72,12 @@ function CreateExerciseForm({ id }: { id: string }) {
           onChange={(e) =>
             setNewExercise({ ...newExercise, name: e.target.value })
           }
+        />
+
+        <WorkoutIconPicker
+          label="Exercise icon"
+          value={normalizeWorkoutIcon(newExercise.icon)}
+          onChange={(icon) => setNewExercise({ ...newExercise, icon })}
         />
 
         <div className="relative">

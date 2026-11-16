@@ -17,6 +17,7 @@ import { TrackRepsDialog } from "@/components/track-reps-dialog";
 import { createId } from "@paralleldrive/cuid2";
 import { WeightSuggestionReachedDialog } from "@/components/weight-suggestion-reached-dialog";
 import { weightSchema } from "@/lib/workout-validation";
+import { WorkoutIcon } from "@/components/workout-icon";
 
 export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
   return <ExerciseScreen key={exerciseId} exerciseId={exerciseId} />;
@@ -199,8 +200,9 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
   return (
     <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32 lg:max-w-xl lg:pb-10">
       <div className="flex flex-col gap-4">
-        <h1 className="truncate text-center text-3xl font-bold">
-          {exercise.name}
+        <h1 className="flex min-w-0 items-center justify-center gap-3 text-3xl font-bold">
+          <WorkoutIcon name={exercise.icon} className="size-8 shrink-0" />
+          <span className="truncate">{exercise.name}</span>
         </h1>
 
         <div className="grid grid-cols-[4.5rem_1fr_4.5rem] gap-2">

@@ -27,6 +27,7 @@ import { notFound } from "next/navigation";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { EditExerciseDialog } from "@/components/edit-exercise-dialog";
 import { toast } from "sonner";
+import { WorkoutIcon } from "@/components/workout-icon";
 
 type SortableExerciseRowProps = {
   exercise: Exercise;
@@ -55,6 +56,7 @@ function SortableExerciseRow({ exercise }: SortableExerciseRowProps) {
         zIndex: isDragging ? 1 : undefined,
       }}
     >
+      <WorkoutIcon name={exercise.icon} className="mr-3 size-6 shrink-0" />
       <span className="min-w-0 flex-1 truncate">{exercise.name}</span>
       <button
         aria-label={`Drag ${exercise.name}`}
@@ -144,8 +146,9 @@ function WorkoutScreen({ id }: { id: string }) {
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-9 pb-28 lg:max-w-3xl lg:pb-10">
-      <h1 className="mb-2 truncate text-center text-3xl font-bold">
-        {workout.name}
+      <h1 className="mb-2 flex min-w-0 items-center justify-center gap-3 text-3xl font-bold">
+        <WorkoutIcon name={workout.icon} className="size-8 shrink-0" />
+        <span className="truncate">{workout.name}</span>
       </h1>
       {sorting ? (
         <>
@@ -193,6 +196,10 @@ function WorkoutScreen({ id }: { id: string }) {
                 className="h-16 min-w-0 flex-1 justify-start px-5 text-left text-2xl font-semibold"
               >
                 <Link href={`/e/${exercise.id}`}>
+                  <WorkoutIcon
+                    name={exercise.icon}
+                    className="mr-2 size-6 shrink-0"
+                  />
                   <span className="min-w-0 truncate">{exercise.name}</span>
                 </Link>
               </Button>

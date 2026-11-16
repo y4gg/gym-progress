@@ -14,6 +14,7 @@ export const workoutFieldsSchema = z.object({
 
 export const exerciseFieldsSchema = z.object({
   name: z.string().trim().min(4, "Exercise names need at least 4 characters."),
+  icon: z.enum(WORKOUT_ICON_NAMES).default(DEFAULT_WORKOUT_ICON),
   weight: weightSchema,
   notes: z.string().default(""),
   sets: z

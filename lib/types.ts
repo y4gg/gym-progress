@@ -13,6 +13,7 @@ interface Workout {
 interface Exercise {
   id: string;
   name: string;
+  icon?: WorkoutIconName;
   workoutId: string;
   position: number;
   weight: number;

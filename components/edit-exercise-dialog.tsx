@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Dialog,
   DialogContent,
@@ -17,6 +19,8 @@ import { exerciseFieldsSchema } from "@/lib/workout-validation";
 import { Minus, Plus } from "lucide-react";
 import { AdvancedExerciseOptionsDialog } from "@/components/advanced-exercise-options-dialog";
 import { DeleteDialog } from "@/components/delete-dialog";
+import { WorkoutIconPicker } from "@/components/workout-icon-picker";
+import { normalizeWorkoutIcon } from "@/lib/workout-icons";
 
 export function EditExerciseDialog({
   exercise,
@@ -36,6 +40,7 @@ export function EditExerciseDialog({
     const updatedExercise = {
       ...exercise,
       name: newExercise.name,
+      icon: newExercise.icon,
       sets: newExercise.sets,
       logging: newExercise.logging,
       maxReps: newExercise.maxReps,
@@ -95,6 +100,12 @@ export function EditExerciseDialog({
               }}
             />
           </div>
+
+          <WorkoutIconPicker
+            label="Exercise icon"
+            value={normalizeWorkoutIcon(newExercise.icon)}
+            onChange={(icon) => setNewExercise({ ...newExercise, icon })}
+          />
 
           <div className="grid grid-cols-[4.5rem_1fr_4.5rem] gap-2">
             <Button

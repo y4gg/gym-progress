@@ -314,12 +314,28 @@ test("editing exercise options preserves weight and notes received while the dia
   fireEvent.change(view.getByLabelText("Name"), {
     target: { value: "Incline bench" },
   });
+  fireEvent.click(view.getByRole("radio", { name: "Chest" }));
   fireEvent.click(view.getByRole("button", { name: "Save" }));
   expect(useStore.getState().getExerciseById(exercise.id)).toMatchObject({
     name: "Incline bench",
+    icon: "chest",
     weight: 80,
     notes: "Synced note",
   });
+  expect(
+    view
+      .getByRole("heading", { name: "Incline bench" })
+      .querySelector('[data-workout-icon="chest"]'),
+  ).toBeTruthy();
+
+  fireEvent.click(view.getByRole("button", { name: "Edit" }));
+  fireEvent.click(view.getByRole("radio", { name: "Legs" }));
+  fireEvent.click(view.getByRole("button", { name: "Close" }));
+  expect(useStore.getState().getExerciseById(exercise.id)?.icon).toBe("chest");
+  fireEvent.click(view.getByRole("button", { name: "Edit" }));
+  expect(
+    (view.getByRole("radio", { name: "Chest" }) as HTMLInputElement).checked,
+  ).toBe(true);
 });
 
 test("decimal weight steps do not accumulate floating point errors", () => {

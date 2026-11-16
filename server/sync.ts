@@ -176,6 +176,7 @@ function normalizeExerciseForDb(newExercise: Exercise) {
   return {
     id: normalizedExercise.id,
     name: normalizedExercise.name,
+    icon: normalizedExercise.icon,
     workoutId: normalizedExercise.workoutId,
     position: normalizedExercise.position,
     weight: normalizedExercise.weight,
@@ -221,6 +222,7 @@ function toClientWorkout(
     exercises: dbWorkout.exercises.map((dbExercise) => ({
       id: dbExercise.id,
       name: dbExercise.name,
+      icon: normalizeWorkoutIcon(dbExercise.icon),
       workoutId: dbExercise.workoutId,
       position: dbExercise.position,
       weight: dbExercise.weight,
@@ -434,6 +436,7 @@ async function applyAddExercise(
       .update(exercise)
       .set({
         name: dbExercise.name,
+        icon: dbExercise.icon,
         workoutId: dbExercise.workoutId,
         position: dbExercise.position,
         weight: dbExercise.weight,
@@ -476,6 +479,7 @@ async function applyEditExercise(
     .update(exercise)
     .set({
       name: dbExercise.name,
+      icon: dbExercise.icon,
       workoutId: dbExercise.workoutId,
       position: dbExercise.position,
       weight: dbExercise.weight,

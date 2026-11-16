@@ -7,15 +7,17 @@ import { WORKOUT_ICON_NAMES, type WorkoutIconName } from "@/lib/workout-icons";
 export function WorkoutIconPicker({
   value,
   onChange,
+  label = "Workout icon",
 }: {
   value: WorkoutIconName;
   onChange: (icon: WorkoutIconName) => void;
+  label?: string;
 }) {
   const name = useId();
 
   return (
     <fieldset className="min-w-0">
-      <legend className="mb-2 text-sm font-medium">Workout icon</legend>
+      <legend className="mb-2 text-sm font-medium">{label}</legend>
       <div className="grid grid-cols-4 gap-2">
         {WORKOUT_ICON_NAMES.map((icon) => (
           <label key={icon} className="relative cursor-pointer">
