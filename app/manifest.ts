@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "Gym Ladder",
     short_name: "Gym Ladder",
-    description: "Track your gym progress",
+    description: "Track your workouts and gym progress, even offline.",
     lang: "en",
     start_url: "/",
     scope: "/",

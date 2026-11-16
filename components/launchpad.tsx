@@ -1,38 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState, type SetStateAction } from "react";
 import { Dialog } from "radix-ui";
-import { useTheme } from "next-themes";
-import {
-  ChevronRight,
-  Dumbbell,
-  Home,
-  LogIn,
-  LogOut,
-  Menu,
-  Moon,
-  Sun,
-  UserRound,
-  X,
-} from "lucide-react";
-import { toast } from "sonner";
+import { Check, Menu, X } from "lucide-react";
 
-import { AppLink, useAppRouter } from "@/components/app-navigation";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { useLaunchpadGestures } from "@/components/use-launchpad-gestures";
-import { authClient } from "@/lib/auth-client";
-import { useStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import {
+  NavigationMenu,
+  type NavigationMenuProps,
+} from "@/components/navigation-menu";
 
-const linkClassName =
-  "flex min-h-12 min-w-0 items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring";
-
-type LaunchpadProps = {
-  pathname: string;
-  session: typeof authClient.$Infer.Session | null;
-  isSessionPending: boolean;
-  triggerClassName: string;
+type LaunchpadProps = NavigationMenuProps & {
+  triggerClassName?: string;
+  onTutorialComplete?: () => void;
 };
 
 export function Launchpad({
@@ -40,12 +22,17 @@ export function Launchpad({
   session,
   isSessionPending,
   triggerClassName,
+  onTutorialComplete,
 }: LaunchpadProps) {
   const [open, setOpen] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const workouts = useStore((state) => state.workouts);
-  const router = useAppRouter();
-  const { resolvedTheme, setTheme } = useTheme();
+  const setMenuOpen = useCallback(
+    (action: SetStateAction<boolean>) => {
+      const nextOpen = typeof action === "function" ? action(open) : action;
+      setOpen(nextOpen);
+      if (open && !nextOpen) onTutorialComplete?.();
+    },
+    [open, onTutorialComplete],
+  );
   const {
     sheetRef,
     suppressClickUntil,
@@ -55,31 +42,16 @@ export function Launchpad({
     startDrag,
     moveDrag,
     endDrag,
-  } = useLaunchpadGestures(open, setOpen);
-  const accountHref = !isSessionPending && !session ? "/login" : "/account";
-  const accountLabel = accountHref === "/login" ? "Login" : "Account";
-  const AccountIcon = accountHref === "/login" ? LogIn : UserRound;
-
-  async function signOut() {
-    setIsSigningOut(true);
-    try {
-      const result = await authClient.signOut();
-      if (result.error) {
-        toast.error(result.error.message ?? "Sign out failed.");
-        return;
-      }
-      useStore.getState().clearData();
-      prepareClose();
-      setOpen(false);
-      toast.success("Signed out.");
-      router.push("/login");
-      router.refresh();
-    } catch {
-      toast.error("Sign out failed.");
-    } finally {
-      setIsSigningOut(false);
+  } = useLaunchpadGestures(open, setMenuOpen);
+  useEffect(() => {
+    if (onTutorialComplete) return;
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    function closeOnDesktop() {
+      if (desktop.matches) setOpen(false);
     }
-  }
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, [onTutorialComplete]);
 
   return (
     <Dialog.Root
@@ -87,19 +59,17 @@ export function Launchpad({
       onOpenChange={(nextOpen) => {
         if (nextOpen) resetDrag();
         else prepareClose();
-        setOpen(nextOpen);
+        setMenuOpen(nextOpen);
       }}
     >
-      <Dialog.Trigger asChild>
-        <button
-          type="button"
-          aria-label="Menu"
-          className={triggerClassName}
-        >
-          <Menu aria-hidden="true" />
-          <span>Menu</span>
-        </button>
-      </Dialog.Trigger>
+      {!onTutorialComplete && (
+        <Dialog.Trigger asChild>
+          <button type="button" aria-label="Menu" className={triggerClassName}>
+            <Menu aria-hidden="true" />
+            <span>Menu</span>
+          </button>
+        </Dialog.Trigger>
+      )}
       <Dialog.Portal>
         <Dialog.Overlay className="launchpad-overlay fixed inset-0 z-[60] bg-black/50" />
         <Dialog.Content
@@ -145,122 +115,29 @@ export function Launchpad({
               </Button>
             </Dialog.Close>
           </div>
-          <nav
-            aria-label="Menu"
-            className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-4 py-3"
-          >
-            <Dialog.Close asChild>
-              <AppLink
-                href="/"
-                aria-current={pathname === "/" ? "page" : undefined}
-                className={cn(
-                  linkClassName,
-                  pathname === "/" &&
-                    "border-primary/30 bg-primary/10 text-primary",
-                )}
-              >
-                <Home className="size-5 shrink-0" aria-hidden="true" />
-                <span className="flex-1">Home</span>
-                <ChevronRight
-                  className="size-4 text-muted-foreground"
-                  aria-hidden="true"
-                />
-              </AppLink>
-            </Dialog.Close>
-            {workouts.length > 0 ? (
-              <div className="mt-4">
-                <p className="mb-1 px-1 text-xs font-bold tracking-wide text-muted-foreground">
-                  Workouts
-                </p>
-                <ul className="space-y-1">
-                  {workouts.map((workout) => {
-                    const active =
-                      pathname === `/w/${workout.id}` ||
-                      pathname === `/w/${workout.id}/create`;
-                    return (
-                      <li key={workout.id}>
-                        <Dialog.Close asChild>
-                          <AppLink
-                            href={`/w/${workout.id}?redirect=true`}
-                            aria-current={active ? "page" : undefined}
-                            className={cn(
-                              linkClassName,
-                              active &&
-                                "border-primary/30 bg-primary/10 text-primary",
-                            )}
-                          >
-                            <Dumbbell
-                              className="size-5 shrink-0"
-                              aria-hidden="true"
-                            />
-                            <span className="min-w-0 flex-1 truncate">
-                              {workout.name}
-                            </span>
-                            <ChevronRight
-                              className="size-4 shrink-0 text-muted-foreground"
-                              aria-hidden="true"
-                            />
-                          </AppLink>
-                        </Dialog.Close>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ) : null}
-          </nav>
-          <div className="flex shrink-0 items-center gap-2 border-t bg-muted/20 p-4">
-            <Dialog.Close asChild>
-              <AppLink
-                href={accountHref}
-                aria-label={accountLabel}
-                aria-current={pathname === accountHref ? "page" : undefined}
-                className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl p-1 focus-visible:outline-2 focus-visible:outline-ring"
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-sm font-semibold">
-                  {session ? (
-                    session.user.name.charAt(0).toUpperCase()
-                  ) : (
-                    <AccountIcon className="size-5" aria-hidden="true" />
-                  )}
-                </span>
-                <span className="min-w-0 text-sm">
-                  <span className="block truncate font-medium">
-                    {session?.user.name ?? accountLabel}
-                  </span>
-                  {session ? (
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {session.user.email}
-                    </span>
-                  ) : null}
-                </span>
-              </AppLink>
-            </Dialog.Close>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-11 shrink-0 rounded-xl"
-              aria-label="Toggle theme"
-              onClick={() =>
-                setTheme(resolvedTheme === "dark" ? "light" : "dark")
-              }
-            >
-              <Sun className="hidden size-5 dark:block" aria-hidden="true" />
-              <Moon className="size-5 dark:hidden" aria-hidden="true" />
-            </Button>
-            {session ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-11 shrink-0 rounded-xl text-destructive hover:text-destructive"
-                aria-label={isSigningOut ? "Signing out" : "Sign out"}
-                disabled={isSigningOut}
-                onClick={signOut}
-              >
-                <LogOut className="size-5" aria-hidden="true" />
-              </Button>
-            ) : null}
-          </div>
+          {onTutorialComplete ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
+              <Check className="size-16" aria-hidden="true" />
+              <h2 className="text-2xl font-bold">You found your launchpad</h2>
+              <p className="max-w-xs leading-7 text-muted-foreground">
+                Jump between workouts, manage your account, and switch themes
+                here. Swipe right or close the menu to continue.
+              </p>
+              <Dialog.Close asChild>
+                <Button size="lg">Continue</Button>
+              </Dialog.Close>
+            </div>
+          ) : (
+            <NavigationMenu
+              pathname={pathname}
+              session={session}
+              isSessionPending={isSessionPending}
+              onNavigate={() => {
+                prepareClose();
+                setMenuOpen(false);
+              }}
+            />
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

@@ -1,5 +1,11 @@
 .git
+.github
+AGENTS.md
+CLAUDE.md
+README.md
 .next
+next-env.d.ts
+public/sw.js
 node_modules
 .env*
 !.env.example

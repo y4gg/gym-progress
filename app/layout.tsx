@@ -11,6 +11,7 @@ import { SyncProvider } from "@/components/sync-provider";
 import { AppNavigation } from "@/components/app-navigation";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import { PageTransition } from "@/components/page-transition";
+import { PwaOnboardingProvider } from "@/components/pwa-onboarding-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -33,9 +34,13 @@ export const metadata: Metadata = {
     title: "Gym Ladder",
     statusBarStyle: "default",
   },
+  icons: { icon: "/icons/icon.svg", apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
   themeColor: "#171917",
 };
 
@@ -68,9 +73,13 @@ export default function RootLayout({
             <Hydration />
             <SyncProvider />
             <ServiceWorkerRegistration />
-            <PageTransition>{children}</PageTransition>
             <Suspense fallback={null}>
-              <AppNavbar />
+              <PwaOnboardingProvider>
+                <div className="min-w-0 flex-1 lg:pl-72">
+                  <PageTransition>{children}</PageTransition>
+                </div>
+                <AppNavbar />
+              </PwaOnboardingProvider>
             </Suspense>
           </AppNavigation>
           <Toaster />
