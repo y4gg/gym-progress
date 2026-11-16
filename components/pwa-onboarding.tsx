@@ -131,7 +131,7 @@ export function PwaOnboarding({ onComplete }: { onComplete: () => void }) {
             <div className="w-full space-y-5 rounded-3xl border bg-card p-6">
               <div className="flex items-center gap-3 font-semibold">
                 <WifiOff className="size-6" aria-hidden="true" />
-                Made for the gym
+                Works fully offline
               </div>
               <div className="rounded-2xl bg-muted/50 p-5">
                 <p className="mb-3 font-medium">Bench press</p>
@@ -144,10 +144,6 @@ export function PwaOnboarding({ onComplete }: { onComplete: () => void }) {
                   />
                 </div>
               </div>
-              <p className="text-sm leading-6 text-muted-foreground">
-                Open Gym Ladder online once to prepare offline access. Signed-in
-                changes sync automatically when you reconnect.
-              </p>
             </div>
           )}
           {step === 3 && (
