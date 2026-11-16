@@ -51,6 +51,14 @@ const isoDateSchema = z.string().refine((value) => {
 const cuidSchema = z.string().refine(isCuid, "invalid_id");
 
 const exerciseSchema: z.ZodType<Exercise> = exerciseFieldsSchema.extend({
+  step: z.preprocess((value) => {
+    // Older offline clients accepted any positive step. Fit those payloads to
+    // numeric(8, 2) before validation, without rounding small steps to zero.
+    if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+      return value;
+    }
+    return Math.max(0.01, Math.round((value + Number.EPSILON) * 100) / 100);
+  }, exerciseFieldsSchema.shape.step),
   id: cuidSchema,
   workoutId: cuidSchema,
   position: z.number().int().min(0).default(0),

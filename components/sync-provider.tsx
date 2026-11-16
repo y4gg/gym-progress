@@ -172,6 +172,8 @@ export function SyncProvider() {
     // without a shared lock that could suppress the replacement account's run.
     let cancelled = false;
     let running = false;
+    let requestPending = false;
+    let queueChangedDuringRequest = false;
     let reconciled = false;
     let retryAttempts = 0;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
@@ -204,9 +206,19 @@ export function SyncProvider() {
       );
     }
 
+    function scheduleQueueChange() {
+      if (cancelled || retryTimer) return;
+      if (changeTimer) clearTimeout(changeTimer);
+      changeTimer = setTimeout(() => {
+        changeTimer = undefined;
+        void run();
+      }, 300);
+    }
+
     async function run() {
       if (cancelled || running || retryTimer) return;
       running = true;
+      queueChangedDuringRequest = false;
       try {
         if (!reconciled) {
           const initialState = useStore.getState();
@@ -215,7 +227,9 @@ export function SyncProvider() {
           }
           const initialOwner = useStore.getState().syncUserId;
           useStore.getState().setSyncStatus("syncing");
+          requestPending = true;
           const snapshot = await getSyncSnapshot(accountId);
+          requestPending = false;
           if (cancelled || useStore.getState().syncUserId !== initialOwner)
             return;
           if (!snapshot.success) {
@@ -277,7 +291,10 @@ export function SyncProvider() {
             sent,
             latestState.workouts,
           );
+          requestPending = true;
+          queueChangedDuringRequest = false;
           const result = await syncOperations(operations, accountId);
+          requestPending = false;
           if (cancelled || useStore.getState().syncUserId !== userId) return;
           if (result.status === "unauthorized") {
             useStore
@@ -333,21 +350,28 @@ export function SyncProvider() {
         );
         scheduleRetry();
       } finally {
+        requestPending = false;
         running = false;
+        const current = useStore.getState();
+        if (
+          queueChangedDuringRequest &&
+          current.syncUserId === userId &&
+          current.pendingSyncOperations.length > 0
+        ) {
+          scheduleQueueChange();
+        }
       }
     }
 
     const unsubscribe = useStore.subscribe((next, previous) => {
-      if (
-        running ||
-        next.pendingSyncOperations === previous.pendingSyncOperations
-      )
+      if (next.pendingSyncOperations === previous.pendingSyncOperations) return;
+      if (running) {
+        // Only edits during the request need a wake-up. Acknowledgement cleanup
+        // must not repeatedly resend an unchanged rejected operation.
+        if (requestPending) queueChangedDuringRequest = true;
         return;
-      if (changeTimer) clearTimeout(changeTimer);
-      changeTimer = setTimeout(() => {
-        changeTimer = undefined;
-        void run();
-      }, 300);
+      }
+      scheduleQueueChange();
     });
     void run();
 

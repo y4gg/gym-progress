@@ -215,3 +215,64 @@ test("a rejected operation retains the local payload and does not retry indefini
   await new Promise((resolve) => setTimeout(resolve, 400));
   expect(send).toHaveBeenCalledTimes(1);
 });
+
+test.each([true, false])(
+  "a queue correction during a rejected request is sent once (accepted: %s)",
+  async (accepted) => {
+    useStore.setState({ syncUserId: currentUser });
+    useStore.getState().addWorkout({ ...workout, name: "" });
+    const pending = deferred<unknown>();
+    send.mockImplementationOnce(async () => pending.promise);
+    if (!accepted) {
+      send.mockImplementationOnce(async () => ({
+        success: false,
+        status: "invalid_payload",
+      }));
+    }
+    render(<SyncProvider />);
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+    act(() =>
+      useStore
+        .getState()
+        .editWorkout({ ...workout, name: "Corrected workout" }),
+    );
+    expect(send).toHaveBeenCalledTimes(1);
+
+    await act(async () =>
+      pending.resolve({ success: false, status: "invalid_payload" }),
+    );
+    await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+    expect(send.mock.calls[1][0][0]).toMatchObject({
+      type: "addWorkout",
+      workout: { name: "Corrected workout" },
+    });
+    await waitFor(() =>
+      expect(useStore.getState().syncStatus).toBe(
+        accepted ? "synced" : "error",
+      ),
+    );
+    expect(useStore.getState().pendingSyncOperations).toHaveLength(
+      accepted ? 0 : 1,
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+    expect(send).toHaveBeenCalledTimes(2);
+  },
+);
+
+test("an unchanged invalid payload stays queued without an automatic retry", async () => {
+  useStore.setState({ syncUserId: currentUser });
+  useStore.getState().addWorkout({ ...workout, name: "" });
+  send.mockImplementationOnce(async () => ({
+    success: false,
+    status: "invalid_payload",
+  }));
+  render(<SyncProvider />);
+  await waitFor(() => expect(useStore.getState().syncStatus).toBe("error"));
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  });
+  expect(send).toHaveBeenCalledTimes(1);
+  expect(useStore.getState().pendingSyncOperations).toHaveLength(1);
+});
