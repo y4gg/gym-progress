@@ -146,8 +146,9 @@ function WorkoutScreen({ id }: { id: string }) {
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-9 pb-28 lg:max-w-3xl lg:pb-10">
-      <h1 className="mb-2 truncate text-center text-3xl font-bold">
-        {workout.name}
+      <h1 className="mb-2 flex min-w-0 items-center justify-center gap-3 text-3xl font-bold">
+        <WorkoutIcon name={workout.icon} className="size-8 shrink-0" />
+        <span className="truncate">{workout.name}</span>
       </h1>
       {sorting ? (
         <>
