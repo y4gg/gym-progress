@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { usePwaOnboarding } from "@/components/pwa-context";
 import { PwaInstallButton } from "@/components/pwa-install-button";
 import { WorkoutIcon } from "@/components/workout-icon";
 
@@ -38,7 +37,6 @@ export function NavigationMenu({
   isSessionPending,
   onNavigate,
 }: NavigationMenuProps) {
-  const { canReplay, replay } = usePwaOnboarding();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const workouts = useStore((state) => state.workouts);
   const router = useAppRouter();
@@ -135,19 +133,7 @@ export function NavigationMenu({
             </ul>
           </div>
         ) : null}
-        <div className="mt-5 space-y-2 border-t pt-4 lg:hidden">
-          {canReplay && (
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={() => {
-                onNavigate?.();
-                replay();
-              }}
-            >
-              Replay onboarding
-            </Button>
-          )}
+        <div className="mt-5 space-y-2 border-t pt-4 empty:hidden lg:hidden">
           <PwaInstallButton />
         </div>
       </nav>

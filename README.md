@@ -33,8 +33,8 @@ Choose **Install Gym Ladder** from Menu or Account. Supported browsers show a
 native install prompt; iPhone and iPad users get Safari Home Screen instructions.
 Launch the installed app to see the welcome, swipe-menu tutorial, and offline
 tracking introduction. The tour works without an account, can be skipped, and
-remembers completion per account on this device. **Replay onboarding** in Menu
-or Account opens it again within the installed app. Onboarding is not available
+remembers completion per account on this device. **Replay onboarding** in
+Account opens it again within the installed app. Onboarding is not available
 in a regular browser.
 
 Run `bun run test:pwa` to check onboarding and installation behavior. For actual
