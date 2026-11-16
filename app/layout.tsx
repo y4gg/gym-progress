@@ -9,6 +9,7 @@ import Hydration from "@/components/hydration";
 import { AppNavbar } from "@/components/app-navbar";
 import { SyncProvider } from "@/components/sync-provider";
 import { AppNavigation } from "@/components/app-navigation";
+import { AppScreen } from "@/components/offline-app";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import { PageTransition } from "@/components/page-transition";
 import { PwaOnboardingProvider } from "@/components/pwa-onboarding-provider";
@@ -76,7 +77,9 @@ export default function RootLayout({
             <Suspense fallback={null}>
               <PwaOnboardingProvider>
                 <div className="min-w-0 flex-1 lg:pl-72">
-                  <PageTransition>{children}</PageTransition>
+                  <PageTransition>
+                    <AppScreen>{children}</AppScreen>
+                  </PageTransition>
                 </div>
                 <AppNavbar />
               </PwaOnboardingProvider>

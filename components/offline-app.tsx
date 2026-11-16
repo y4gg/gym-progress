@@ -1,7 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { AppLink, useAppPathname } from "@/components/app-navigation";
 import { Button } from "@/components/ui/button";
+import { SyncStatus } from "@/components/sync-status";
 import Home from "@/components/screens/home";
 import Workout from "@/components/screens/workout";
 import CreateExercise from "@/components/screens/create-exercise";
@@ -10,6 +12,14 @@ import ExerciseHistory from "@/components/screens/exercise-history";
 import ExerciseLogs from "@/components/screens/exercise-logs";
 import { useStore } from "@/lib/store";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
+import { isWorkoutPathname } from "@/lib/workout-routes";
+
+export function AppScreen({ children }: { children: ReactNode }) {
+  const pathname = useAppPathname();
+  // Native history changes the URL without fetching a new Next page. Render
+  // workout screens from that URL; account pages keep their server content.
+  return isWorkoutPathname(pathname) ? <OfflineApp /> : children;
+}
 
 export function OfflineApp() {
   const pathname = useAppPathname();
@@ -55,6 +65,7 @@ export function OfflineApp() {
         <h1 className="text-2xl font-bold">
           {isWorkoutRoute ? "Not saved on this device" : "Connection required"}
         </h1>
+        {pathname === "/account" && <SyncStatus />}
         <p className="text-muted-foreground">
           {isWorkoutRoute
             ? "This workout or exercise is unavailable. Your other saved workouts are ready to use."
@@ -67,22 +78,5 @@ export function OfflineApp() {
     );
   }
 
-  return (
-    <>
-      <div
-        className="mx-auto flex w-full max-w-sm items-center justify-between gap-3 px-6 pt-4 text-xs text-muted-foreground"
-        role="status"
-      >
-        <span>Offline mode. Changes saved on this device.</span>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => window.location.reload()}
-        >
-          Reconnect
-        </Button>
-      </div>
-      {screen}
-    </>
-  );
+  return screen;
 }

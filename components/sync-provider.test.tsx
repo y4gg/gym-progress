@@ -86,6 +86,10 @@ function deferred<T>() {
 }
 
 beforeEach(() => {
+  Object.defineProperty(browser.navigator, "onLine", {
+    configurable: true,
+    value: true,
+  });
   currentUser = "account-a";
   remote = { workouts: [], exerciseLogs: [] };
   browser.localStorage.clear();
@@ -94,6 +98,39 @@ beforeEach(() => {
   send.mockClear();
 });
 afterEach(cleanup);
+
+test("connection loss immediately marks pending sync offline and reconnects without waiting for the old request", async () => {
+  useStore.setState({ syncUserId: currentUser });
+  useStore.getState().addWorkout(workout);
+  const pending = deferred<unknown>();
+  send.mockImplementationOnce(async () => pending.promise);
+  render(<SyncProvider />);
+  await waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+
+  act(() => {
+    Object.defineProperty(browser.navigator, "onLine", {
+      configurable: true,
+      value: false,
+    });
+    browser.dispatchEvent(new browser.Event("offline"));
+  });
+  expect(useStore.getState().syncStatus).toBe("offline");
+  expect(useStore.getState().pendingSyncOperations).toHaveLength(1);
+
+  act(() => {
+    Object.defineProperty(browser.navigator, "onLine", {
+      configurable: true,
+      value: true,
+    });
+    browser.dispatchEvent(new browser.Event("online"));
+  });
+  await waitFor(() => expect(useStore.getState().syncStatus).toBe("synced"));
+  expect(send).toHaveBeenCalledTimes(2);
+  expect(useStore.getState().pendingSyncOperations).toHaveLength(0);
+
+  await act(async () => pending.reject(new Error("Old connection timed out")));
+  expect(useStore.getState().syncStatus).toBe("synced");
+});
 
 test("large offline queues drain in server-sized batches without losing remaining changes", async () => {
   const operations: SyncOperation[] = Array.from(

@@ -44,6 +44,19 @@ self.addEventListener("activate", (event) => {
 });
 
 async function navigate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cachedApp = await cache.match(OFFLINE_URL);
+  const { pathname } = new URL(request.url);
+  const isWorkoutRoute =
+    pathname === "/" ||
+    pathname === OFFLINE_URL ||
+    /^\/w\/[^/]+(?:\/create)?\/?$/.test(pathname) ||
+    /^\/e\/[^/]+(?:\/(?:history|logs))?\/?$/.test(pathname);
+  // Workout data lives on the device and syncs separately. Never block the app
+  // on a network probe, even if navigator.onLine has not noticed the outage.
+  if (cachedApp && (isWorkoutRoute || self.navigator.onLine === false)) {
+    return cachedApp;
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 3000);
   try {
@@ -54,8 +67,7 @@ async function navigate(request) {
   } finally {
     clearTimeout(timeout);
   }
-  const cache = await caches.open(CACHE_NAME);
-  return (await cache.match(OFFLINE_URL)) ?? Response.error();
+  return cachedApp ?? Response.error();
 }
 
 self.addEventListener("fetch", (event) => {
