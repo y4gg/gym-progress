@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 
 export default function AccountPage() {
   const session = authClient.useSession();
-  const { replay } = usePwaOnboarding();
+  const { canReplay, replay } = usePwaOnboarding();
   const currentEmail = session.data?.user.email;
   const actionsDisabled = session.isPending || !session.data;
 
@@ -24,9 +24,11 @@ export default function AccountPage() {
 
         <SyncStatus />
         <PwaInstallButton />
-        <Button variant="outline" className="min-h-12" onClick={replay}>
-          Replay onboarding
-        </Button>
+        {canReplay && (
+          <Button variant="outline" className="min-h-12 lg:hidden" onClick={replay}>
+            Replay onboarding
+          </Button>
+        )}
         <ChangeEmailDialog
           currentEmail={currentEmail}
           disabled={actionsDisabled}

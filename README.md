@@ -27,7 +27,8 @@ native install prompt; iPhone and iPad users get Safari Home Screen instructions
 Launch the installed app to see the welcome, swipe-menu tutorial, and offline
 tracking introduction. The tour works without an account, can be skipped, and
 remembers completion per account on this device. **Replay onboarding** in Menu
-or Account opens it again, including in a regular browser.
+or Account opens it again within the installed app. Onboarding is not available
+in a regular browser.
 
 Run `bun run test:pwa` to check onboarding and installation behavior. For actual
 installation and offline testing, use a production build over HTTPS or localhost.

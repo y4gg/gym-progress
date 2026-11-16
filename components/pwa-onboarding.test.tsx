@@ -71,6 +71,7 @@ mock.module("next-themes", () => ({
 const { act, cleanup, fireEvent, render } =
   await import("@testing-library/react");
 const { PwaOnboardingProvider } = await import("./pwa-onboarding-provider");
+const { NavigationMenu } = await import("./navigation-menu");
 const { PwaInstallProvider, PwaInstallButton } =
   await import("./pwa-install-button");
 const { usePwaOnboarding } = await import("./pwa-context");
@@ -116,7 +117,7 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-test("browser visits leave the app visible and can replay the tour", () => {
+test("browser visits cannot start onboarding even when replay is called", () => {
   const view = render(
     <PwaOnboardingProvider>
       <App />
@@ -127,8 +128,37 @@ test("browser visits leave the app visible and can replay the tour", () => {
   ).toBeNull();
   fireEvent.click(view.getByRole("button", { name: "Replay onboarding" }));
   expect(
+    view.queryByRole("heading", { name: "Welcome to Gym Ladder" }),
+  ).toBeNull();
+  expect(
+    browser.localStorage.getItem(getPwaOnboardingStorageKey(userId!)),
+  ).toBeNull();
+});
+
+test("the menu only offers replay inside a standalone PWA", () => {
+  pathname = "/account";
+  const view = render(
+    <PwaOnboardingProvider>
+      <NavigationMenu pathname={pathname} session={null} isSessionPending={false} />
+    </PwaOnboardingProvider>,
+  );
+  expect(view.queryByRole("button", { name: "Replay onboarding" })).toBeNull();
+
+  act(() => {
+    standalone = true;
+    displayMode.dispatchEvent(new browser.Event("change"));
+  });
+  fireEvent.click(view.getByRole("button", { name: "Replay onboarding" }));
+  expect(
     view.getByRole("heading", { name: "Welcome to Gym Ladder" }),
   ).toBeTruthy();
+
+  act(() => {
+    standalone = false;
+    displayMode.dispatchEvent(new browser.Event("change"));
+  });
+  expect(view.queryByRole("heading")).toBeNull();
+  expect(view.queryByRole("button", { name: "Replay onboarding" })).toBeNull();
 });
 
 test("first standalone launch runs the real menu tutorial and remembers completion", async () => {

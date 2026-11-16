@@ -103,7 +103,7 @@ export function PwaInstallButton() {
   if (installed) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 lg:hidden">
       <Button
         variant="outline"
         className="min-h-12 w-full"

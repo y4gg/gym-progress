@@ -48,9 +48,14 @@ export function PwaOnboardingProvider({ children }: { children: ReactNode }) {
   return (
     <PwaInstallProvider>
       <PwaOnboardingContext.Provider
-        value={{ replay: () => setReplaying(true) }}
+        value={{
+          canReplay: standalone,
+          replay: () => {
+            if (standalone) setReplaying(true);
+          },
+        }}
       >
-        {replaying || showAutomatically ? (
+        {standalone && (replaying || showAutomatically) ? (
           <PwaOnboarding
             key={userId}
             onComplete={() => {
