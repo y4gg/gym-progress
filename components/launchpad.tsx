@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 
 import { AppLink, useAppRouter } from "@/components/app-navigation";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { useLaunchpadGestures } from "@/components/use-launchpad-gestures";
 import { authClient } from "@/lib/auth-client";
@@ -125,7 +126,7 @@ export function Launchpad({
         >
           <div className="flex shrink-0 select-none items-center justify-between gap-3 border-b px-5 py-3">
             <Dialog.Title className="flex min-w-0 items-center gap-2.5 text-base font-bold">
-              <Dumbbell className="size-8 shrink-0" aria-hidden="true" />
+              <AppLogo className="size-8 shrink-0" />
               <span className="truncate">
                 Gym Ladder{" "}
                 <span className="font-normal text-muted-foreground">

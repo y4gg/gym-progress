@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
@@ -26,7 +26,17 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Gym Ladder",
+  applicationName: "Gym Ladder",
   description: "Track your gym progress",
+  appleWebApp: {
+    capable: true,
+    title: "Gym Ladder",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#171917",
 };
 
 export default function RootLayout({
