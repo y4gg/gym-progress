@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, expect, mock, test } from "bun:test";
-import { PHASE_PRODUCTION_BUILD } from "next/constants";
 
 const connect = mock(async () => {});
 const query = mock(async () => {});
@@ -18,8 +17,7 @@ mock.module("drizzle-orm/node-postgres", () => ({ drizzle: () => client }));
 mock.module("drizzle-orm/node-postgres/migrator", () => ({ migrate }));
 
 const { migrateDatabase } = await import("../db/migrate");
-const { register } = await import("../instrumentation");
-const originalEnv = { ...process.env };
+const originalDatabaseUrl = process.env.DATABASE_URL;
 
 beforeEach(() => {
   connect.mockReset();
@@ -27,24 +25,20 @@ beforeEach(() => {
   end.mockReset();
   migrate.mockReset();
   process.env.DATABASE_URL = "postgres://localhost/migrations-test";
-  process.env.NEXT_RUNTIME = "nodejs";
-  delete process.env.NEXT_PHASE;
 });
 
 afterEach(() => {
-  for (const key of ["DATABASE_URL", "NEXT_RUNTIME", "NEXT_PHASE"]) {
-    if (originalEnv[key] === undefined) delete process.env[key];
-    else process.env[key] = originalEnv[key];
-  }
+  if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+  else process.env.DATABASE_URL = originalDatabaseUrl;
 });
 
-test("startup waits for migrations before becoming ready", async () => {
+test("the migration command waits for migrations to finish", async () => {
   let finish!: () => void;
   migrate.mockImplementationOnce(
     () => new Promise<void>((resolve) => { finish = resolve; }),
   );
   let ready = false;
-  const startup = register().then(() => { ready = true; });
+  const startup = migrateDatabase().then(() => { ready = true; });
   await new Promise((resolve) => setTimeout(resolve, 0));
   expect(migrate).toHaveBeenCalledTimes(1);
   expect(ready).toBe(false);
@@ -69,10 +63,10 @@ test("migrations wait for the database lock", async () => {
   expect(end).toHaveBeenCalledTimes(1);
 });
 
-test("a migration failure rejects startup and closes the lock connection", async () => {
+test("a migration failure rejects and closes the lock connection", async () => {
   const error = new Error("migration failed");
   migrate.mockRejectedValueOnce(error);
-  await expect(register()).rejects.toBe(error);
+  await expect(migrateDatabase()).rejects.toBe(error);
   expect(end).toHaveBeenCalledTimes(1);
 });
 
@@ -87,15 +81,6 @@ test("a connection or lock failure closes the client without migrating", async (
 
 test("missing database configuration fails before connecting", async () => {
   delete process.env.DATABASE_URL;
-  await expect(register()).rejects.toThrow("DATABASE_URL is required");
-  expect(connect).not.toHaveBeenCalled();
-});
-
-test("builds and Edge registration do not access the database", async () => {
-  process.env.NEXT_PHASE = PHASE_PRODUCTION_BUILD;
-  await register();
-  delete process.env.NEXT_PHASE;
-  process.env.NEXT_RUNTIME = "edge";
-  await register();
+  await expect(migrateDatabase()).rejects.toThrow("DATABASE_URL is required");
   expect(connect).not.toHaveBeenCalled();
 });

@@ -24,9 +24,13 @@ RUN --mount=type=cache,id=gym-progress-next,target=/app/.next/cache,sharing=lock
     BETTER_AUTH_SECRET=docker-build-only-placeholder-secret \
     BETTER_AUTH_URL=http://localhost:3000 \
     bun run build
+# Bundle the migration CLI so it needs no additional runtime dependencies.
+RUN bun build scripts/migrate.mjs --target=bun --outfile=runtime/migrate.mjs
 
-FROM base AS runner
-ENV NODE_ENV=production \
+FROM bun AS runner
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0
 RUN groupadd --system --gid 1001 nextjs \
@@ -34,6 +38,9 @@ RUN groupadd --system --gid 1001 nextjs \
 COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nextjs /app/public ./public
+COPY --from=builder --chown=nextjs:nextjs /app/runtime/migrate.mjs ./scripts/migrate.mjs
+COPY --from=builder --chown=nextjs:nextjs /app/scripts/start.sh ./scripts/start.sh
+COPY --from=builder --chown=nextjs:nextjs /app/drizzle ./drizzle
 USER nextjs
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["sh", "scripts/start.sh", "server.js"]

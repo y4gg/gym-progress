@@ -123,14 +123,13 @@ connection URL reachable from the container for `DATABASE_URL`, and configure
 Resend and Google OAuth with your production credentials. The Resend account must
 be able to send from `noreply@updates.y4.gg`, the sender currently used by the app.
 
-The server applies pending committed database migrations before accepting
-requests, including when running `bun run dev`, `bun run start`, or the Docker
-image. Set `DATABASE_URL` to a PostgreSQL user with schema migration permissions.
-Startup fails if migrations fail; concurrent server instances serialize their
+`bun run start` and the Docker image use a shared startup script that applies
+pending committed database migrations, then launches the server with the Bun
+runtime. Set `DATABASE_URL` to a PostgreSQL user with schema migration permissions.
+Startup stops if migrations fail; concurrent server instances serialize their
 migrations using a database advisory lock. Builds do not connect to the database.
-The standalone output includes the migration files. To apply migrations manually
-from a checkout, run `bunx drizzle-kit migrate` with `DATABASE_URL` configured
-while the app is stopped.
+For development, run `bun scripts/migrate.mjs` before `bun run dev`. The Docker
+image includes the migration CLI and SQL files alongside the standalone server.
 
 To build and run the same image locally:
 
@@ -139,9 +138,9 @@ docker build -t gym-progress .
 docker run --rm -p 3000:3000 --env-file .env gym-progress
 ```
 
-The image installs dependencies using the Bun lockfile and runs the Next.js
-standalone server as a non-root user. Local `.env` files are excluded from the
-build context, so no production credentials are needed to build the image. The
-build uses placeholders solely to initialize auth and email during compilation;
+The image installs dependencies using the Bun lockfile and runs migrations and
+the Next.js standalone server on Bun as a non-root user. Local `.env` files are
+excluded from the build context, so no production credentials are needed to build
+the image. The build uses placeholders solely to initialize auth and email during compilation;
 set the real auth and email credentials at runtime. Building also requires
 network access to download the Google fonts used by the app.
