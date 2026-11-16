@@ -24,7 +24,7 @@ export default function AccountPage() {
 
         <SyncStatus />
         <PwaInstallButton />
-        <Button variant="outline" className="min-h-12" onClick={replay}>
+        <Button variant="outline" className="min-h-12 lg:hidden" onClick={replay}>
           Replay onboarding
         </Button>
         <ChangeEmailDialog

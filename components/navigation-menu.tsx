@@ -135,7 +135,7 @@ export function NavigationMenu({
             </ul>
           </div>
         ) : null}
-        <div className="mt-5 space-y-2 border-t pt-4">
+        <div className="mt-5 space-y-2 border-t pt-4 lg:hidden">
           <Button
             variant="ghost"
             className="w-full justify-start"
