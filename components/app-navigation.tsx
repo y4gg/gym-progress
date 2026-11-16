@@ -36,21 +36,30 @@ function getServerLocation() {
 }
 
 type OfflineNavigation = {
-  navigate: (href: string, replace?: boolean) => void;
+  navigate: (
+    href: string,
+    options?: { replace?: boolean; scroll?: boolean },
+  ) => void;
 };
 
 const OfflineNavigationContext = createContext<OfflineNavigation | null>(null);
 
 const offlineNavigation: OfflineNavigation = {
-  navigate(destination, replace = false) {
+  navigate(destination, { replace = false, scroll = true } = {}) {
     const url = new URL(destination, window.location.href);
-    if (url.origin !== window.location.origin) {
-      window.location.assign(url);
+    const isOfflineRoute =
+      url.pathname === "/" ||
+      url.pathname === "/offline" ||
+      /^\/w\/[^/]+(?:\/create)?\/?$/.test(url.pathname) ||
+      /^\/e\/[^/]+(?:\/(?:history|logs))?\/?$/.test(url.pathname);
+    // Account pages need a server document once the connection returns.
+    if (url.origin !== window.location.origin || !isOfflineRoute) {
+      window.location[replace ? "replace" : "assign"](url.href);
       return;
     }
     window.history[replace ? "replaceState" : "pushState"](null, "", url);
     window.dispatchEvent(new Event(LOCATION_CHANGED));
-    window.scrollTo(0, 0);
+    if (scroll) window.scrollTo(0, 0);
   },
 };
 
@@ -104,15 +113,15 @@ export function useAppRouter() {
 
   return {
     ...router,
-    push(href: string) {
-      if (offline) offline.navigate(href);
+    push(href: string, options?: Parameters<typeof router.push>[1]) {
+      if (offline) offline.navigate(href, options);
       else if (!navigator.onLine) window.location.assign(href);
-      else router.push(href);
+      else router.push(href, options);
     },
-    replace(href: string) {
-      if (offline) offline.navigate(href, true);
+    replace(href: string, options?: Parameters<typeof router.replace>[1]) {
+      if (offline) offline.navigate(href, { ...options, replace: true });
       else if (!navigator.onLine) window.location.replace(href);
-      else router.replace(href);
+      else router.replace(href, options);
     },
   };
 }
@@ -125,6 +134,8 @@ export function AppLink({
   href,
   onNavigate,
   prefetch,
+  replace,
+  scroll,
   ...props
 }: AppLinkProps) {
   const offline = useContext(OfflineNavigationContext);
@@ -133,12 +144,22 @@ export function AppLink({
       {...props}
       href={href}
       prefetch={offline ? false : prefetch}
+      replace={replace}
+      scroll={scroll}
       onNavigate={(event) => {
-        onNavigate?.(event);
+        let prevented = false;
+        onNavigate?.({
+          ...event,
+          preventDefault() {
+            prevented = true;
+            event.preventDefault();
+          },
+        });
+        if (prevented) return;
         if (offline || !navigator.onLine) {
           event.preventDefault();
-          if (offline) offline.navigate(href);
-          else window.location.assign(href);
+          if (offline) offline.navigate(href, { replace, scroll });
+          else window.location[replace ? "replace" : "assign"](href);
         }
       }}
     />

@@ -251,3 +251,80 @@ test("a new local calendar day resets manual progress", () => {
   view.rerender(<ExercisePage exerciseId={exercise.id} />);
   expect(currentSet(view)).toBe("1");
 });
+
+test("weight and notes are persisted before leaving the exercise", () => {
+  const view = render(<ExercisePage exerciseId={exercise.id} />);
+  fireEvent.click(view.getByRole("button", { name: "Increase weight" }));
+  fireEvent.change(view.getByLabelText("Notes"), {
+    target: { value: "Keep elbows tucked" },
+  });
+  view.unmount();
+
+  const persisted = JSON.parse(browser.localStorage.getItem("store")!);
+  expect(persisted.state.workouts[0].exercises[0]).toMatchObject({
+    weight: 72.5,
+    notes: "Keep elbows tucked",
+  });
+});
+
+test("switching exercises cannot copy edits or open dialogs to the next exercise", () => {
+  const other = {
+    ...exercise,
+    id: "fly",
+    name: "Chest fly",
+    position: 1,
+    weight: 20,
+  };
+  useStore.setState({
+    workouts: [
+      {
+        ...useStore.getState().workouts[0],
+        exercises: [exercise, other],
+      },
+    ],
+  });
+  const view = render(<ExercisePage exerciseId={exercise.id} />);
+  fireEvent.click(view.getByRole("button", { name: "Increase weight" }));
+  fireEvent.click(view.getByRole("button", { name: "Next set" }));
+  view.rerender(<ExercisePage exerciseId={other.id} />);
+
+  expect(view.queryByText("Track reps?")).toBeNull();
+  expect((view.getByLabelText("Weight") as HTMLInputElement).value).toBe("20");
+  expect(useStore.getState().getExerciseById(exercise.id)?.weight).toBe(72.5);
+  expect(useStore.getState().getExerciseById(other.id)?.weight).toBe(20);
+});
+
+test("negative weights cannot enter the store or set logs", () => {
+  const view = render(<ExercisePage exerciseId={exercise.id} />);
+  fireEvent.change(view.getByLabelText("Weight"), { target: { value: "-10" } });
+  fireEvent.click(view.getByRole("button", { name: "Next set" }));
+  fireEvent.click(view.getByRole("button", { name: "Yes" }));
+  expect(useStore.getState().getExerciseById(exercise.id)?.weight).toBe(70);
+  expect(useStore.getState().exerciseLogs[0].weight).toBe(70);
+});
+
+test("editing exercise options preserves weight and notes received while the dialog is open", async () => {
+  const view = render(<ExercisePage exerciseId={exercise.id} />);
+  fireEvent.click(view.getByRole("button", { name: "Edit" }));
+  await act(async () => {
+    useStore
+      .getState()
+      .editExercise({ ...exercise, weight: 80, notes: "Synced note" });
+  });
+  fireEvent.change(view.getByLabelText("Name"), {
+    target: { value: "Incline bench" },
+  });
+  fireEvent.click(view.getByRole("button", { name: "Save" }));
+  expect(useStore.getState().getExerciseById(exercise.id)).toMatchObject({
+    name: "Incline bench",
+    weight: 80,
+    notes: "Synced note",
+  });
+});
+
+test("decimal weight steps do not accumulate floating point errors", () => {
+  useStore.getState().editExercise({ ...exercise, weight: 0.2, step: 0.1 });
+  const view = render(<ExercisePage exerciseId={exercise.id} />);
+  fireEvent.click(view.getByRole("button", { name: "Increase weight" }));
+  expect(useStore.getState().getExerciseById(exercise.id)?.weight).toBe(0.3);
+});

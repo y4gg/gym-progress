@@ -41,7 +41,7 @@ mock.module("@/components/app-navigation", () => ({
   AppLink: (props: ComponentProps<"a">) => <a {...props} />,
 }));
 
-const { cleanup, fireEvent, render } =
+const { act, cleanup, fireEvent, render } =
   await import("@testing-library/react");
 const { useStore } = await import("@/lib/store");
 const { default: ExerciseLogsPage } = await import("./exercise-logs");
@@ -140,4 +140,31 @@ test("select mode opens the individual sets and retains set selection", () => {
   expect(view.getByRole("button", { name: "Delete selected" })).toBeTruthy();
   fireEvent.click(view.getByRole("button", { name: "Clear" }));
   expect(set.getAttribute("aria-pressed")).toBe("false");
+});
+
+test("changing exercises clears selections so another exercise's logs cannot be deleted", async () => {
+  searchParams = new URLSearchParams("select=1");
+  await act(async () => {
+    useStore.setState({
+      workouts: [
+        {
+          ...useStore.getState().workouts[0],
+          exercises: [exercise, { ...exercise, id: "fly", position: 1 }],
+        },
+      ],
+      exerciseLogs: [
+        ...useStore.getState().exerciseLogs,
+        { ...log("fly-set", 3, 20, 10), exerciseId: "fly" },
+      ],
+    });
+  });
+  const view = render(<ExerciseLogsPage exerciseId={exercise.id} />);
+  fireEvent.click(view.getByRole("button", { name: "Set 2: 7 reps, 70 kg" }));
+  view.rerender(<ExerciseLogsPage exerciseId="fly" />);
+  expect(view.queryByRole("button", { name: "Delete selected" })).toBeNull();
+  expect(
+    view
+      .getByRole("button", { name: "Set 1: 10 reps, 20 kg" })
+      .getAttribute("aria-pressed"),
+  ).toBe("false");
 });

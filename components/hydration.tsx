@@ -1,10 +1,7 @@
 "use client";
-import { useEffect } from "react";
-import { useStore } from "@/lib/store";
+import { useStoreHydrated } from "@/lib/use-store-hydrated";
 
 export default function Hydration() {
-  useEffect(() => {
-    useStore.persist.rehydrate();
-  }, []);
+  useStoreHydrated();
   return null;
 }

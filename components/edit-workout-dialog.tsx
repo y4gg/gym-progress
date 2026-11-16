@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
-import z from "zod";
+import { workoutFieldsSchema } from "@/lib/workout-validation";
 import { toast } from "sonner";
 import { DeleteDialog } from "@/components/delete-dialog";
 
@@ -30,23 +30,15 @@ export function EditWorkoutDialog({
   const editWorkout = useStore((state) => state.editWorkout);
   const deleteWorkout = useStore((state) => state.deleteWorkout);
 
-  const workoutSchema = z.object({
-    name: z.string().nonempty(),
-  });
-
   const handleEditWorkout = () => {
-    try {
-      workoutSchema.parse({ name: workoutName });
-    } catch (error) {
-      if (error instanceof z.ZodError)
-        error.issues.forEach((issue) => {
-          toast.error(`${issue.input}: ${issue.code}`);
-        });
+    const result = workoutFieldsSchema.safeParse({ name: workoutName });
+    if (!result.success) {
+      toast.error(result.error.issues[0].message);
       return;
     }
     if (!workout) return;
 
-    editWorkout({ ...workout, name: workoutName });
+    editWorkout({ ...workout, ...result.data });
     setOpen(false);
   };
 

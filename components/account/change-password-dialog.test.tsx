@@ -186,3 +186,19 @@ test("failed password creation preserves add mode and displays the server error"
   expect(view.getByRole("heading", { name: "Add password" })).toBeDefined();
   expect(changePassword).not.toHaveBeenCalled();
 });
+
+test("cancel never submits password changes", async () => {
+  const view = render(<ChangePasswordDialog />);
+  fireEvent.click(await view.findByRole("button", { name: "Add Password" }));
+  fireEvent.change(view.getByLabelText("New password"), {
+    target: { value: "new-password123" },
+  });
+  fireEvent.change(view.getByLabelText("Confirm password"), {
+    target: { value: "new-password123" },
+  });
+  const cancel = view.getByRole("button", { name: "Cancel" });
+  expect(cancel.getAttribute("type")).toBe("button");
+  await act(async () => fireEvent.click(cancel));
+  expect(addPassword).not.toHaveBeenCalled();
+  expect(changePassword).not.toHaveBeenCalled();
+});

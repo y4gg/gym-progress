@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { createId } from "@paralleldrive/cuid2";
-import z from "zod";
+import { workoutFieldsSchema } from "@/lib/workout-validation";
 import { toast } from "sonner";
 
 export function CreateWorkoutDialog({
@@ -24,24 +24,16 @@ export function CreateWorkoutDialog({
   const [open, setOpen] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
 
-  const { addWorkout } = useStore();
-
-  const workoutSchema = z.object({
-    name: z.string().nonempty(),
-  });
+  const addWorkout = useStore((state) => state.addWorkout);
 
   const handleCreateWorkout = () => {
-    try {
-      workoutSchema.parse({ name: workoutName });
-    } catch (error) {
-      if (error instanceof z.ZodError)
-        error.issues.forEach((issue) => {
-          toast.error(`${issue.input}: ${issue.code}`);
-        });
+    const result = workoutFieldsSchema.safeParse({ name: workoutName });
+    if (!result.success) {
+      toast.error(result.error.issues[0].message);
       return;
     }
     const id = createId();
-    addWorkout({ id, name: workoutName, exercises: [] });
+    addWorkout({ id, ...result.data, exercises: [] });
     setWorkoutName("");
     setOpen(false);
   };

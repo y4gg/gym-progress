@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
+import { z } from "zod";
 
 import { db } from "@/db";
 import { user } from "@/db/schema";
@@ -17,17 +18,11 @@ type ResendVerificationResult =
   | { status: "invalid" };
 
 function normalizeEmail(email: string | null | undefined) {
-  const normalizedEmail = email?.trim().toLowerCase();
-
-  if (
-    !normalizedEmail ||
-    normalizedEmail.length > 254 ||
-    !normalizedEmail.includes("@")
-  ) {
-    return null;
-  }
-
-  return normalizedEmail;
+  const result = z
+    .email()
+    .max(254)
+    .safeParse(typeof email === "string" ? email.trim().toLowerCase() : email);
+  return result.success ? result.data : null;
 }
 
 export async function getPendingVerificationEmail(email: string | undefined) {
@@ -40,9 +35,7 @@ export async function getPendingVerificationEmail(email: string | undefined) {
   const [pendingUser] = await db
     .select({ email: user.email })
     .from(user)
-    .where(
-      and(eq(user.email, normalizedEmail), eq(user.emailVerified, false)),
-    )
+    .where(and(eq(user.email, normalizedEmail), eq(user.emailVerified, false)))
     .limit(1);
 
   return pendingUser?.email ?? null;
@@ -66,8 +59,7 @@ export async function resendVerificationEmail(
     };
   }
 
-  const nextCooldown =
-    await startEmailVerificationResendCooldown(pendingEmail);
+  const nextCooldown = await startEmailVerificationResendCooldown(pendingEmail);
 
   const requestHeaders = await headers();
   const origin =

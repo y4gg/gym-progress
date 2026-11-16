@@ -13,7 +13,7 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { Exercise } from "@/lib/types";
 import { toast } from "sonner";
-import z from "zod";
+import { exerciseFieldsSchema } from "@/lib/workout-validation";
 import { Minus, Plus } from "lucide-react";
 import { AdvancedExerciseOptionsDialog } from "@/components/advanced-exercise-options-dialog";
 import { DeleteDialog } from "@/components/delete-dialog";
@@ -28,29 +28,25 @@ export function EditExerciseDialog({
   const [open, setOpen] = useState(false);
   const [newExercise, setNewExercise] = useState<Exercise>(exercise);
 
-  const { deleteExercise, editExercise } = useStore();
-
-  const exerciseSchema = z.object({
-    name: z.string().min(4),
-    weight: z.number().min(0),
-    notes: z.string().optional(),
-    sets: z.number().min(1).multipleOf(1),
-    maxReps: z.number().int().min(1).optional(),
-    logging: z.boolean(),
-    step: z.number().positive().optional(),
-  });
+  const deleteExercise = useStore((state) => state.deleteExercise);
+  const editExercise = useStore((state) => state.editExercise);
 
   const handleEditExercise = () => {
-    try {
-      exerciseSchema.parse(newExercise);
-    } catch (error) {
-      if (error instanceof z.ZodError)
-        error.issues.forEach((issue) => {
-          toast.error(`${issue.input}: ${issue.code}`);
-        });
+    // Weight, notes and order can change through sync while this dialog is open.
+    const updatedExercise = {
+      ...exercise,
+      name: newExercise.name,
+      sets: newExercise.sets,
+      logging: newExercise.logging,
+      maxReps: newExercise.maxReps,
+      step: newExercise.step,
+    };
+    const result = exerciseFieldsSchema.safeParse(updatedExercise);
+    if (!result.success) {
+      toast.error(result.error.issues[0].message);
       return;
     }
-    editExercise(newExercise);
+    editExercise({ ...updatedExercise, ...result.data });
     toast.success("Exercise edited successfully.");
     setOpen(false);
   };

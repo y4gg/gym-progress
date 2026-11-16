@@ -15,6 +15,7 @@ const testAuth = betterAuth({
       resetToken = token;
     },
   },
+  user: { deleteUser: { enabled: true } },
   logger: { disabled: true },
 });
 let requestHeaders = new Headers();
@@ -28,11 +29,14 @@ beforeEach(async () => {
   requestHeaders = new Headers();
   resetToken = "";
   const context = await testAuth.$context;
-  const user = await context.internalAdapter.createUser({
-    name: "Google user",
-    email: "google-user@example.com",
-    emailVerified: true,
-  });
+  const user = await context.internalAdapter.createUser(
+    {
+      name: "Google user",
+      email: "google-user@example.com",
+      emailVerified: true,
+    },
+    { method: "oauth", oauth: { providerId: "google" } },
+  );
   userId = user.id;
   await context.internalAdapter.linkAccount({
     userId,
@@ -114,4 +118,30 @@ test("the forgot-password flow can also create a password for a Google-only acco
     body: { email: "google-user@example.com", password: "reset-password123" },
   });
   expect(result.user.id).toBe(userId);
+});
+
+test("recent Google-only sessions can delete their account without a password", async () => {
+  const result = await testAuth.api.deleteUser({
+    headers: requestHeaders,
+    body: {},
+  });
+  expect(result.success).toBe(true);
+  expect(
+    await (await testAuth.$context).internalAdapter.findUserById(userId),
+  ).toBeNull();
+});
+
+test("older passwordless sessions must reauthenticate before account deletion", async () => {
+  const session = await testAuth.api.getSession({ headers: requestHeaders });
+  await (
+    await testAuth.$context
+  ).internalAdapter.updateSession(session!.session.token, {
+    createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+  });
+  await expect(
+    testAuth.api.deleteUser({ headers: requestHeaders, body: {} }),
+  ).rejects.toMatchObject({ body: { code: "SESSION_EXPIRED" } });
+  expect(
+    await (await testAuth.$context).internalAdapter.findUserById(userId),
+  ).not.toBeNull();
 });

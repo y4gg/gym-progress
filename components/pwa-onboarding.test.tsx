@@ -201,6 +201,24 @@ test("swiping left opens the tutorial menu and closing it advances the tour", ()
   ).toBeTruthy();
 });
 
+test("the menu tutorial can be completed without a touch gesture", () => {
+  standalone = true;
+  const view = render(
+    <PwaOnboardingProvider>
+      <App />
+    </PwaOnboardingProvider>,
+  );
+  fireEvent.click(view.getByRole("button", { name: "Continue" }));
+  fireEvent.click(view.getByRole("button", { name: "Open menu" }));
+  expect(
+    view.getByRole("heading", { name: "You found your launchpad" }),
+  ).toBeTruthy();
+  fireEvent.click(view.getByRole("button", { name: "Continue" }));
+  expect(
+    view.getByRole("heading", { name: "Keep climbing, even offline" }),
+  ).toBeTruthy();
+});
+
 test("completion belongs to the current account", () => {
   standalone = true;
   const view = render(

@@ -34,17 +34,21 @@ export function DeleteAccountDialog({ disabled }: { disabled?: boolean }) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isPending || disabled) return;
     setError(null);
     setIsPending(true);
 
     try {
       const result = await authClient.deleteUser({
-        password,
+        password: password || undefined,
         callbackURL: "/login",
       });
 
       if (result.error) {
-        const message = getAuthErrorMessage(result.error);
+        const message =
+          result.error.code === "SESSION_EXPIRED"
+            ? "Sign in again before deleting your account, or enter your current password."
+            : getAuthErrorMessage(result.error);
         setError(message);
         toast.error(message);
         return;
@@ -65,7 +69,15 @@ export function DeleteAccountDialog({ disabled }: { disabled?: boolean }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (isPending) return;
+        setOpen(nextOpen);
+        setPassword("");
+        setError(null);
+      }}
+    >
       <DialogTrigger asChild>
         <AccountActionButton
           className="text-destructive hover:text-destructive"
@@ -92,19 +104,22 @@ export function DeleteAccountDialog({ disabled }: { disabled?: boolean }) {
         <form className="grid gap-4" onSubmit={handleSubmit}>
           <div>
             <Label htmlFor="delete-password" className="sr-only">
-              Password
+              Password (optional with a recent sign-in)
             </Label>
             <Input
               autoComplete="current-password"
               className="h-16 px-5 text-center text-xl font-semibold"
               id="delete-password"
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Password"
-              required
+              placeholder="Password (if you have one)"
               type="password"
               value={password}
             />
           </div>
+          <p className="text-sm text-muted-foreground">
+            You can leave the password blank if you signed in recently,
+            including with Google or a passkey.
+          </p>
           {error ? (
             <p className="text-sm text-destructive" role="alert">
               {error}
@@ -112,7 +127,11 @@ export function DeleteAccountDialog({ disabled }: { disabled?: boolean }) {
           ) : null}
           <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">
             <DialogClose asChild>
-              <Button className="h-14 text-lg font-semibold" variant="outline">
+              <Button
+                className="h-14 text-lg font-semibold"
+                type="button"
+                variant="outline"
+              >
                 Cancel
               </Button>
             </DialogClose>

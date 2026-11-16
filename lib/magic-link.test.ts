@@ -47,11 +47,14 @@ beforeEach(async () => {
     error: null,
   }));
   const context = await auth.$context;
-  const user = await context.internalAdapter.createUser({
-    name: "Google user",
-    email: "google-user@example.com",
-    emailVerified: true,
-  });
+  const user = await context.internalAdapter.createUser(
+    {
+      name: "Google user",
+      email: "google-user@example.com",
+      emailVerified: true,
+    },
+    { method: "oauth", oauth: { providerId: "google" } },
+  );
   userId = user.id;
   await context.internalAdapter.linkAccount({
     userId,
