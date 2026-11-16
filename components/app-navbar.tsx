@@ -8,7 +8,6 @@ import {
 } from "@/components/app-navigation";
 import {
   ArrowLeft,
-  Dumbbell,
   Home,
   LogOut,
   Plus,
@@ -17,6 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
+import { AppLogo } from "@/components/app-logo";
 import { Launchpad } from "@/components/launchpad";
 import { NavigationMenu } from "@/components/navigation-menu";
 import { cn } from "@/lib/utils";
@@ -228,7 +228,7 @@ export function AppNavbar() {
           href="/"
           className="flex shrink-0 items-center gap-2.5 border-b px-5 py-6 text-lg font-bold focus-visible:outline-2 focus-visible:outline-ring"
         >
-          <Dumbbell className="size-8 shrink-0" aria-hidden="true" />
+          <AppLogo className="size-8 shrink-0" />
           Gym Ladder
         </Link>
         <div className="grid shrink-0 px-4 pt-4">

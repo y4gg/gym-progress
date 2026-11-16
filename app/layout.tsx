@@ -27,8 +27,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Gym Ladder",
-  description: "Track your gym progress",
   applicationName: "Gym Ladder",
+  description: "Track your gym progress",
   appleWebApp: {
     capable: true,
     title: "Gym Ladder",
@@ -41,7 +41,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#171717",
+  themeColor: "#171917",
 };
 
 export default function RootLayout({

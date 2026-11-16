@@ -12,6 +12,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import { Launchpad } from "@/components/launchpad";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,7 @@ export function PwaOnboarding({ onComplete }: { onComplete: () => void }) {
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8">
         <div className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-3 font-bold">
-            <Dumbbell className="size-9" aria-hidden="true" />
+            <AppLogo className="size-9 shrink-0" />
             Gym Ladder
           </span>
           <div

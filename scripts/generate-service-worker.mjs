@@ -27,6 +27,9 @@ await readFile(".next/server/app/offline.html");
 const urls = [
   "/offline",
   "/manifest.webmanifest",
+  "/favicon.ico",
+  "/icon.svg",
+  "/apple-icon.png",
   "/icons/icon.svg",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
