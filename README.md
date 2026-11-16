@@ -19,6 +19,11 @@ This project was started before I even knew about stardance, aswell with a goal 
 5. Wight & Set logging
 6. Offline workout tracking
 7. Installable PWA with a guided first-launch tour
+8. Choose a muscle-group icon (arms, legs, chest, back, and more) for each workout
+
+Workout icons appear on Home and in the workout menu, save offline, and sync
+with your account. Apply the committed database migrations before deploying this
+feature (`bunx drizzle-kit migrate`); existing workouts default to the dumbbell.
 
 ## Install and onboarding
 

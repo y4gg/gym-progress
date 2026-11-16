@@ -5,6 +5,8 @@ import type {
   Workout,
 } from "@/lib/types";
 
+import { normalizeWorkoutIcon } from "@/lib/workout-icons";
+
 const DEFAULT_STEP = 2.5;
 
 export const SYNC_BATCH_SIZE = 200;
@@ -106,6 +108,7 @@ export function normalizeExerciseLog(exerciseLog: ExerciseLog): ExerciseLog {
 export function normalizeWorkout(workout: Workout): Workout {
   return {
     ...workout,
+    icon: normalizeWorkoutIcon(workout.icon),
     exercises: sortExercisesByPosition(
       (workout.exercises ?? []).map((exercise, index) =>
         normalizeExercise({

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_WORKOUT_ICON, WORKOUT_ICON_NAMES } from "@/lib/workout-icons";
 
 // Match PostgreSQL numeric(8, 2), so a valid local edit cannot block syncing.
 export const weightSchema = z
@@ -8,6 +9,7 @@ export const weightSchema = z
 
 export const workoutFieldsSchema = z.object({
   name: z.string().trim().min(1, "Enter a workout name."),
+  icon: z.enum(WORKOUT_ICON_NAMES).default(DEFAULT_WORKOUT_ICON),
 });
 
 export const exerciseFieldsSchema = z.object({
