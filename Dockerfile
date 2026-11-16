@@ -8,15 +8,19 @@ ENV NEXT_TELEMETRY_DISABLED=1
 FROM base AS dependencies
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+# Reuse package downloads when the lockfile changes.
+RUN --mount=type=cache,id=gym-progress-bun,target=/root/.bun/install/cache,sharing=locked \
+    bun install --frozen-lockfile
 
 FROM dependencies AS builder
 COPY . .
 # Keep this directory available even when the app has no public assets yet.
 RUN mkdir -p public
+# Keep Next.js caches, including incremental type checks, across source changes.
 # Auth and email initialize during compilation. These build-only placeholders
 # are not runtime defaults; supply real credentials in Dokploy's Environment tab.
-RUN RESEND_API_KEY=re_build_placeholder \
+RUN --mount=type=cache,id=gym-progress-next,target=/app/.next/cache,sharing=locked \
+    RESEND_API_KEY=re_build_placeholder \
     BETTER_AUTH_SECRET=docker-build-only-placeholder-secret \
     BETTER_AUTH_URL=http://localhost:3000 \
     bun run build
