@@ -1,4 +1,5 @@
 "use client";
+import { PageBackLink } from "@/components/page-back-link";
 
 import { useMemo, useState, Suspense } from "react";
 import {
@@ -171,6 +172,7 @@ function ExerciseLogsView({
 
   return (
     <main className="mx-auto w-full max-w-md px-6 py-9 pb-32 lg:max-w-3xl">
+      <PageBackLink href={`/e/${exerciseId}`}>Back to exercise</PageBackLink>
       <h1 className="mb-6 truncate text-center text-3xl font-bold">Logs</h1>
 
       {groupedLogs.length === 0 ? (

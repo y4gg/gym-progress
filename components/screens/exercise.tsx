@@ -1,4 +1,5 @@
 "use client";
+import { PageBackLink } from "@/components/page-back-link";
 
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
@@ -199,6 +200,7 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
 
   return (
     <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32 lg:max-w-xl lg:pb-10">
+      <PageBackLink href={`/w/${workout.id}`}>Back to workout</PageBackLink>
       <div className="flex flex-col gap-4">
         <h1 className="flex min-w-0 items-center justify-center gap-3 text-3xl font-bold">
           <WorkoutIcon name={exercise.icon} className="size-8 shrink-0" />

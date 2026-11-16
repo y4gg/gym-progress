@@ -1,4 +1,5 @@
 "use client";
+import { PageBackLink } from "@/components/page-back-link";
 
 import { useMemo, useState } from "react";
 import { AppLink as Link } from "@/components/app-navigation";
@@ -212,6 +213,7 @@ export default function ExerciseHistoryPage({
   );
   return (
     <main className="mx-auto w-full max-w-md px-6 py-9 pb-32 lg:max-w-3xl lg:pb-10">
+      <PageBackLink href={`/e/${exerciseId}`}>Back to exercise</PageBackLink>
       <header className="mb-7 text-center">
         <h1 className="text-3xl font-bold">History</h1>
         <p className="mt-3 truncate text-xl font-semibold">{exercise.name}</p>
