@@ -131,7 +131,7 @@ export default function WorkoutOverview({ id }: { id: string }) {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-9 pb-28">
+    <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-9 pb-28 lg:max-w-3xl lg:pb-10">
       <h1 className="mb-2 truncate text-center text-3xl font-bold">
         {workout.name}
       </h1>
