@@ -18,6 +18,19 @@ This project was started before I even knew about stardance, aswell with a goal 
 4. Weight incrase suggestions
 5. Wight & Set logging
 6. Offline workout tracking
+7. Installable PWA with a guided first-launch tour
+
+## Install and onboarding
+
+Choose **Install Gym Ladder** from Menu or Account. Supported browsers show a
+native install prompt; iPhone and iPad users get Safari Home Screen instructions.
+Launch the installed app to see the welcome, swipe-menu tutorial, and offline
+tracking introduction. The tour works without an account, can be skipped, and
+remembers completion per account on this device. **Replay onboarding** in Menu
+or Account opens it again, including in a regular browser.
+
+Run `bun run test:pwa` to check onboarding and installation behavior. For actual
+installation and offline testing, use a production build over HTTPS or localhost.
 
 ## Offline use
 

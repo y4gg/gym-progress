@@ -11,6 +11,7 @@
     "test:auth": "bun test 'app/(account)/auth-form.test.tsx' && bun test lib/magic-link.test.ts",
     "test:exercise": "bun test components/screens/exercise.test.tsx",
     "test:launchpad": "bun test components/use-launchpad-gestures.test.tsx",
+    "test:pwa": "bun test components/pwa-onboarding.test.tsx",
     "test:offline": "node --test scripts/service-worker.test.mjs && bun test lib/sync.test.ts"
   },
   "dependencies": {
