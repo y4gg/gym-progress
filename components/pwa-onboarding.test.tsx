@@ -135,7 +135,7 @@ test("browser visits cannot start onboarding even when replay is called", () => 
   ).toBeNull();
 });
 
-test("the menu only offers replay inside a standalone PWA", () => {
+test("the menu does not offer replay in a browser or standalone PWA", () => {
   pathname = "/account";
   const view = render(
     <PwaOnboardingProvider>
@@ -148,10 +148,10 @@ test("the menu only offers replay inside a standalone PWA", () => {
     standalone = true;
     displayMode.dispatchEvent(new browser.Event("change"));
   });
-  fireEvent.click(view.getByRole("button", { name: "Replay onboarding" }));
+  expect(view.queryByRole("button", { name: "Replay onboarding" })).toBeNull();
   expect(
-    view.getByRole("heading", { name: "Welcome to Gym Ladder" }),
-  ).toBeTruthy();
+    view.queryByRole("heading", { name: "Welcome to Gym Ladder" }),
+  ).toBeNull();
 
   act(() => {
     standalone = false;
