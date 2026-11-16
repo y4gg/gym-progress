@@ -22,8 +22,8 @@ This project was started before I even knew about stardance, aswell with a goal 
 8. Choose a muscle-group icon (arms, legs, chest, back, and more) for each workout
 
 Workout icons appear on Home and in the workout menu, save offline, and sync
-with your account. Apply the committed database migrations before deploying this
-feature (`bunx drizzle-kit migrate`); existing workouts default to the dumbbell.
+with your account. Database migrations run automatically when the server starts;
+existing workouts default to the dumbbell.
 
 ## Install and onboarding
 
@@ -123,10 +123,14 @@ connection URL reachable from the container for `DATABASE_URL`, and configure
 Resend and Google OAuth with your production credentials. The Resend account must
 be able to send from `noreply@updates.y4.gg`, the sender currently used by the app.
 
-Apply the committed database migrations to your PostgreSQL database separately
-before using account and sync features; the container does not run migrations.
-From a checkout with dependencies installed and `DATABASE_URL` configured, run
-`bunx drizzle-kit migrate`.
+The server applies pending committed database migrations before accepting
+requests, including when running `bun run dev`, `bun run start`, or the Docker
+image. Set `DATABASE_URL` to a PostgreSQL user with schema migration permissions.
+Startup fails if migrations fail; concurrent server instances serialize their
+migrations using a database advisory lock. Builds do not connect to the database.
+The standalone output includes the migration files. To apply migrations manually
+from a checkout, run `bunx drizzle-kit migrate` with `DATABASE_URL` configured
+while the app is stopped.
 
 To build and run the same image locally:
 
