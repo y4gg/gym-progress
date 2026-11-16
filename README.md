@@ -23,9 +23,9 @@ This project was started before I even knew about stardance, aswell with a goal 
 
 Workout icons appear on Home and in the workout menu, save offline, and sync
 with your account. Exercise icons appear in workout lists and on the exercise
-screen, and can be chosen when creating or editing an exercise. Apply the
-committed database migrations before deploying this feature
-(`bunx drizzle-kit migrate`); existing workouts and exercises default to the dumbbell.
+screen, and can be chosen when creating or editing an exercise. Database
+migrations run automatically when the server starts; existing workouts and
+exercises default to the dumbbell.
 
 ## Install and onboarding
 
@@ -125,10 +125,13 @@ connection URL reachable from the container for `DATABASE_URL`, and configure
 Resend and Google OAuth with your production credentials. The Resend account must
 be able to send from `noreply@updates.y4.gg`, the sender currently used by the app.
 
-Apply the committed database migrations to your PostgreSQL database separately
-before using account and sync features; the container does not run migrations.
-From a checkout with dependencies installed and `DATABASE_URL` configured, run
-`bunx drizzle-kit migrate`.
+`bun run start` and the Docker image use a shared startup script that applies
+pending committed database migrations, then launches the server with the Bun
+runtime. Set `DATABASE_URL` to a PostgreSQL user with schema migration permissions.
+Startup stops if migrations fail; concurrent server instances serialize their
+migrations using a database advisory lock. Builds do not connect to the database.
+For development, run `bun scripts/migrate.mjs` before `bun run dev`. The Docker
+image includes the migration CLI and SQL files alongside the standalone server.
 
 To build and run the same image locally:
 
@@ -137,9 +140,9 @@ docker build -t gym-progress .
 docker run --rm -p 3000:3000 --env-file .env gym-progress
 ```
 
-The image installs dependencies using the Bun lockfile and runs the Next.js
-standalone server as a non-root user. Local `.env` files are excluded from the
-build context, so no production credentials are needed to build the image. The
-build uses placeholders solely to initialize auth and email during compilation;
+The image installs dependencies using the Bun lockfile and runs migrations and
+the Next.js standalone server on Bun as a non-root user. Local `.env` files are
+excluded from the build context, so no production credentials are needed to build
+the image. The build uses placeholders solely to initialize auth and email during compilation;
 set the real auth and email credentials at runtime. Building also requires
 network access to download the Google fonts used by the app.
