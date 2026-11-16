@@ -123,12 +123,8 @@ export function PwaOnboarding({ onComplete }: { onComplete: () => void }) {
                 pathname="/"
                 session={null}
                 isSessionPending={false}
-                triggerClassName="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border px-6 text-sm font-semibold hover:bg-accent"
                 onTutorialComplete={() => setStep(2)}
               />
-              <p className="text-center text-xs text-muted-foreground">
-                You can also tap Menu to continue.
-              </p>
             </>
           )}
           {step === 2 && (

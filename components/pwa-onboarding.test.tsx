@@ -81,6 +81,19 @@ function App() {
   return <button onClick={replay}>Replay onboarding</button>;
 }
 
+function swipeLeft(target: HTMLElement) {
+  fireEvent.touchStart(target, {
+    touches: [{ identifier: 1, clientX: 300, clientY: 200 }],
+  });
+  fireEvent.touchMove(target, {
+    touches: [{ identifier: 1, clientX: 180, clientY: 200 }],
+  });
+  fireEvent.touchEnd(target, {
+    touches: [],
+    changedTouches: [{ identifier: 1, clientX: 180, clientY: 200 }],
+  });
+}
+
 beforeEach(() => {
   standalone = false;
   pathname = "/";
@@ -128,7 +141,7 @@ test("first standalone launch runs the real menu tutorial and remembers completi
   expect(view.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("1");
   fireEvent.click(view.getByRole("button", { name: "Continue" }));
   expect(view.getByRole("heading", { name: "Open your menu" })).toBeTruthy();
-  fireEvent.click(view.getByRole("button", { name: "Menu" }));
+  swipeLeft(view.getByRole("heading", { name: "Open your menu" }));
   expect(
     view.getByRole("heading", { name: "You found your launchpad" }),
   ).toBeTruthy();
@@ -177,16 +190,8 @@ test("swiping left opens the tutorial menu and closing it advances the tour", ()
   );
   fireEvent.click(view.getByRole("button", { name: "Continue" }));
   const heading = view.getByRole("heading", { name: "Open your menu" });
-  fireEvent.touchStart(heading, {
-    touches: [{ identifier: 1, clientX: 300, clientY: 200 }],
-  });
-  fireEvent.touchMove(heading, {
-    touches: [{ identifier: 1, clientX: 180, clientY: 200 }],
-  });
-  fireEvent.touchEnd(heading, {
-    touches: [],
-    changedTouches: [{ identifier: 1, clientX: 180, clientY: 200 }],
-  });
+  expect(view.queryByRole("button", { name: "Menu" })).toBeNull();
+  swipeLeft(heading);
   expect(
     view.getByRole("heading", { name: "You found your launchpad" }),
   ).toBeTruthy();

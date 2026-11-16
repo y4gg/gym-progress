@@ -12,7 +12,7 @@ import {
 } from "@/components/navigation-menu";
 
 type LaunchpadProps = NavigationMenuProps & {
-  triggerClassName: string;
+  triggerClassName?: string;
   onTutorialComplete?: () => void;
 };
 
@@ -61,12 +61,14 @@ export function Launchpad({
         setMenuOpen(nextOpen);
       }}
     >
-      <Dialog.Trigger asChild>
-        <button type="button" aria-label="Menu" className={triggerClassName}>
-          <Menu aria-hidden="true" />
-          <span>Menu</span>
-        </button>
-      </Dialog.Trigger>
+      {!onTutorialComplete && (
+        <Dialog.Trigger asChild>
+          <button type="button" aria-label="Menu" className={triggerClassName}>
+            <Menu aria-hidden="true" />
+            <span>Menu</span>
+          </button>
+        </Dialog.Trigger>
+      )}
       <Dialog.Portal>
         <Dialog.Overlay className="launchpad-overlay fixed inset-0 z-[60] bg-black/50" />
         <Dialog.Content
@@ -126,14 +128,14 @@ export function Launchpad({
             </div>
           ) : (
             <NavigationMenu
-            pathname={pathname}
-            session={session}
-            isSessionPending={isSessionPending}
-            onNavigate={() => {
-              prepareClose();
-              setMenuOpen(false);
-            }}
-          />
+              pathname={pathname}
+              session={session}
+              isSessionPending={isSessionPending}
+              onNavigate={() => {
+                prepareClose();
+                setMenuOpen(false);
+              }}
+            />
           )}
         </Dialog.Content>
       </Dialog.Portal>
