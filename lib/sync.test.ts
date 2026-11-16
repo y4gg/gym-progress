@@ -3,6 +3,7 @@ import {
   applyPendingOperations,
   compactSyncQueue,
   getUnchangedOperationIds,
+  normalizeExercise,
   normalizeWorkout,
 } from "@/lib/sync";
 import type { SyncOperation, Workout } from "@/lib/types";
@@ -142,7 +143,7 @@ test("replaying a pending workout add preserves exercises already present in the
   };
   const snapshot = { ...workout, exercises: [exercise] };
   const replayed = applyPendingOperations([snapshot], [], [sent]);
-  expect(replayed.workouts[0].exercises).toEqual([exercise]);
+  expect(replayed.workouts[0].exercises).toEqual([normalizeExercise(exercise)]);
 });
 
 test("legacy and unknown icons fall back while offline icon edits survive queue replay", () => {

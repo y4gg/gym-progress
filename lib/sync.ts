@@ -77,6 +77,7 @@ export function sortExercisesByPosition(exercises: Exercise[]): Exercise[] {
 export function normalizeExercise(exercise: Exercise): Exercise {
   return {
     ...exercise,
+    icon: normalizeWorkoutIcon(exercise.icon),
     position: normalizePosition(exercise.position),
     weight: Number(exercise.weight),
     sets: Number(exercise.sets),

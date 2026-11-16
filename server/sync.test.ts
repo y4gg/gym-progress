@@ -1,6 +1,9 @@
 import { beforeEach, expect, mock, test } from "bun:test";
 import type { SyncOperation } from "@/lib/types";
-import type { workout as workoutTable } from "@/db/schema";
+import type {
+  workout as workoutTable,
+  exercise as exerciseTable,
+} from "@/db/schema";
 
 const getSession = mock(async () => ({ user: { id: "account-a" } }));
 mock.module("@/lib/auth", () => ({ auth: { api: { getSession } } }));
@@ -17,7 +20,9 @@ const insert = mock(() => ({ values: insertValues }));
 const updateValues = mock((values: unknown) => ({ where: async () => values }));
 const update = mock(() => ({ set: updateValues }));
 const findWorkouts = mock(
-  async (): Promise<(typeof workoutTable.$inferSelect & { exercises: [] })[]> => [],
+  async (): Promise<(typeof workoutTable.$inferSelect & {
+    exercises: (typeof exerciseTable.$inferSelect)[];
+  })[]> => [],
 );
 const findLogs = mock(async () => []);
 const transaction = mock(
@@ -169,7 +174,9 @@ test.each([
     ).toEqual(["legacy-exercise", "delete-1"]);
     expect(
       type === "addExercise" ? insertValues : updateValues,
-    ).toHaveBeenCalledWith(expect.objectContaining({ step: expectedStep }));
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ step: expectedStep, icon: "dumbbell" }),
+    );
     expect(operations[0]).toMatchObject({ exercise: { step } });
   },
 );
@@ -281,3 +288,48 @@ test("legacy workout payloads get the default icon and unknown icons are rejecte
   });
   expect(transaction).not.toHaveBeenCalled();
 });
+
+test.each(["addExercise", "editExercise", "upsertExercise"] as const)(
+  "%s persists the exercise icon and includes it in the sync snapshot",
+  async (type) => {
+    ownerRows.push(
+      [{ userId: "account-a", updatedAt: new Date(0) }],
+      type === "addExercise"
+        ? []
+        : [{ userId: "account-a", workoutId, updatedAt: new Date(0) }],
+    );
+    findWorkouts.mockResolvedValueOnce([
+      {
+        id: workoutId,
+        userId: "account-a",
+        name: "Push",
+        icon: "upper-body",
+        createdAt: new Date(timestamp),
+        updatedAt: new Date(timestamp),
+        exercises: [{
+          ...legacyExercise,
+          icon: "chest",
+          maxReps: null,
+          step: 2.5,
+          createdAt: new Date(timestamp),
+          updatedAt: new Date(timestamp),
+        }],
+      },
+    ]);
+    const result = await syncOperations([
+      {
+        id: "exercise-icon",
+        type: type === "editExercise" ? "editExercise" : "addExercise",
+        queuedAt: timestamp,
+        exercise: { ...legacyExercise, step: 2.5, icon: "chest" },
+      },
+    ]);
+    expect(result.success).toBe(true);
+    expect(
+      type === "addExercise" ? insertValues : updateValues,
+    ).toHaveBeenCalledWith(expect.objectContaining({ icon: "chest" }));
+    expect("workouts" in result && result.workouts[0].exercises[0].icon).toBe(
+      "chest",
+    );
+  },
+);

@@ -94,11 +94,17 @@ test("sorting includes exercises added through sync while the draft is open", as
       ...exercise,
       id: "press",
       name: "Shoulder press",
+      icon: "shoulders",
       position: 8,
     });
   });
   expect(
     view.getByRole("button", { name: "Drag Shoulder press" }),
+  ).toBeTruthy();
+  expect(
+    view
+      .getByRole("button", { name: "Drag Shoulder press" })
+      .parentElement?.querySelector('[data-workout-icon="shoulders"]'),
   ).toBeTruthy();
   fireEvent.click(view.getByRole("button", { name: "Done" }));
   expect(
@@ -113,23 +119,49 @@ test("sorting includes exercises added through sync while the draft is open", as
   ]);
 });
 
-test("switching create routes resets the draft and adds to the current workout", () => {
+test("switching create routes resets the draft and persists the new exercise's icon", async () => {
   const view = render(<CreateExercisePage id="push" />);
   fireEvent.change(view.getByLabelText("Exercise name"), {
     target: { value: "Wrong draft" },
   });
+  fireEvent.click(view.getByRole("radio", { name: "Chest" }));
   view.rerender(<CreateExercisePage id="pull" />);
   expect((view.getByLabelText("Exercise name") as HTMLInputElement).value).toBe(
     "",
   );
+  expect(
+    (view.getByRole("radio", { name: "Dumbbell" }) as HTMLInputElement).checked,
+  ).toBe(true);
   fireEvent.change(view.getByLabelText("Exercise name"), {
     target: { value: "  Pull ups  " },
   });
+  fireEvent.click(view.getByRole("radio", { name: "Back" }));
   fireEvent.submit(view.container.querySelector("form")!);
   expect(
     useStore.getState().getWorkoutById("pull")?.exercises[0],
-  ).toMatchObject({ name: "Pull ups", workoutId: "pull" });
+  ).toMatchObject({ name: "Pull ups", workoutId: "pull", icon: "back" });
   expect(useStore.getState().getWorkoutById("push")?.exercises).toHaveLength(2);
+  expect(useStore.getState().pendingSyncOperations[0]).toMatchObject({
+    type: "addExercise",
+    exercise: { icon: "back" },
+  });
+
+  const saved = localStorage.getItem("store");
+  expect(saved).toBeTruthy();
+  await act(async () => {
+    useStore.setState({ workouts: [] });
+    localStorage.setItem("store", saved!);
+    await useStore.persist.rehydrate();
+  });
+  expect(useStore.getState().getWorkoutById("pull")?.exercises[0].icon).toBe(
+    "back",
+  );
+  view.rerender(<WorkoutOverview id="pull" />);
+  expect(
+    view
+      .getByRole("link", { name: "Pull ups" })
+      .querySelector('[data-workout-icon="back"]'),
+  ).toBeTruthy();
 });
 
 test("clearing the optional weight step stores the default and whitespace names are rejected", () => {

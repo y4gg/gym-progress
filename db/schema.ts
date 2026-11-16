@@ -155,6 +155,7 @@ export const exercise = pgTable(
   {
     id: text("id").primaryKey().unique(),
     name: text("name").notNull(),
+    icon: text("icon").default("dumbbell").notNull(),
     workoutId: text("workout_id")
       .notNull()
       .references(() => workout.id, { onDelete: "cascade" }),
