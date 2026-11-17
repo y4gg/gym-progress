@@ -1,5 +1,5 @@
 "use client";
-import { useAppRouter } from "@/components/app-navigation";
+import { AppLink as Link, useAppRouter } from "@/components/app-navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -170,6 +170,9 @@ function CreateExerciseForm({ id }: { id: string }) {
 
         <Button className="h-16 text-xl font-semibold" type="submit">
           Create Exercise
+        </Button>
+        <Button className="h-12" variant="ghost" asChild>
+          <Link href={`/w/${workout.id}`}>Cancel</Link>
         </Button>
       </form>
     </main>

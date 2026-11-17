@@ -39,7 +39,7 @@ mock.module("@/components/app-navigation", () => ({
   AppLink: (props: ComponentProps<"a">) => <a {...props} />,
 }));
 
-const { act, cleanup, fireEvent, render } =
+const { act, cleanup, fireEvent, render, within } =
   await import("@testing-library/react");
 const { useStore } = await import("@/lib/store");
 const { default: ExercisePage } = await import("./exercise");
@@ -104,6 +104,53 @@ afterEach(() => {
 function currentSet(view: ReturnType<typeof render>) {
   return (view.getByLabelText("Current set") as HTMLInputElement).value;
 }
+
+test.each([[0, 1], [0, 3], [1, 3], [2, 3]])(
+  "exercise %i in a workout of %i has distinct previous, advance and return destinations",
+  (index, count) => {
+    const exercises = Array.from({ length: count }, (_, position) => ({
+      ...exercise,
+      id: `exercise-${position}`,
+      name: `Exercise ${position + 1}`,
+      position,
+    }));
+    useStore.setState({
+      workouts: [{ ...useStore.getState().workouts[0], exercises }],
+    });
+    const view = render(<ExercisePage exerciseId={exercises[index].id} />);
+    const navigation = within(
+      view.getByRole("navigation", { name: "Exercise navigation" }),
+    );
+    expect(navigation.getByText(`Exercise ${index + 1} of ${count}`)).toBeTruthy();
+    expect(
+      navigation.getByRole("link", { name: "Back to workout" }).getAttribute("href"),
+    ).toBe("/w/push");
+
+    if (index === 0) {
+      expect(
+        navigation.getByRole("button", { name: "Previous exercise" }).hasAttribute("disabled"),
+      ).toBe(true);
+    } else {
+      expect(
+        navigation.getByRole("link", {
+          name: `Previous exercise: ${exercises[index - 1].name}`,
+        }).getAttribute("href"),
+      ).toBe(`/e/${exercises[index - 1].id}`);
+    }
+
+    if (index === count - 1) {
+      expect(
+        navigation.getByRole("link", { name: "Finish workout" }).getAttribute("href"),
+      ).toBe("/w/push");
+    } else {
+      expect(
+        navigation.getByRole("link", {
+          name: `Next exercise: ${exercises[index + 1].name}`,
+        }).getAttribute("href"),
+      ).toBe(`/e/${exercises[index + 1].id}`);
+    }
+  },
+);
 
 test("reopening an exercise resumes after the sets already logged today", () => {
   const view = render(<ExercisePage exerciseId={exercise.id} />);

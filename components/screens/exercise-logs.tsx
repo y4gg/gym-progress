@@ -226,6 +226,17 @@ function ExerciseLogsView({
         </div>
       )}
 
+      <Button
+        className={cn(
+          "mt-6 h-12 w-full",
+          groupedLogs.length > 0 && "mb-20 lg:mb-0",
+        )}
+        variant="outline"
+        asChild
+      >
+        <Link href={`/e/${exerciseId}`}>Back to exercise</Link>
+      </Button>
+
       {groupedLogs.length > 0 ? (
         <div className="fixed inset-x-0 bottom-24 z-40 flex justify-center px-6 lg:left-72 lg:bottom-6">
           {selectMode && selectedCount > 0 ? (

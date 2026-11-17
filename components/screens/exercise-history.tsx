@@ -343,6 +343,9 @@ export default function ExerciseHistoryPage({
           ) : null}
         </>
       )}
+      <Button className="mt-6 h-12 w-full" variant="outline" asChild>
+        <Link href={`/e/${exerciseId}`}>Back to exercise</Link>
+      </Button>
     </main>
   );
 }

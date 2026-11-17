@@ -6,7 +6,7 @@ import { useAppRouter, AppLink as Link } from "@/components/app-navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, List, Minus, Plus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { notFound } from "next/navigation";
 import { EditExerciseDialog } from "@/components/edit-exercise-dialog";
@@ -18,7 +18,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { WeightSuggestionReachedDialog } from "@/components/weight-suggestion-reached-dialog";
 import { weightSchema } from "@/lib/workout-validation";
 import { WorkoutIcon } from "@/components/workout-icon";
-import { cn } from "@/lib/utils";
 
 export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
   return <ExerciseScreen key={exerciseId} exerciseId={exerciseId} />;
@@ -108,6 +107,8 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
   const weightSuggestionEnabled = typeof targetReps === "number";
   const canTrackCurrentSet = exercise.logging;
   const isLastSet = currentSet === exercise.sets;
+  const exerciseNumber =
+    workout.exercises.findIndex((item) => item.id === exercise.id) + 1;
 
   const goToNextExercise = () => {
     if (typeof nextExercise === "undefined") {
@@ -318,35 +319,70 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
 
         <Separator orientation="horizontal" className="my-2" />
 
-        <div className="grid grid-cols-2 gap-2 -mt-2">
-          {previousExercise ? (
+        <nav aria-label="Exercise navigation" className="-mt-2 space-y-2">
+          <p className="text-center text-xs font-medium text-muted-foreground">
+            Exercise {exerciseNumber} of {workout.exercises.length}
+          </p>
+          <div className="flex gap-2">
+            {previousExercise ? (
+              <Button className="size-14 rounded-xl" variant="outline" asChild>
+                <Link
+                  href={`/e/${previousExercise.id}`}
+                  aria-label={`Previous exercise: ${previousExercise.name}`}
+                  title={`Previous exercise: ${previousExercise.name}`}
+                >
+                  <ChevronLeft className="size-5" aria-hidden="true" />
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                aria-label="Previous exercise"
+                className="size-14 rounded-xl"
+                disabled
+                type="button"
+                variant="outline"
+              >
+                <ChevronLeft className="size-5" aria-hidden="true" />
+              </Button>
+            )}
             <Button
-              className="h-14 gap-2 text-xl font-semibold"
-              variant="outline"
+              className="h-14 min-w-0 flex-1 justify-between gap-3 rounded-xl px-4 text-left"
               asChild
             >
-              <Link href={`/e/${previousExercise.id}`}>
-                <ChevronLeft className="size-5" aria-hidden="true" />
-                Previous
-              </Link>
+              {nextExercise ? (
+                <Link
+                  href={`/e/${nextExercise.id}`}
+                  aria-label={`Next exercise: ${nextExercise.name}`}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-xs opacity-70">Next exercise</span>
+                    <span className="block truncate text-base font-semibold">
+                      {nextExercise.name}
+                    </span>
+                  </span>
+                  <ChevronRight className="size-5" aria-hidden="true" />
+                </Link>
+              ) : (
+                <Link href={`/w/${workout.id}`}>
+                  <span className="text-base font-semibold">Finish workout</span>
+                  <Check className="size-5" aria-hidden="true" />
+                </Link>
+              )}
             </Button>
-          ) : null}
-
+          </div>
           <Button
-            className={cn(
-              "h-14 gap-2 text-xl font-semibold",
-              !previousExercise && "col-span-2",
-            )}
+            className="h-11 w-full gap-2 text-sm text-muted-foreground"
+            variant="ghost"
             asChild
           >
-            <Link
-              href={nextExercise ? `/e/${nextExercise.id}` : `/w/${workout.id}`}
-            >
-              {nextExercise ? "Next" : "Finish"}
-              <ChevronRight className="size-5" aria-hidden="true" />
+            <Link href={`/w/${workout.id}`}>
+              <List className="size-4" aria-hidden="true" />
+              Back to workout
             </Link>
           </Button>
+        </nav>
 
+        <div className="grid grid-cols-2 gap-2">
           <Button
             className="h-14 text-xl font-semibold"
             variant="outline"
