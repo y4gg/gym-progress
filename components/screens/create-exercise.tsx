@@ -1,5 +1,5 @@
 "use client";
-import { PageBackLink } from "@/components/page-back-link";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { useAppRouter } from "@/components/app-navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,7 +57,12 @@ function CreateExerciseForm({ id }: { id: string }) {
 
   return (
     <main className="mx-auto w-full max-w-sm px-6 py-9 pb-28 lg:max-w-xl lg:pb-10">
-      <PageBackLink href={`/w/${workout.id}`}>Back to workout</PageBackLink>
+      <PageBreadcrumb
+        href={`/w/${workout.id}`}
+        parentName={workout.name}
+        parentIcon={workout.icon}
+        currentPage="New exercise"
+      />
       <form
         className="flex flex-col gap-4"
         id="create-exercise-form"

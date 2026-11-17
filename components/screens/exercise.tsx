@@ -1,5 +1,5 @@
 "use client";
-import { PageBackLink } from "@/components/page-back-link";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
@@ -7,7 +7,7 @@ import { useAppRouter, AppLink as Link } from "@/components/app-navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { notFound } from "next/navigation";
 import { EditExerciseDialog } from "@/components/edit-exercise-dialog";
@@ -19,6 +19,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { WeightSuggestionReachedDialog } from "@/components/weight-suggestion-reached-dialog";
 import { weightSchema } from "@/lib/workout-validation";
 import { WorkoutIcon } from "@/components/workout-icon";
+import { cn } from "@/lib/utils";
 
 export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
   return <ExerciseScreen key={exerciseId} exerciseId={exerciseId} />;
@@ -200,7 +201,12 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
 
   return (
     <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32 lg:max-w-xl lg:pb-10">
-      <PageBackLink href={`/w/${workout.id}`}>Back to workout</PageBackLink>
+      <PageBreadcrumb
+        href={`/w/${workout.id}`}
+        parentName={workout.name}
+        parentIcon={workout.icon}
+        currentPage={exercise.name}
+      />
       <div className="flex flex-col gap-4">
         <h1 className="flex min-w-0 items-center justify-center gap-3 text-3xl font-bold">
           <WorkoutIcon name={exercise.icon} className="size-8 shrink-0" />
@@ -320,24 +326,32 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
         <Separator orientation="horizontal" className="my-2" />
 
         <div className="grid grid-cols-2 gap-2 -mt-2">
+          {previousExercise ? (
+            <Button
+              className="h-14 gap-2 text-xl font-semibold"
+              variant="outline"
+              asChild
+            >
+              <Link href={`/e/${previousExercise.id}`}>
+                <ChevronLeft className="size-5" aria-hidden="true" />
+                Previous
+              </Link>
+            </Button>
+          ) : null}
+
           <Button
-            className="h-14 text-xl font-semibold"
-            variant="outline"
+            className={cn(
+              "h-14 gap-2 text-xl font-semibold",
+              !previousExercise && "col-span-2",
+            )}
             asChild
           >
-            {typeof previousExercise === "undefined" ? (
-              <Link href={`/w/${workout.id}`}>Back</Link>
-            ) : (
-              <Link href={`/e/${previousExercise.id}`}>Back</Link>
-            )}
-          </Button>
-
-          <Button className="h-14 text-xl font-semibold" asChild>
-            {typeof nextExercise === "undefined" ? (
-              <Link href={`/w/${workout.id}`}>Finish</Link>
-            ) : (
-              <Link href={`/e/${nextExercise.id}`}>Next</Link>
-            )}
+            <Link
+              href={nextExercise ? `/e/${nextExercise.id}` : `/w/${workout.id}`}
+            >
+              {nextExercise ? "Next" : "Finish"}
+              <ChevronRight className="size-5" aria-hidden="true" />
+            </Link>
           </Button>
 
           <Button

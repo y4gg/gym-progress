@@ -1,5 +1,5 @@
 "use client";
-import { PageBackLink } from "@/components/page-back-link";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 
 import { useMemo, useState, Suspense } from "react";
 import {
@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import type { ExerciseLog } from "@/lib/types";
+import type { Exercise, ExerciseLog } from "@/lib/types";
 import { toast } from "sonner";
 
 type LogGroup = {
@@ -138,14 +138,15 @@ function groupLogs(exerciseLogs: ExerciseLog[]) {
 }
 
 function ExerciseLogsView({
-  exerciseId,
+  exercise,
   groupedLogs,
   selectMode,
 }: {
-  exerciseId: string;
+  exercise: Exercise;
   groupedLogs: LogGroup[];
   selectMode: boolean;
 }) {
+  const exerciseId = exercise.id;
   const router = useAppRouter();
   const deleteExerciseLogs = useStore((state) => state.deleteExerciseLogs);
   const [selectedLogIds, setSelectedLogIds] = useState<string[]>([]);
@@ -172,7 +173,12 @@ function ExerciseLogsView({
 
   return (
     <main className="mx-auto w-full max-w-md px-6 py-9 pb-32 lg:max-w-3xl">
-      <PageBackLink href={`/e/${exerciseId}`}>Back to exercise</PageBackLink>
+      <PageBreadcrumb
+        href={`/e/${exerciseId}`}
+        parentName={exercise.name}
+        parentIcon={exercise.icon}
+        currentPage="Logs"
+      />
       <h1 className="mb-6 truncate text-center text-3xl font-bold">Logs</h1>
 
       {groupedLogs.length === 0 ? (
@@ -309,7 +315,7 @@ function ExerciseLogsPageContent({ exerciseId }: { exerciseId: string }) {
 
   return (
     <ExerciseLogsView
-      exerciseId={exercise.id}
+      exercise={exercise}
       groupedLogs={groupedLogs}
       key={`${exercise.id}:${selectMode ? "select" : "read"}`}
       selectMode={selectMode}
