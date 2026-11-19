@@ -247,3 +247,67 @@ test("account pages keep their server-rendered screen", () => {
   );
   expect(view.getByText("Account screen")).toBeTruthy();
 });
+
+test("overview opens in the local app and can switch to an older training period", () => {
+  Object.defineProperty(browser.navigator, "onLine", {
+    configurable: true,
+    value: false,
+  });
+  const date = new Date();
+  date.setDate(date.getDate() - 42);
+  const timestamp = date.toISOString();
+  const workoutId = "push";
+  const exerciseId = "bench";
+  useStore.setState({
+    workouts: [{
+      id: workoutId,
+      name: "Push day",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      exercises: [{
+        id: exerciseId,
+        workoutId,
+        name: "Bench press",
+        position: 0,
+        weight: 60,
+        sets: 3,
+        step: 2.5,
+        logging: true,
+        notes: "",
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      }],
+    }],
+    exerciseLogs: [{
+      id: "set",
+      exerciseId,
+      workoutId,
+      weight: 60,
+      reps: 8,
+      performedAt: timestamp,
+      createdAt: timestamp,
+    }],
+  });
+  const assign = spyOn(browser.location, "assign").mockImplementation(() => {});
+  const view = render(
+    <AppNavigation>
+      <AppLink href="/overview">Open overview</AppLink>
+      <AppScreen>{null}</AppScreen>
+    </AppNavigation>,
+  );
+
+  fireEvent.click(view.getByRole("link", { name: "Open overview" }));
+  expect(view.getByRole("heading", { name: "Overview" })).toBeTruthy();
+  expect(view.getByText("No exercise progress to show in this period.")).toBeTruthy();
+  expect(router.push).not.toHaveBeenCalled();
+  expect(assign).not.toHaveBeenCalled();
+
+  fireEvent.click(view.getByRole("button", { name: "12 weeks" }));
+  expect(
+    view.getByRole("link", { name: /Bench press/ }).getAttribute("href"),
+  ).toBe("/e/bench/history");
+  expect(view.getByTitle("480 kg (weight × reps)")).toBeTruthy();
+  const activeWeek = view.getByRole("button", { name: /, 1 day$/ });
+  fireEvent.click(activeWeek);
+  expect(activeWeek.getAttribute("aria-pressed")).toBe("true");
+});

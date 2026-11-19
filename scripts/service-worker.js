@@ -50,6 +50,7 @@ async function navigate(request) {
   const isWorkoutRoute =
     pathname === "/" ||
     pathname === OFFLINE_URL ||
+    /^\/overview\/?$/.test(pathname) ||
     /^\/w\/[^/]+(?:\/create)?\/?$/.test(pathname) ||
     /^\/e\/[^/]+(?:\/(?:history|logs))?\/?$/.test(pathname);
   // Workout data lives on the device and syncs separately. Never block the app
