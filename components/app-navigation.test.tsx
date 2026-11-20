@@ -47,9 +47,15 @@ mock.module("next/link", () => ({
     href,
     onNavigate,
     children,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledBy,
+    "aria-describedby": ariaDescribedBy,
   }: ComponentProps<typeof NextLink>) => (
     <a
       href={href as string}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
+      aria-describedby={ariaDescribedBy}
       onClick={(event) =>
         onNavigate?.({ preventDefault: () => event.preventDefault() })
       }
@@ -267,10 +273,13 @@ test("settings and their detail pages open locally for an offline guest", () => 
 
   fireEvent.click(view.getByRole("link", { name: "Settings" }));
   expect(view.getByRole("heading", { name: "Settings" })).toBeTruthy();
+  const trainingLink = view.getByRole("link", { name: "Training" });
+  expect(trainingLink.textContent).toContain("3 sets");
+  expect(trainingLink.textContent).toContain("+2.5 kg");
   fireEvent.click(view.getByRole("link", { name: "Appearance" }));
   expect(browser.location.pathname).toBe("/settings/appearance");
   expect(view.getByRole("radio", { name: "System" })).toBeTruthy();
-  fireEvent.click(view.getByRole("link", { name: "Back" }));
+  fireEvent.click(view.getByRole("link", { name: "Back to settings" }));
   fireEvent.click(view.getByRole("link", { name: "Data & sync" }));
   expect(view.getByText("Offline")).toBeTruthy();
   expect(view.getByText("Saved on this device")).toBeTruthy();

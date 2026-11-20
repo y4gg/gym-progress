@@ -15,21 +15,25 @@ export default function AccountPage() {
 
   return (
     <SettingsLayout title="Account">
-      <div className="flex w-full max-w-sm flex-col gap-3">
-        <ChangeEmailDialog
-          currentEmail={currentEmail}
-          disabled={actionsDisabled}
-        />
-        <ChangePasswordDialog
-          key={session.data?.user.id ?? "signed-out"}
-          disabled={actionsDisabled}
-        />
-        <PasskeysDialog disabled={actionsDisabled} />
-        <SignOutButton disabled={actionsDisabled} />
-        <DeleteAccountDialog disabled={actionsDisabled} />
+      <div className="grid max-w-md gap-5">
+        <div className="grid gap-2">
+          <ChangeEmailDialog
+            currentEmail={currentEmail}
+            disabled={actionsDisabled}
+          />
+          <ChangePasswordDialog
+            key={session.data?.user.id ?? "signed-out"}
+            disabled={actionsDisabled}
+          />
+          <PasskeysDialog disabled={actionsDisabled} />
+        </div>
+        <div className="grid gap-2 border-t border-border pt-5">
+          <SignOutButton disabled={actionsDisabled} />
+          <DeleteAccountDialog disabled={actionsDisabled} />
+        </div>
 
         {!session.isPending && !session.data ? (
-          <p className="pt-2 text-center text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Login to manage your account.
           </p>
         ) : null}

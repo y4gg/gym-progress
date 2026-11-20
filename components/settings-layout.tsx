@@ -14,12 +14,14 @@ export function SettingsLayout({
   children: ReactNode;
 }) {
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-9 pb-28 lg:pb-10">
-      <div className="grid gap-6">
-        <header className="flex min-h-11 items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold">{title}</h1>
+    <main className="mx-auto w-full max-w-2xl px-5 pt-8 pb-28 sm:px-8 lg:pt-14 lg:pb-12">
+      <div className="grid gap-7 sm:gap-8">
+        <header className="flex min-h-11 flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <h1 className="text-[2rem] leading-[1.08] font-bold tracking-[-0.055em] sm:text-[2.5rem]">
+            {title}
+          </h1>
           {back && (
-            <Button asChild variant="ghost" className="min-h-11">
+            <Button asChild variant="ghost" className="min-h-11 text-muted-foreground hover:text-foreground">
               <AppLink href="/settings" aria-label="Back to settings">
                 <ArrowLeft aria-hidden="true" />
                 Back

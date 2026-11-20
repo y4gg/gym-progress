@@ -59,7 +59,11 @@ mock.module("@/lib/auth-client", () => ({
 }));
 mock.module("@/lib/store", () => ({
   useStore: (selector: (state: unknown) => unknown) =>
-    selector({ syncUserId: savedUserId, workouts: [] }),
+    selector({
+      syncUserId: savedUserId,
+      workouts: [],
+      trainingDefaults: { sets: 3, step: 2.5, logging: true },
+    }),
 }));
 mock.module("@/lib/use-store-hydrated", () => ({
   useStoreHydrated: () => true,

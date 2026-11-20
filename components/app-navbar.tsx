@@ -204,7 +204,7 @@ function PageSpecificNavItem({
     );
   }
 
-  if (isSettingsPathname(pathname)) return <div aria-hidden="true" />;
+  if (isSettingsPathname(pathname)) return null;
 
   return (
     <NavLink href="/account" label="Account">
@@ -218,6 +218,7 @@ export function AppNavbar() {
   const pathname = useAppPathname();
   const session = authClient.useSession();
   const isLoggedIn = Boolean(session.data);
+  const settingsPage = isSettingsPathname(pathname);
 
   if (pathname === "/offline") return null;
 
@@ -251,7 +252,12 @@ export function AppNavbar() {
         aria-label="Primary"
         className="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 flex justify-center px-6 pointer-events-none lg:hidden"
       >
-        <div className="pointer-events-auto grid h-16 w-full max-w-sm grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md">
+        <div
+          className={cn(
+            "pointer-events-auto grid h-16 w-full max-w-sm items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md",
+            settingsPage ? "grid-cols-2" : "grid-cols-3",
+          )}
+        >
           <NavLink className="ml-1" href="/" label="Home">
             <Home />
             <span>Home</span>

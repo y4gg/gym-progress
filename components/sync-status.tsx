@@ -59,7 +59,7 @@ export function SyncStatus() {
     >
       <Icon
         aria-hidden="true"
-        className={cn("size-4 shrink-0", status === "syncing" && "animate-spin")}
+        className={cn("size-4 shrink-0", status === "syncing" && "motion-safe:animate-spin")}
       />
       {statusConfig.label}
     </span>
