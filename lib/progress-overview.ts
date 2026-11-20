@@ -19,17 +19,23 @@ export function buildProgressOverview(
     return timestamp >= start && timestamp < tomorrow;
   });
   const sessions = buildHistorySessions(periodLogs);
+  const trainingDays = new Set(sessions.map(({ timestamp }) => timestamp));
 
   const weeks = Array.from({ length: weekCount }, (_, index) => {
     const offset = 7 * (index - weekCount + 1);
-    const start = calendarDay(monday, offset).getTime();
-    const end = calendarDay(monday, offset + 6).getTime();
+    const days = Array.from({ length: 7 }, (_, day) => {
+      const timestamp = calendarDay(monday, offset + day).getTime();
+      return {
+        timestamp,
+        logged: trainingDays.has(timestamp),
+        upcoming: timestamp >= tomorrow,
+      };
+    });
     return {
-      start,
-      end,
-      days: sessions.filter(
-        ({ timestamp }) => timestamp >= start && timestamp <= end,
-      ).length,
+      start: days[0].timestamp,
+      end: days[6].timestamp,
+      trainingDays: days.filter(({ logged }) => logged).length,
+      days,
     };
   });
 
@@ -63,7 +69,7 @@ export function buildProgressOverview(
   );
 
   return {
-    trainingDays: sessions.length,
+    trainingDays: trainingDays.size,
     sets: periodLogs.length,
     volume: sessions.reduce((total, session) => total + session.volume, 0),
     weeks,

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Barlow_Semi_Condensed, Geist, Geist_Mono, Inter } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,13 @@ import { PageTransition } from "@/components/page-transition";
 import { PwaOnboardingProvider } from "@/components/pwa-onboarding-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+
+const overviewDisplay = Barlow_Semi_Condensed({
+  weight: "600",
+  subsets: ["latin"],
+  variable: "--font-overview-display",
+  preload: false,
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,6 +68,7 @@ export default function RootLayout({
         geistMono.variable,
         "font-sans",
         inter.variable,
+        overviewDisplay.variable,
       )}
     >
       <body className="min-h-full flex flex-col">
