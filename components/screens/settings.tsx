@@ -220,9 +220,6 @@ export function TrainingSettings() {
           ))}
         </div>
       </fieldset>
-      <p className="max-w-[48ch] text-sm leading-relaxed text-muted-foreground">
-        Set the starting values for new exercises on this device. You can adjust them for each exercise.
-      </p>
       <form
         noValidate
         onSubmit={saveDefaults}
