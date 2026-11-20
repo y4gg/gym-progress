@@ -66,9 +66,11 @@ mock.module("next/link", () => ({
   ),
 }));
 
-const { act, cleanup, fireEvent, render } = await import("@testing-library/react");
+const { act, cleanup, fireEvent, render, within } =
+  await import("@testing-library/react");
 const { AppLink, AppNavigation, useAppPathname, useAppRouter, useAppSearchParams } =
   await import("./app-navigation");
+const { AppNavbar } = await import("./app-navbar");
 const { AppScreen } = await import("./offline-app");
 const { NavigationMenu } = await import("./navigation-menu");
 const { useStore } = await import("@/lib/store");
@@ -258,6 +260,25 @@ test("account pages keep their server-rendered screen", () => {
     </AppNavigation>,
   );
   expect(view.getByText("Account screen")).toBeTruthy();
+});
+
+test("desktop sidebar links stay above the page action when switching to settings", () => {
+  const view = render(
+    <AppNavigation>
+      <AppNavbar />
+    </AppNavigation>,
+  );
+  const sidebar = within(view.getByRole("complementary", { name: "Sidebar" }));
+  const menu = sidebar.getByRole("navigation", { name: "Menu" });
+  const create = sidebar.getByRole("button", { name: "Create workout" });
+  expect(
+    menu.compareDocumentPosition(create) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+
+  fireEvent.click(within(menu).getByRole("link", { name: "Settings" }));
+  expect(browser.location.pathname).toBe("/settings");
+  expect(sidebar.getByRole("navigation", { name: "Menu" })).toBe(menu);
+  expect(sidebar.queryByRole("button", { name: "Create workout" })).toBeNull();
 });
 
 test("settings and their detail pages open locally for an offline guest", () => {

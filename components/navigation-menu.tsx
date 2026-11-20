@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   BarChart3,
   ChevronRight,
@@ -35,7 +35,8 @@ export function NavigationMenu({
   session,
   isSessionPending,
   onNavigate,
-}: NavigationMenuProps) {
+  pageAction,
+}: NavigationMenuProps & { pageAction?: ReactNode }) {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const workouts = useStore((state) => state.workouts);
   const router = useAppRouter();
@@ -168,6 +169,9 @@ export function NavigationMenu({
           </div>
         ) : null}
       </nav>
+      {pageAction && (
+        <div className="grid shrink-0 px-4 py-2">{pageAction}</div>
+      )}
       <div className="flex shrink-0 items-center gap-2 border-t bg-muted/20 p-4">
         <AppLink
           onNavigate={onNavigate}

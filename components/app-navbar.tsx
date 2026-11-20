@@ -236,19 +236,19 @@ export function AppNavbar() {
           <AppLogo className="size-8 shrink-0" />
           Gym Ladder
         </Link>
-        {showPageAction && (
-          <div className="grid shrink-0 px-4 pt-4">
-            <PageSpecificNavItem
-              isLoggedIn={isLoggedIn}
-              isSessionPending={session.isPending}
-              pathname={pathname}
-            />
-          </div>
-        )}
         <NavigationMenu
           pathname={pathname}
           session={session.data}
           isSessionPending={session.isPending}
+          pageAction={
+            showPageAction && (
+              <PageSpecificNavItem
+                isLoggedIn={isLoggedIn}
+                isSessionPending={session.isPending}
+                pathname={pathname}
+              />
+            )
+          }
         />
       </aside>
       <nav
