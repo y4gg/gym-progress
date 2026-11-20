@@ -7,7 +7,7 @@ const KILOGRAMS_PER_POUND = 0.45359237;
 const weightNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 const smallWeightNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: WEIGHT_STORAGE_DECIMALS });
 
-function weightInUnit(kilograms: number, unit: WeightUnit) {
+export function weightInUnit(kilograms: number, unit: WeightUnit) {
   return unit === "kg" ? kilograms : kilograms / KILOGRAMS_PER_POUND;
 }
 

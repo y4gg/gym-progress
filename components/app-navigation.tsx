@@ -59,8 +59,8 @@ const offlineNavigation: OfflineNavigation = {
   },
 };
 
-// Workout and settings screens use local data. Keep navigation local even
-// when the browser still reports online after losing internet access.
+// Keep local screens available even when the browser still reports online
+// after losing internet access.
 export function AppNavigation({ children }: { children: ReactNode }) {
   const segment = useSelectedLayoutSegment();
   const pathname = usePathname();

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  BarChart3,
   ChevronRight,
   Home,
   LogIn,
@@ -13,7 +14,7 @@ import { toast } from "sonner";
 
 import { AppLink, useAppRouter } from "@/components/app-navigation";
 import { Button } from "@/components/ui/button";
-import { isSettingsPathname } from "@/lib/app-routes";
+import { isOverviewPathname, isSettingsPathname } from "@/lib/app-routes";
 import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ export function NavigationMenu({
   const accountHref = !isSessionPending && !session ? "/login" : "/account";
   const accountLabel = accountHref === "/login" ? "Login" : "Account";
   const AccountIcon = accountHref === "/login" ? LogIn : UserRound;
+  const isOverview = isOverviewPathname(pathname);
 
   async function signOut() {
     setIsSigningOut(true);
@@ -91,16 +93,37 @@ export function NavigationMenu({
         </AppLink>
         <AppLink
           onNavigate={onNavigate}
+          href="/overview"
+          aria-current={isOverview ? "page" : undefined}
+          className={cn(
+            linkClassName,
+            "mt-1",
+            isOverview && "border-primary/30 bg-primary/10 text-primary",
+          )}
+        >
+          <BarChart3 className="size-5 shrink-0" aria-hidden="true" />
+          <span className="flex-1">Overview</span>
+          <ChevronRight
+            className="size-4 text-muted-foreground"
+            aria-hidden="true"
+          />
+        </AppLink>
+        <AppLink
+          onNavigate={onNavigate}
           href="/settings"
           aria-current={settingsActive ? "page" : undefined}
           className={cn(
             linkClassName,
+            "mt-1",
             settingsActive && "border-primary/30 bg-primary/10 text-primary",
           )}
         >
           <Settings className="size-5 shrink-0" aria-hidden="true" />
           <span className="flex-1">Settings</span>
-          <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+          <ChevronRight
+            className="size-4 text-muted-foreground"
+            aria-hidden="true"
+          />
         </AppLink>
 
         {workouts.length > 0 ? (

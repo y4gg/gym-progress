@@ -8,6 +8,7 @@ import {
 } from "@/components/app-navigation";
 import {
   ArrowLeft,
+  BarChart3,
   Home,
   LogOut,
   Plus,
@@ -19,26 +20,27 @@ import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
 import { AppLogo } from "@/components/app-logo";
 import { Launchpad } from "@/components/launchpad";
 import { NavigationMenu } from "@/components/navigation-menu";
-import { isSettingsPathname } from "@/lib/app-routes";
+import { isOverviewPathname, isSettingsPathname } from "@/lib/app-routes";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { authClient } from "@/lib/auth-client";
 
 type NavLinkProps = {
+  active?: boolean;
   children: React.ReactNode;
-  className?: string;
   href: string;
   label: string;
 };
 
 const navItemClassName =
-  "flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 lg:flex-none lg:justify-start";
+  "flex h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-center text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 max-lg:[&>svg]:size-5 lg:flex-none lg:flex-row lg:justify-start lg:gap-2 lg:px-3 lg:text-sm";
 
-function NavLink({ children, className, href, label }: NavLinkProps) {
+function NavLink({ active, children, href, label }: NavLinkProps) {
   return (
     <Link
+      aria-current={active ? "page" : undefined}
       aria-label={label}
-      className={cn(navItemClassName, className)}
+      className={cn(navItemClassName, active && "bg-accent text-foreground")}
       href={href}
     >
       {children}
@@ -204,8 +206,6 @@ function PageSpecificNavItem({
     );
   }
 
-  if (isSettingsPathname(pathname)) return null;
-
   return (
     <NavLink href="/account" label="Account">
       <Settings />
@@ -218,7 +218,8 @@ export function AppNavbar() {
   const pathname = useAppPathname();
   const session = authClient.useSession();
   const isLoggedIn = Boolean(session.data);
-  const settingsPage = isSettingsPathname(pathname);
+  const isOverview = isOverviewPathname(pathname);
+  const showPageAction = !isOverview && !isSettingsPathname(pathname);
 
   if (pathname === "/offline") return null;
 
@@ -235,13 +236,15 @@ export function AppNavbar() {
           <AppLogo className="size-8 shrink-0" />
           Gym Ladder
         </Link>
-        <div className="grid shrink-0 px-4 pt-4">
-          <PageSpecificNavItem
-            isLoggedIn={isLoggedIn}
-            isSessionPending={session.isPending}
-            pathname={pathname}
-          />
-        </div>
+        {showPageAction && (
+          <div className="grid shrink-0 px-4 pt-4">
+            <PageSpecificNavItem
+              isLoggedIn={isLoggedIn}
+              isSessionPending={session.isPending}
+              pathname={pathname}
+            />
+          </div>
+        )}
         <NavigationMenu
           pathname={pathname}
           session={session.data}
@@ -255,24 +258,30 @@ export function AppNavbar() {
         <div
           className={cn(
             "pointer-events-auto grid h-16 w-full max-w-sm items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md",
-            settingsPage ? "grid-cols-2" : "grid-cols-3",
+            showPageAction ? "grid-cols-4" : "grid-cols-3",
           )}
         >
-          <NavLink className="ml-1" href="/" label="Home">
+          <NavLink href="/" label="Home" active={pathname === "/"}>
             <Home />
             <span>Home</span>
           </NavLink>
-          <PageSpecificNavItem
-            isLoggedIn={isLoggedIn}
-            isSessionPending={session.isPending}
-            pathname={pathname}
-          />
+          <NavLink href="/overview" label="Overview" active={isOverview}>
+            <BarChart3 />
+            <span>Overview</span>
+          </NavLink>
+          {showPageAction && (
+            <PageSpecificNavItem
+              isLoggedIn={isLoggedIn}
+              isSessionPending={session.isPending}
+              pathname={pathname}
+            />
+          )}
           <Launchpad
             key={pathname}
             pathname={pathname}
             session={session.data}
             isSessionPending={session.isPending}
-            triggerClassName={cn(navItemClassName, "mr-1 cursor-pointer")}
+            triggerClassName={cn(navItemClassName, "cursor-pointer")}
           />
         </div>
       </nav>

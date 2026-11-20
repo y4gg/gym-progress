@@ -10,6 +10,7 @@ for (const name of [
   "navigator",
   "localStorage",
   "HTMLElement",
+  "HTMLFormElement",
   "Node",
   "Event",
 ] as const) {
@@ -102,6 +103,7 @@ beforeEach(() => {
   router.replace.mockClear();
   router.refresh.mockClear();
   useStore.getState().clearData();
+  useStore.setState({ weightUnit: "kg" });
 });
 afterEach(() => {
   cleanup();
@@ -286,4 +288,78 @@ test("settings and their detail pages open locally for an offline guest", () => 
   expect(view.getByRole("link", { name: "Sign in" }).getAttribute("href")).toBe("/login");
   expect(assign).not.toHaveBeenCalled();
   expect(router.push).not.toHaveBeenCalled();
+});
+
+test("overview opens locally and uses the weight unit chosen in settings", () => {
+  Object.defineProperty(browser.navigator, "onLine", {
+    configurable: true,
+    value: false,
+  });
+  const date = new Date();
+  date.setDate(date.getDate() - 42);
+  const timestamp = date.toISOString();
+  const workoutId = "push";
+  const exerciseId = "bench";
+  useStore.setState({
+    workouts: [{
+      id: workoutId,
+      name: "Push day",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      exercises: [{
+        id: exerciseId,
+        workoutId,
+        name: "Bench press",
+        position: 0,
+        weight: 60,
+        sets: 3,
+        step: 2.5,
+        logging: true,
+        notes: "",
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      }],
+    }],
+    exerciseLogs: [{
+      id: "set",
+      exerciseId,
+      workoutId,
+      weight: 60,
+      reps: 8,
+      performedAt: timestamp,
+      createdAt: timestamp,
+    }],
+  });
+  const assign = spyOn(browser.location, "assign").mockImplementation(() => {});
+  const view = render(
+    <AppNavigation>
+      <NavigationMenu pathname="/" session={null} isSessionPending={false} />
+      <AppScreen>{null}</AppScreen>
+    </AppNavigation>,
+  );
+
+  fireEvent.click(view.getByRole("link", { name: "Overview" }));
+  expect(view.getByRole("heading", { name: "Overview" })).toBeTruthy();
+  expect(view.getByText("No exercise progress to show in this period.")).toBeTruthy();
+  expect(router.push).not.toHaveBeenCalled();
+  expect(assign).not.toHaveBeenCalled();
+
+  fireEvent.click(view.getByRole("button", { name: "12 weeks" }));
+  expect(
+    view.getByRole("link", { name: /Bench press/ }).getAttribute("href"),
+  ).toBe("/e/bench/history");
+  expect(view.getByTitle("480 kg (weight × reps)")).toBeTruthy();
+  const activeWeek = view.getByRole("button", { name: /, 1 day$/ });
+  fireEvent.click(activeWeek);
+  expect(activeWeek.getAttribute("aria-pressed")).toBe("true");
+
+  fireEvent.click(view.getByRole("link", { name: "Settings" }));
+  fireEvent.click(view.getByRole("link", { name: "Training" }));
+  fireEvent.click(view.getByRole("radio", { name: "Pounds (lb)" }));
+  fireEvent.click(view.getByRole("link", { name: "Overview" }));
+  fireEvent.click(view.getByRole("button", { name: "12 weeks" }));
+  expect(view.getByText("132.28 lb")).toBeTruthy();
+  expect(view.getByTitle("1,058.22 lb (weight × reps)")).toBeTruthy();
+  expect(router.push).not.toHaveBeenCalled();
+  expect(assign).not.toHaveBeenCalled();
 });

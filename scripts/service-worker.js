@@ -50,11 +50,12 @@ async function navigate(request) {
   const isLocalAppRoute =
     pathname === "/" ||
     pathname === OFFLINE_URL ||
+    /^\/overview\/?$/.test(pathname) ||
     /^\/w\/[^/]+(?:\/create)?\/?$/.test(pathname) ||
     /^\/e\/[^/]+(?:\/(?:history|logs))?\/?$/.test(pathname) ||
     /^\/settings(?:\/(?:training|appearance|sync))?\/?$/.test(pathname);
-  // Workouts and settings use local data. Never block these screens
-  // on a network probe, even if navigator.onLine has not noticed the outage.
+  // Serve local screens immediately, even if navigator.onLine has not noticed
+  // the outage.
   if (cachedApp && (isLocalAppRoute || self.navigator.onLine === false)) {
     return cachedApp;
   }

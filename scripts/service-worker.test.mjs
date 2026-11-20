@@ -141,6 +141,7 @@ test("offline navigation serves the app for unvisited IDs, query strings, and ac
   await sw.lifecycle("install");
   for (const path of [
     "/",
+    "/overview",
     "/w/new/create",
     "/e/new",
     "/e/new/history",
@@ -184,7 +185,7 @@ test("an unresponsive server times out and opens the offline app", async () => {
   assert.equal(await (await sw.request("/account")).text(), "/offline");
 });
 
-test("workout and settings launches and reloads use the cache without a network request", async () => {
+test("workout, overview, and settings routes use the cache without a network request", async () => {
   let fetches = 0;
   const sw = worker({
     // A dead connection can leave navigator.onLine true and fetch pending.
@@ -196,7 +197,7 @@ test("workout and settings launches and reloads use the cache without a network 
   });
   await sw.lifecycle("install");
   for (const path of [
-    "/", "/offline", "/w/new", "/w/new/create/", "/e/new",
+    "/", "/offline", "/overview", "/overview/", "/w/new", "/w/new/create/", "/e/new",
     "/e/new/history", "/e/new/logs?select=1",
     "/settings", "/settings/training/", "/settings/appearance", "/settings/sync",
   ]) {
