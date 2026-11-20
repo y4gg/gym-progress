@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 
 import { AppLink } from "@/components/app-navigation";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { formatWeight, weightInUnit, type WeightUnit } from "@/lib/weight-units";
 
 const date = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
+const month = new Intl.DateTimeFormat("en-GB", { month: "short" });
 const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 const compactNumber = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
@@ -20,49 +21,63 @@ const compactNumber = new Intl.NumberFormat("en-US", {
 });
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const weekCounts = [4, 12];
+const activityLevels = [
+  { minimum: 0, label: "0" },
+  { minimum: 1, label: "1–4" },
+  { minimum: 5, label: "5–9" },
+  { minimum: 10, label: "10+" },
+];
 type Progress = ReturnType<typeof buildProgressOverview>;
 
 function formatDays(days: number) {
   return `${days} ${days === 1 ? "day" : "days"}`;
 }
 
+function formatSets(sets: number) {
+  return `${number.format(sets)} ${sets === 1 ? "set" : "sets"}`;
+}
+
 function WeeklyActivity({ weeks }: { weeks: Progress["weeks"] }) {
-  const scrollArea = useRef<HTMLDivElement>(null);
   const [selectedStart, setSelectedStart] = useState<number | null>(null);
   const selected =
     weeks.find((week) => week.start === selectedStart) ?? weeks[weeks.length - 1];
-  const loggedDates = selected.days
-    .filter((day) => day.logged)
-    .map((day) => date.format(day.timestamp));
-
-  useLayoutEffect(() => {
-    const element = scrollArea.current;
-    if (element) element.scrollLeft = element.scrollWidth;
-  }, []);
+  const selectedSets = selected.days.reduce((total, day) => total + day.sets, 0);
+  const loggedDays = selected.days
+    .filter((day) => day.sets > 0)
+    .map((day) => `${date.format(day.timestamp)}, ${formatSets(day.sets)}`);
+  const compact = weeks.length > 4;
+  const months = weeks.map((week) => month.format(week.start));
 
   return (
     <section className="overview-activity">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-x-5 gap-y-2 sm:mb-6">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
         <h2 className="overview-display text-[1.625rem] leading-none sm:text-3xl">
           Weekly activity
         </h2>
         <p aria-live="polite" className="overview-week-detail">
           <span>{date.formatRange(selected.start, selected.end)}</span>
-          <strong>{formatDays(selected.trainingDays)}</strong>
-          {loggedDates.length > 0 && (
-            <span className="sr-only">Logged on {loggedDates.join(", ")}</span>
+          <strong>{formatDays(selected.trainingDays)}, {formatSets(selectedSets)}</strong>
+          {loggedDays.length > 0 && (
+            <span className="sr-only">{loggedDays.join(". ")}</span>
           )}
         </p>
       </div>
 
-      <div className="overview-calendar">
+      <div className="overview-calendar" data-compact={compact}>
         <div aria-hidden className="overview-weekdays">
           {weekdays.map((day) => <span key={day}>{day}</span>)}
         </div>
-        <div ref={scrollArea} className="overview-weeks-scroll">
-          <ul aria-label="Training days by week" className="overview-weeks">
-            {weeks.map((week) => (
-              <li className="flex-1" key={week.start}>
+        <ul aria-label="Training activity by week" className="overview-weeks">
+          {weeks.map((week, index) => {
+            // Leave room for the next label when the first month has only one column.
+            const showMonth = index === 0
+              ? months[index] === months[index + 1]
+              : months[index] !== months[index - 1];
+            return (
+              <li key={week.start}>
+                <span aria-hidden className="overview-week-date">
+                  {compact ? (showMonth && months[index]) : date.format(week.start)}
+                </span>
                 <button
                   type="button"
                   aria-label={`${date.formatRange(week.start, week.end)}, ${formatDays(week.trainingDays)}`}
@@ -73,28 +88,30 @@ function WeeklyActivity({ weeks }: { weeks: Progress["weeks"] }) {
                   <span aria-hidden className="overview-week-slots">
                     {week.days.map((day) => (
                       <span
-                        className={cn(
-                          "overview-day",
-                          day.logged && "overview-day-logged",
-                          day.upcoming && "overview-day-upcoming",
-                        )}
+                        className={cn("overview-day", day.upcoming && "overview-day-upcoming")}
+                        data-level={activityLevels.findLast(({ minimum }) => day.sets >= minimum)?.minimum}
                         key={day.timestamp}
+                        title={`${date.format(day.timestamp)}, ${day.upcoming ? "Upcoming" : formatSets(day.sets)}`}
                       />
                     ))}
                   </span>
-                  <span aria-hidden className="overview-week-date">
-                    {date.format(week.start)}
-                  </span>
                 </button>
               </li>
-            ))}
-          </ul>
-        </div>
+            );
+          })}
+        </ul>
       </div>
-      <p className="overview-legend" aria-hidden>
-        <span className="overview-day overview-day-logged" />
-        At least one set logged
-      </p>
+      <div className="overview-legend">
+        <span>Sets per day</span>
+        <ul aria-label="Activity levels">
+          {activityLevels.map(({ minimum, label }) => (
+            <li key={minimum}>
+              <span aria-hidden className="overview-day" data-level={minimum} />
+              {label}
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }
