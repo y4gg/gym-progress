@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { Exercise } from "@/lib/types";
+import { weightInputValue, type WeightUnit } from "@/lib/weight-units";
 import type { Dispatch, SetStateAction } from "react";
 
 type ExerciseOptions = Pick<Exercise, "logging" | "maxReps" | "step">;
@@ -24,9 +25,15 @@ type ExerciseOptions = Pick<Exercise, "logging" | "maxReps" | "step">;
 export function AdvancedExerciseOptionsDialog<TExercise extends ExerciseOptions>({
   exercise,
   onExerciseChange,
+  stepInput,
+  onStepInputChange,
+  weightUnit,
 }: {
   exercise: TExercise;
   onExerciseChange: Dispatch<SetStateAction<TExercise>>;
+  stepInput: string | null;
+  onStepInputChange: (step: string) => void;
+  weightUnit: WeightUnit;
 }) {
   const loggingId = useId();
   const stepId = useId();
@@ -54,32 +61,27 @@ export function AdvancedExerciseOptionsDialog<TExercise extends ExerciseOptions>
           </DialogHeader>
 
           <div className="flex flex-col gap-3">
-            <div className="relative">
-              <Label htmlFor={stepId} className="sr-only">
-                Weight step
+            <div className="grid gap-2">
+              <Label htmlFor={stepId}>
+                Weight increment
               </Label>
-              <Input
-                className="h-16 px-5 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                defaultValue={exercise.step ?? 2.5}
-                id={stepId}
-                inputMode="decimal"
-                min={0.01}
-                onChange={(event) =>
-                  onExerciseChange((currentExercise) => ({
-                    ...currentExercise,
-                    step:
-                      event.target.value === ""
-                        ? undefined
-                        : Number(event.target.value),
-                  }))
-                }
-                placeholder="2.5"
-                step="any"
-                type="number"
-              />
-              <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">
-                kg steps
-              </span>
+              <div className="relative">
+                <Input
+                  aria-describedby={`${stepId}-unit`}
+                  className="h-16 px-5 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  value={stepInput ?? weightInputValue(exercise.step ?? 2.5, weightUnit)}
+                  id={stepId}
+                  inputMode="decimal"
+                  min={0.01}
+                  onChange={(event) => onStepInputChange(event.target.value)}
+                  placeholder={String(weightInputValue(2.5, weightUnit))}
+                  step="any"
+                  type="number"
+                />
+                <span id={`${stepId}-unit`} className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">
+                  {weightUnit}
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-[1fr_4.5rem] gap-2">

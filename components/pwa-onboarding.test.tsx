@@ -59,7 +59,12 @@ mock.module("@/lib/auth-client", () => ({
 }));
 mock.module("@/lib/store", () => ({
   useStore: (selector: (state: unknown) => unknown) =>
-    selector({ syncUserId: savedUserId, workouts: [] }),
+    selector({
+      syncUserId: savedUserId,
+      workouts: [],
+      weightUnit: "kg",
+      trainingDefaults: { sets: 3, step: 2.5, logging: true },
+    }),
 }));
 mock.module("@/lib/use-store-hydrated", () => ({
   useStoreHydrated: () => true,
@@ -72,6 +77,7 @@ const { act, cleanup, fireEvent, render } =
   await import("@testing-library/react");
 const { PwaOnboardingProvider } = await import("./pwa-onboarding-provider");
 const { NavigationMenu } = await import("./navigation-menu");
+const { default: Settings } = await import("./screens/settings");
 const { PwaInstallProvider, PwaInstallButton } =
   await import("./pwa-install-button");
 const { usePwaOnboarding } = await import("./pwa-context");
@@ -194,12 +200,12 @@ test("first standalone launch runs the real menu tutorial and remembers completi
   expect(reopened.queryByRole("heading")).toBeNull();
 });
 
-test("guests can skip and replay without losing completion", () => {
+test("guests can skip and replay from settings without losing completion", () => {
   standalone = true;
   userId = null;
   const view = render(
     <PwaOnboardingProvider>
-      <App />
+      <Settings />
     </PwaOnboardingProvider>,
   );
   fireEvent.click(view.getByRole("button", { name: "Skip onboarding" }));
@@ -208,7 +214,8 @@ test("guests can skip and replay without losing completion", () => {
     view.getByRole("heading", { name: "Welcome to Gym Ladder" }),
   ).toBeTruthy();
   fireEvent.click(view.getByRole("button", { name: "Skip onboarding" }));
-  expect(view.queryByRole("heading")).toBeNull();
+  expect(view.getByRole("heading", { name: "Settings" })).toBeTruthy();
+  expect(view.queryByRole("button", { name: "Install Gym Ladder" })).toBeNull();
 });
 
 test("swiping left opens the tutorial menu and closing it advances the tour", () => {

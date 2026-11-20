@@ -158,7 +158,7 @@ test("account and unknown routes use the server, including genuine 404 responses
       fetch: async () => new Response("server", { status }),
     });
     await sw.lifecycle("install");
-    for (const path of ["/account", "/login", "/missing", "/w/new/missing"]) {
+    for (const path of ["/account", "/login", "/missing", "/w/new/missing", "/settings/missing"]) {
       const response = await sw.request(path);
       assert.equal(response.status, status);
       assert.equal(await response.text(), "server");
@@ -185,7 +185,7 @@ test("an unresponsive server times out and opens the offline app", async () => {
   assert.equal(await (await sw.request("/account")).text(), "/offline");
 });
 
-test("workout launches and reloads use the cached app without starting a network request", async () => {
+test("workout, overview, and settings routes use the cache without a network request", async () => {
   let fetches = 0;
   const sw = worker({
     // A dead connection can leave navigator.onLine true and fetch pending.
@@ -199,6 +199,7 @@ test("workout launches and reloads use the cached app without starting a network
   for (const path of [
     "/", "/offline", "/overview", "/overview/", "/w/new", "/w/new/create/", "/e/new",
     "/e/new/history", "/e/new/logs?select=1",
+    "/settings", "/settings/training/", "/settings/appearance", "/settings/sync",
   ]) {
     assert.equal(await (await sw.request(path)).text(), "/offline");
   }

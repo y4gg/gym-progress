@@ -15,7 +15,7 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
-import { isWorkoutPathname } from "@/lib/workout-routes";
+import { isLocalAppPathname } from "@/lib/app-routes";
 
 const LOCATION_CHANGED = "gym-location-changed";
 
@@ -49,7 +49,7 @@ const offlineNavigation: OfflineNavigation = {
   navigate(destination, { replace = false, scroll = true } = {}) {
     const url = new URL(destination, window.location.href);
     // Account pages need a server document once the connection returns.
-    if (url.origin !== window.location.origin || !isWorkoutPathname(url.pathname)) {
+    if (url.origin !== window.location.origin || !isLocalAppPathname(url.pathname)) {
       window.location[replace ? "replace" : "assign"](url.href);
       return;
     }
@@ -59,8 +59,8 @@ const offlineNavigation: OfflineNavigation = {
   },
 };
 
-// Workout screens use local data on every connection. Keep navigation local even
-// when the browser still reports online after losing internet access.
+// Keep local screens available even when the browser still reports online
+// after losing internet access.
 export function AppNavigation({ children }: { children: ReactNode }) {
   const segment = useSelectedLayoutSegment();
   const pathname = usePathname();
@@ -68,7 +68,7 @@ export function AppNavigation({ children }: { children: ReactNode }) {
   return (
     <OfflineNavigationContext.Provider
       value={
-        segment === "offline" || isWorkoutPathname(pathname)
+        segment === "offline" || isLocalAppPathname(pathname)
           ? offlineNavigation
           : null
       }

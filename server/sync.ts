@@ -9,6 +9,7 @@ import { db } from "@/db";
 import { exercise, exerciseLog, workout } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { normalizeWorkoutIcon } from "@/lib/workout-icons";
+import { roundKilograms, WEIGHT_STORAGE_DECIMALS } from "@/lib/weight-units";
 import {
   SYNC_BATCH_SIZE,
   normalizeExercise,
@@ -23,6 +24,7 @@ import type {
 } from "@/lib/types";
 import {
   exerciseFieldsSchema,
+  weightSchema,
   workoutFieldsSchema,
 } from "@/lib/workout-validation";
 
@@ -52,14 +54,6 @@ const isoDateSchema = z.string().refine((value) => {
 const cuidSchema = z.string().refine(isCuid, "invalid_id");
 
 const exerciseSchema: z.ZodType<Exercise> = exerciseFieldsSchema.extend({
-  step: z.preprocess((value) => {
-    // Older offline clients accepted any positive step. Fit those payloads to
-    // numeric(8, 2) before validation, without rounding small steps to zero.
-    if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
-      return value;
-    }
-    return Math.max(0.01, Math.round((value + Number.EPSILON) * 100) / 100);
-  }, exerciseFieldsSchema.shape.step),
   id: cuidSchema,
   workoutId: cuidSchema,
   position: z.number().int().min(0).default(0),
@@ -80,7 +74,7 @@ const exerciseLogSchema: z.ZodType<ExerciseLog> = z.object({
   exerciseId: cuidSchema,
   workoutId: cuidSchema,
   reps: z.number().int().min(0),
-  weight: z.number().min(0),
+  weight: weightSchema,
   performedAt: isoDateSchema,
   createdAt: isoDateSchema,
 });
@@ -275,10 +269,27 @@ async function getUserSnapshot(userId: string) {
   };
 }
 
-function validateOperations(operations: SyncOperation[]) {
+function normalizeSyncedStep(step: number, weightPrecision: number) {
+  if (weightPrecision === WEIGHT_STORAGE_DECIMALS) {
+    return Math.max(10 ** -WEIGHT_STORAGE_DECIMALS, roundKilograms(step));
+  }
+
+  // Older offline clients expect increments rounded to hundredths of a kilogram.
+  return Math.max(0.01, Math.round((step + Number.EPSILON) * 100) / 100);
+}
+
+function validateOperations(operations: SyncOperation[], weightPrecision: number) {
   const result = syncOperationsSchema.safeParse(operations);
 
   if (result.success) {
+    for (const operation of result.data) {
+      const exercises = "exercise" in operation
+        ? [operation.exercise]
+        : "workout" in operation ? operation.workout.exercises : [];
+      for (const exercise of exercises) {
+        exercise.step = normalizeSyncedStep(exercise.step, weightPrecision);
+      }
+    }
     return { success: true as const, operations: result.data };
   }
 
@@ -604,6 +615,7 @@ export async function getSyncSnapshot(expectedUserId?: string) {
 export async function syncOperations(
   operations: SyncOperation[],
   expectedUserId?: string,
+  weightPrecision = 2,
 ) {
   try {
     const userId = await getRequiredUserId();
@@ -614,7 +626,7 @@ export async function syncOperations(
       return syncUnauthorized;
     }
 
-    const validated = validateOperations(operations);
+    const validated = validateOperations(operations, weightPrecision);
     if (!validated.success) {
       return validated.status === "invalid_id"
         ? syncInvalidId

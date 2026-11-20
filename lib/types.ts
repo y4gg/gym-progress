@@ -1,4 +1,5 @@
 import type { WorkoutIconName } from "@/lib/workout-icons";
+import type { WeightUnit } from "@/lib/weight-units";
 
 interface Workout {
   id: string;
@@ -67,7 +68,13 @@ type SyncOperation =
   | { id: string; type: "addExerciseLog"; exerciseLog: ExerciseLog; queuedAt: string }
   | { id: string; type: "deleteExerciseLog"; exerciseLogId: string; queuedAt: string };
 
+type TrainingDefaults = Pick<Exercise, "sets" | "step" | "logging">;
+
 interface Store {
+  weightUnit: WeightUnit;
+  setWeightUnit: (unit: WeightUnit) => void;
+  trainingDefaults: TrainingDefaults;
+  setTrainingDefaults: (defaults: Partial<TrainingDefaults>) => void;
   workouts: Workout[];
   exerciseLogs: ExerciseLog[];
   syncUserId: string | null;

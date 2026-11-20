@@ -160,12 +160,12 @@ export const exercise = pgTable(
       .notNull()
       .references(() => workout.id, { onDelete: "cascade" }),
     position: integer("position").notNull(),
-    weight: numeric("weight", { precision: 8, scale: 2, mode: "number" }).notNull(),
+    weight: numeric("weight", { precision: 12, scale: 6, mode: "number" }).notNull(),
     sets: integer("sets").notNull(),
     maxReps: integer("max_reps"), // If set not null: Increase weight suggestion is enabled
     logging: boolean("logging").default(false).notNull(),
     notes: text("notes"),
-    step: numeric("step", { precision: 8, scale: 2, mode: "number" })
+    step: numeric("step", { precision: 12, scale: 6, mode: "number" })
       .default(sql`2.50`)
       .notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -194,8 +194,8 @@ export const exerciseLog = pgTable(
       .references(() => workout.id, { onDelete: "cascade" }),
     reps: integer("reps").notNull(),
     weight: numeric("weight", {
-      precision: 8,
-      scale: 2,
+      precision: 12,
+      scale: 6,
       mode: "number",
     }).notNull(),
     performedAt: timestamp("performed_at").notNull(),

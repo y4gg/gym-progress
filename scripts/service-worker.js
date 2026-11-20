@@ -47,15 +47,16 @@ async function navigate(request) {
   const cache = await caches.open(CACHE_NAME);
   const cachedApp = await cache.match(OFFLINE_URL);
   const { pathname } = new URL(request.url);
-  const isWorkoutRoute =
+  const isLocalAppRoute =
     pathname === "/" ||
     pathname === OFFLINE_URL ||
     /^\/overview\/?$/.test(pathname) ||
     /^\/w\/[^/]+(?:\/create)?\/?$/.test(pathname) ||
-    /^\/e\/[^/]+(?:\/(?:history|logs))?\/?$/.test(pathname);
-  // Workout data lives on the device and syncs separately. Never block the app
-  // on a network probe, even if navigator.onLine has not noticed the outage.
-  if (cachedApp && (isWorkoutRoute || self.navigator.onLine === false)) {
+    /^\/e\/[^/]+(?:\/(?:history|logs))?\/?$/.test(pathname) ||
+    /^\/settings(?:\/(?:training|appearance|sync))?\/?$/.test(pathname);
+  // Serve local screens immediately, even if navigator.onLine has not noticed
+  // the outage.
+  if (cachedApp && (isLocalAppRoute || self.navigator.onLine === false)) {
     return cachedApp;
   }
   const controller = new AbortController();

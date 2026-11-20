@@ -10,6 +10,7 @@ for (const name of [
   "navigator",
   "localStorage",
   "HTMLElement",
+  "HTMLFormElement",
   "Node",
   "Event",
 ] as const) {
@@ -29,6 +30,9 @@ mock.module("next/navigation", () => ({
   useRouter: () => router,
 }));
 mock.module("@/lib/use-store-hydrated", () => ({ useStoreHydrated: () => true }));
+mock.module("@/lib/auth-client", () => ({
+  authClient: { useSession: () => ({ data: null, isPending: false }) },
+}));
 mock.module("@/components/screens/home", () => ({
   default: () => <p>Workouts screen</p>,
 }));
@@ -44,9 +48,15 @@ mock.module("next/link", () => ({
     href,
     onNavigate,
     children,
+    "aria-label": ariaLabel,
+    "aria-labelledby": ariaLabelledBy,
+    "aria-describedby": ariaDescribedBy,
   }: ComponentProps<typeof NextLink>) => (
     <a
       href={href as string}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
+      aria-describedby={ariaDescribedBy}
       onClick={(event) =>
         onNavigate?.({ preventDefault: () => event.preventDefault() })
       }
@@ -56,10 +66,13 @@ mock.module("next/link", () => ({
   ),
 }));
 
-const { act, cleanup, fireEvent, render } = await import("@testing-library/react");
+const { act, cleanup, fireEvent, render, within } =
+  await import("@testing-library/react");
 const { AppLink, AppNavigation, useAppPathname, useAppRouter, useAppSearchParams } =
   await import("./app-navigation");
+const { AppNavbar } = await import("./app-navbar");
 const { AppScreen } = await import("./offline-app");
+const { NavigationMenu } = await import("./navigation-menu");
 const { useStore } = await import("@/lib/store");
 
 function RouterControls() {
@@ -92,6 +105,7 @@ beforeEach(() => {
   router.replace.mockClear();
   router.refresh.mockClear();
   useStore.getState().clearData();
+  useStore.setState({ weightUnit: "kg" });
 });
 afterEach(() => {
   cleanup();
@@ -248,7 +262,56 @@ test("account pages keep their server-rendered screen", () => {
   expect(view.getByText("Account screen")).toBeTruthy();
 });
 
-test("overview opens in the local app and can switch to an older training period", () => {
+test("desktop sidebar links stay above the page action when switching to settings", () => {
+  const view = render(
+    <AppNavigation>
+      <AppNavbar />
+    </AppNavigation>,
+  );
+  const sidebar = within(view.getByRole("complementary", { name: "Sidebar" }));
+  const menu = sidebar.getByRole("navigation", { name: "Menu" });
+  const create = sidebar.getByRole("button", { name: "Create workout" });
+  expect(
+    menu.compareDocumentPosition(create) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+
+  fireEvent.click(within(menu).getByRole("link", { name: "Settings" }));
+  expect(browser.location.pathname).toBe("/settings");
+  expect(sidebar.getByRole("navigation", { name: "Menu" })).toBe(menu);
+  expect(sidebar.queryByRole("button", { name: "Create workout" })).toBeNull();
+});
+
+test("settings and their detail pages open locally for an offline guest", () => {
+  Object.defineProperty(browser.navigator, "onLine", { value: false });
+  useStore.setState({ syncStatus: "offline" });
+  const assign = spyOn(browser.location, "assign").mockImplementation(() => {});
+  const view = render(
+    <AppNavigation>
+      <NavigationMenu pathname="/" session={null} isSessionPending={false} />
+      <AppScreen>
+        <p>Server screen</p>
+      </AppScreen>
+    </AppNavigation>,
+  );
+
+  fireEvent.click(view.getByRole("link", { name: "Settings" }));
+  expect(view.getByRole("heading", { name: "Settings" })).toBeTruthy();
+  const trainingLink = view.getByRole("link", { name: "Training" });
+  expect(trainingLink.textContent).toContain("3 sets");
+  expect(trainingLink.textContent).toContain("+2.5 kg");
+  fireEvent.click(view.getByRole("link", { name: "Appearance" }));
+  expect(browser.location.pathname).toBe("/settings/appearance");
+  expect(view.getByRole("radio", { name: "System" })).toBeTruthy();
+  fireEvent.click(view.getByRole("link", { name: "Back to settings" }));
+  fireEvent.click(view.getByRole("link", { name: "Data & sync" }));
+  expect(view.getByText("Offline")).toBeTruthy();
+  expect(view.getByText("Saved on this device")).toBeTruthy();
+  expect(view.getByRole("link", { name: "Sign in" }).getAttribute("href")).toBe("/login");
+  expect(assign).not.toHaveBeenCalled();
+  expect(router.push).not.toHaveBeenCalled();
+});
+
+test("overview opens locally and uses the weight unit chosen in settings", () => {
   Object.defineProperty(browser.navigator, "onLine", {
     configurable: true,
     value: false,
@@ -291,12 +354,12 @@ test("overview opens in the local app and can switch to an older training period
   const assign = spyOn(browser.location, "assign").mockImplementation(() => {});
   const view = render(
     <AppNavigation>
-      <AppLink href="/overview">Open overview</AppLink>
+      <NavigationMenu pathname="/" session={null} isSessionPending={false} />
       <AppScreen>{null}</AppScreen>
     </AppNavigation>,
   );
 
-  fireEvent.click(view.getByRole("link", { name: "Open overview" }));
+  fireEvent.click(view.getByRole("link", { name: "Overview" }));
   expect(view.getByRole("heading", { name: "Overview" })).toBeTruthy();
   expect(view.getByText("No exercise progress to show in this period.")).toBeTruthy();
   expect(router.push).not.toHaveBeenCalled();
@@ -310,4 +373,14 @@ test("overview opens in the local app and can switch to an older training period
   const activeWeek = view.getByRole("button", { name: /, 1 day$/ });
   fireEvent.click(activeWeek);
   expect(activeWeek.getAttribute("aria-pressed")).toBe("true");
+
+  fireEvent.click(view.getByRole("link", { name: "Settings" }));
+  fireEvent.click(view.getByRole("link", { name: "Training" }));
+  fireEvent.click(view.getByRole("radio", { name: "Pounds (lb)" }));
+  fireEvent.click(view.getByRole("link", { name: "Overview" }));
+  fireEvent.click(view.getByRole("button", { name: "12 weeks" }));
+  expect(view.getByText("132.28 lb")).toBeTruthy();
+  expect(view.getByTitle("1,058.22 lb (weight × reps)")).toBeTruthy();
+  expect(router.push).not.toHaveBeenCalled();
+  expect(assign).not.toHaveBeenCalled();
 });

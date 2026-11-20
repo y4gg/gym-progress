@@ -20,10 +20,10 @@ import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
 import { AppLogo } from "@/components/app-logo";
 import { Launchpad } from "@/components/launchpad";
 import { NavigationMenu } from "@/components/navigation-menu";
+import { isOverviewPathname, isSettingsPathname } from "@/lib/app-routes";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { authClient } from "@/lib/auth-client";
-import { isOverviewPathname } from "@/lib/workout-routes";
 
 type NavLinkProps = {
   active?: boolean;
@@ -219,6 +219,7 @@ export function AppNavbar() {
   const session = authClient.useSession();
   const isLoggedIn = Boolean(session.data);
   const isOverview = isOverviewPathname(pathname);
+  const showPageAction = !isOverview && !isSettingsPathname(pathname);
 
   if (pathname === "/offline") return null;
 
@@ -235,19 +236,19 @@ export function AppNavbar() {
           <AppLogo className="size-8 shrink-0" />
           Gym Ladder
         </Link>
-        {!isOverview && (
-          <div className="grid shrink-0 px-4 pt-4">
-            <PageSpecificNavItem
-              isLoggedIn={isLoggedIn}
-              isSessionPending={session.isPending}
-              pathname={pathname}
-            />
-          </div>
-        )}
         <NavigationMenu
           pathname={pathname}
           session={session.data}
           isSessionPending={session.isPending}
+          pageAction={
+            showPageAction && (
+              <PageSpecificNavItem
+                isLoggedIn={isLoggedIn}
+                isSessionPending={session.isPending}
+                pathname={pathname}
+              />
+            )
+          }
         />
       </aside>
       <nav
@@ -257,7 +258,7 @@ export function AppNavbar() {
         <div
           className={cn(
             "pointer-events-auto grid h-16 w-full max-w-sm items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md",
-            isOverview ? "grid-cols-3" : "grid-cols-4",
+            showPageAction ? "grid-cols-4" : "grid-cols-3",
           )}
         >
           <NavLink href="/" label="Home" active={pathname === "/"}>
@@ -268,7 +269,7 @@ export function AppNavbar() {
             <BarChart3 />
             <span>Overview</span>
           </NavLink>
-          {!isOverview && (
+          {showPageAction && (
             <PageSpecificNavItem
               isLoggedIn={isLoggedIn}
               isSessionPending={session.isPending}

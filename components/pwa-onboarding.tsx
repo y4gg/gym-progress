@@ -14,7 +14,9 @@ import {
 import { Launchpad } from "@/components/launchpad";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
+import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { formatWeight } from "@/lib/weight-units";
 
 const steps = [
   {
@@ -41,6 +43,7 @@ const steps = [
 
 export function PwaOnboarding({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0);
+  const weightUnit = useStore((state) => state.weightUnit);
   const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -138,7 +141,7 @@ export function PwaOnboarding({ onComplete }: { onComplete: () => void }) {
                 <p className="mb-3 font-medium">Bench press</p>
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Set 1</span>
-                  <span>60 kg × 8 reps</span>
+                  <span>{formatWeight(60, weightUnit)} {weightUnit} × 8 reps</span>
                   <Check
                     className="size-4 text-foreground"
                     aria-hidden="true"

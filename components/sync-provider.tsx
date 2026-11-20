@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
+import { WEIGHT_STORAGE_DECIMALS } from "@/lib/weight-units";
 import {
   SYNC_BATCH_SIZE,
   applyPendingOperations,
@@ -293,7 +294,7 @@ export function SyncProvider() {
           );
           requestPending = true;
           queueChangedDuringRequest = false;
-          const result = await syncOperations(operations, accountId);
+          const result = await syncOperations(operations, accountId, WEIGHT_STORAGE_DECIMALS);
           requestPending = false;
           if (cancelled || useStore.getState().syncUserId !== userId) return;
           if (result.status === "unauthorized") {

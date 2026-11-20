@@ -10,13 +10,10 @@ import { buildProgressOverview } from "@/lib/progress-overview";
 import { useStore } from "@/lib/store";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { cn } from "@/lib/utils";
+import { formatWeight, weightInUnit, type WeightUnit } from "@/lib/weight-units";
 
 const date = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
-const signedNumber = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 2,
-  signDisplay: "exceptZero",
-});
 const compactNumber = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
   notation: "compact",
@@ -102,11 +99,14 @@ function WeeklyActivity({ weeks }: { weeks: Progress["weeks"] }) {
   );
 }
 
-function TrainingTotals({ progress }: { progress: Progress }) {
+function TrainingTotals({ progress, weightUnit }: {
+  progress: Progress;
+  weightUnit: WeightUnit;
+}) {
   const metrics = [
     { label: "Training days", value: progress.trainingDays },
     { label: "Sets logged", value: progress.sets },
-    { label: "Volume", value: progress.volume, unit: "kg" },
+    { label: "Volume", value: weightInUnit(progress.volume, weightUnit), unit: weightUnit },
   ];
 
   return (
@@ -134,9 +134,10 @@ function TrainingTotals({ progress }: { progress: Progress }) {
   );
 }
 
-function ExerciseProgress({ exercises, hasLogs }: {
+function ExerciseProgress({ exercises, hasLogs, weightUnit }: {
   exercises: Progress["exercises"];
   hasLogs: boolean;
+  weightUnit: WeightUnit;
 }) {
   return (
     <section>
@@ -154,10 +155,13 @@ function ExerciseProgress({ exercises, hasLogs }: {
       {exercises.length ? (
         <ul className="divide-y border-y">
           {exercises.map(({ exercise, workoutName, unit, first, latest }) => {
+            const displayUnit = unit === "kg" ? weightUnit : unit;
+            const formatValue = (value: number) =>
+              unit === "kg" ? formatWeight(value, weightUnit) : number.format(value);
             const change = first === null ? null : latest - first;
             const changeLabel = change === null ? "First day" : change === 0
               ? "No change"
-              : `${signedNumber.format(change)} ${unit}`;
+              : `${change > 0 ? "+" : ""}${formatValue(change)} ${displayUnit}`;
             return (
               <li key={exercise.id}>
                 <AppLink
@@ -181,11 +185,11 @@ function ExerciseProgress({ exercises, hasLogs }: {
                     <span className="block text-sm font-semibold">
                       {first !== null && (
                         <>
-                          <span className="font-medium text-muted-foreground">{number.format(first)}</span>
+                          <span className="font-medium text-muted-foreground">{formatValue(first)}</span>
                           {" → "}
                         </>
                       )}
-                      {number.format(latest)} {unit}
+                      {formatValue(latest)} {displayUnit}
                     </span>
                     <span
                       className={cn(
@@ -224,6 +228,7 @@ export default function Overview() {
   const hydrated = useStoreHydrated();
   const workouts = useStore((state) => state.workouts);
   const logs = useStore((state) => state.exerciseLogs);
+  const weightUnit = useStore((state) => state.weightUnit);
   const [weekCount, setWeekCount] = useState(weekCounts[0]);
 
   if (!hydrated) return null;
@@ -258,10 +263,14 @@ export default function Overview() {
 
       <div className="overview-panel">
         <WeeklyActivity key={weekCount} weeks={progress.weeks} />
-        <TrainingTotals progress={progress} />
+        <TrainingTotals progress={progress} weightUnit={weightUnit} />
       </div>
 
-      <ExerciseProgress exercises={progress.exercises} hasLogs={logs.length > 0} />
+      <ExerciseProgress
+        exercises={progress.exercises}
+        hasLogs={logs.length > 0}
+        weightUnit={weightUnit}
+      />
     </main>
   );
 }

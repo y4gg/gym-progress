@@ -1,5 +1,6 @@
 import { beforeEach, expect, mock, test } from "bun:test";
 import type { SyncOperation } from "@/lib/types";
+import { WEIGHT_STORAGE_DECIMALS } from "@/lib/weight-units";
 import type {
   workout as workoutTable,
   exercise as exerciseTable,
@@ -201,6 +202,33 @@ test("legacy steps nested in workout payloads do not block a sync batch", async 
   expect("appliedOperationIds" in result && result.appliedOperationIds).toEqual(
     ["legacy-workout", "delete-1"],
   );
+});
+
+test("sync preserves the precision of converted pounds for exercise increments and logged weights", async () => {
+  const exercise = { ...legacyExercise, weight: 61.23497, step: 2.267962 };
+  ownerRows.push(
+    [{ userId: "account-a", updatedAt: new Date(timestamp) }],
+    [],
+    [{ userId: "account-a", workoutId, updatedAt: new Date(timestamp) }],
+    [{ userId: "account-a", updatedAt: new Date(timestamp) }],
+    [],
+  );
+  const exerciseLog = {
+    id: "clh3bpd7000033b6k6d3w4j2m",
+    exerciseId: exercise.id,
+    workoutId,
+    weight: exercise.weight,
+    reps: 8,
+    performedAt: timestamp,
+    createdAt: timestamp,
+  };
+  const result = await syncOperations([
+    { id: "precise-exercise", type: "addExercise", exercise, queuedAt: timestamp },
+    { id: "precise-log", type: "addExerciseLog", exerciseLog, queuedAt: timestamp },
+  ], "account-a", WEIGHT_STORAGE_DECIMALS);
+  expect(result.success).toBe(true);
+  expect(insertValues).toHaveBeenCalledWith(expect.objectContaining({ id: exercise.id, weight: 61.23497, step: 2.267962 }));
+  expect(insertValues).toHaveBeenCalledWith(expect.objectContaining({ id: exerciseLog.id, weight: 61.23497 }));
 });
 
 test("invalid step values still fail validation before database writes", async () => {

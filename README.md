@@ -29,12 +29,12 @@ exercises default to the dumbbell.
 
 ## Install and onboarding
 
-Choose **Install Gym Ladder** from Menu or Account. Supported browsers show a
+Choose **Install Gym Ladder** from **Settings** in the menu. Supported browsers show a
 native install prompt; iPhone and iPad users get Safari Home Screen instructions.
 Launch the installed app to see the welcome, swipe-menu tutorial, and offline
 tracking introduction. The tour works without an account, can be skipped, and
 remembers completion per account on this device. **Replay onboarding** in
-Account opens it again within the installed app. Onboarding is not available
+Settings opens it again within the installed app. Onboarding is not available
 in a regular browser.
 
 Run `bun run test:pwa` to check onboarding and installation behavior. For actual
@@ -53,8 +53,8 @@ request to time out, even if the browser still reports that it is online.
 
 Workouts, logs, and pending sync changes stay in this browser's local storage.
 Signed-in accounts resume syncing when the connection returns. Sign-in and account
-management require a connection. Connection and sync status appear on the account
-page; syncing resumes automatically when you reconnect.
+management require a connection. Connection and sync status appear under
+**Settings → Data & sync**. Syncing resumes automatically when you reconnect.
 
 Offline support requires HTTPS or localhost and a browser with service worker
 support. It runs in production builds only. Use `bun run build` and `bun run start`
