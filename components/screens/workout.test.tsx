@@ -38,6 +38,7 @@ const { act, cleanup, fireEvent, render } =
 const { useStore } = await import("@/lib/store");
 const { default: WorkoutOverview } = await import("./workout");
 const { default: CreateExercisePage } = await import("./create-exercise");
+const { TrainingSettings } = await import("./settings");
 
 const timestamp = new Date().toISOString();
 const exercise: Exercise = {
@@ -68,6 +69,7 @@ beforeEach(async () => {
   browser.localStorage.clear();
   useStore.getState().clearData();
   useStore.setState({
+    trainingDefaults: { sets: 3, step: 2.5, logging: true },
     workouts: [
       workout,
       { ...workout, id: "pull", name: "Pull", exercises: [] },
@@ -198,4 +200,38 @@ test("a weight step that would round to zero in PostgreSQL cannot be saved", () 
   fireEvent.click(view.getByRole("button", { name: "Close" }));
   fireEvent.submit(view.container.querySelector("form")!);
   expect(useStore.getState().getWorkoutById("pull")?.exercises).toHaveLength(0);
+});
+
+test("saved training defaults survive hydration and apply to new exercises", async () => {
+  const view = render(<TrainingSettings />);
+  const form = view.container.querySelector("form")!;
+  const sets = view.getByLabelText("Default sets");
+  const step = view.getByLabelText("Default weight increment (kg)");
+  fireEvent.change(sets, { target: { value: "0" } });
+  fireEvent.change(step, { target: { value: "0.001" } });
+  fireEvent.submit(form);
+  expect(view.getAllByRole("alert")).toHaveLength(2);
+  expect(useStore.getState().trainingDefaults).toEqual({ sets: 3, step: 2.5, logging: true });
+
+  fireEvent.click(view.getByRole("switch", { name: "Default rep tracking" }));
+  expect(useStore.getState().trainingDefaults.logging).toBe(false);
+  fireEvent.change(sets, { target: { value: "5" } });
+  fireEvent.change(step, { target: { value: "1.25" } });
+  fireEvent.submit(form);
+
+  const saved = localStorage.getItem("store")!;
+  await act(async () => {
+    useStore.setState({ trainingDefaults: { sets: 3, step: 2.5, logging: true } });
+    localStorage.setItem("store", saved);
+    await useStore.persist.rehydrate();
+  });
+  view.rerender(<CreateExercisePage id="push" />);
+  fireEvent.change(view.getByLabelText("Exercise name"), {
+    target: { value: "Dumbbell press" },
+  });
+  fireEvent.submit(view.container.querySelector("form")!);
+
+  const exercises = useStore.getState().getWorkoutById("push")?.exercises;
+  expect(exercises?.[0]).toMatchObject(exercise);
+  expect(exercises?.[2]).toMatchObject({ sets: 5, step: 1.25, logging: false });
 });

@@ -140,6 +140,11 @@ function migratePersistedState(persistedState: unknown) {
 const useStore = create<Store>()(
   persist(
     (set, get) => ({
+      trainingDefaults: { sets: 3, step: 2.5, logging: true },
+      setTrainingDefaults: (defaults) =>
+        set((state) => ({
+          trainingDefaults: { ...state.trainingDefaults, ...defaults },
+        })),
       workouts: [],
       exerciseLogs: [],
       syncUserId: null,

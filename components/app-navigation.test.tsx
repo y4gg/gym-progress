@@ -29,6 +29,9 @@ mock.module("next/navigation", () => ({
   useRouter: () => router,
 }));
 mock.module("@/lib/use-store-hydrated", () => ({ useStoreHydrated: () => true }));
+mock.module("@/lib/auth-client", () => ({
+  authClient: { useSession: () => ({ data: null, isPending: false }) },
+}));
 mock.module("@/components/screens/home", () => ({
   default: () => <p>Workouts screen</p>,
 }));
@@ -60,6 +63,7 @@ const { act, cleanup, fireEvent, render } = await import("@testing-library/react
 const { AppLink, AppNavigation, useAppPathname, useAppRouter, useAppSearchParams } =
   await import("./app-navigation");
 const { AppScreen } = await import("./offline-app");
+const { NavigationMenu } = await import("./navigation-menu");
 const { useStore } = await import("@/lib/store");
 
 function RouterControls() {
@@ -246,4 +250,31 @@ test("account pages keep their server-rendered screen", () => {
     </AppNavigation>,
   );
   expect(view.getByText("Account screen")).toBeTruthy();
+});
+
+test("settings and their detail pages open locally for an offline guest", () => {
+  Object.defineProperty(browser.navigator, "onLine", { value: false });
+  useStore.setState({ syncStatus: "offline" });
+  const assign = spyOn(browser.location, "assign").mockImplementation(() => {});
+  const view = render(
+    <AppNavigation>
+      <NavigationMenu pathname="/" session={null} isSessionPending={false} />
+      <AppScreen>
+        <p>Server screen</p>
+      </AppScreen>
+    </AppNavigation>,
+  );
+
+  fireEvent.click(view.getByRole("link", { name: "Settings" }));
+  expect(view.getByRole("heading", { name: "Settings" })).toBeTruthy();
+  fireEvent.click(view.getByRole("link", { name: "Appearance" }));
+  expect(browser.location.pathname).toBe("/settings/appearance");
+  expect(view.getByRole("radio", { name: "System" })).toBeTruthy();
+  fireEvent.click(view.getByRole("link", { name: "Back" }));
+  fireEvent.click(view.getByRole("link", { name: "Data & sync" }));
+  expect(view.getByText("Offline")).toBeTruthy();
+  expect(view.getByText("Saved on this device")).toBeTruthy();
+  expect(view.getByRole("link", { name: "Sign in" }).getAttribute("href")).toBe("/login");
+  expect(assign).not.toHaveBeenCalled();
+  expect(router.push).not.toHaveBeenCalled();
 });

@@ -17,11 +17,13 @@ import { WorkoutIconPicker } from "@/components/workout-icon-picker";
 import { normalizeWorkoutIcon } from "@/lib/workout-icons";
 
 export default function CreateExercisePage({ id }: { id: string }) {
+  const hydrated = useStoreHydrated();
+  if (!hydrated) return null;
+
   return <CreateExerciseForm key={id} id={id} />;
 }
 
 function CreateExerciseForm({ id }: { id: string }) {
-  const hydrated = useStoreHydrated();
   const router = useAppRouter();
   const workout = useStore((state) => state.getWorkoutById(id));
   const [newExercise, setNewExercise] = useState<NewExercise>(() => ({
@@ -29,15 +31,9 @@ function CreateExerciseForm({ id }: { id: string }) {
     name: "",
     weight: 0,
     notes: "",
-    sets: 3,
-    logging: true,
-    step: 2.5,
+    ...useStore.getState().trainingDefaults,
     workoutId: id,
   }));
-
-  if (!hydrated) {
-    return null;
-  }
 
   if (!workout) {
     notFound();

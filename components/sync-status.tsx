@@ -8,7 +8,6 @@ import {
   WifiOff,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -19,8 +18,8 @@ export function SyncStatus() {
 
   const statusConfig = {
     idle: {
-      icon: LogIn,
-      label: "Login required",
+      icon: LoaderCircle,
+      label: "Waiting to sync",
       className: "text-muted-foreground",
     },
     syncing: {
@@ -35,7 +34,7 @@ export function SyncStatus() {
     },
     offline: {
       icon: WifiOff,
-      label: "Offline",
+      label: "Sync paused",
       className: "text-amber-600 dark:text-amber-400",
     },
     error: {
@@ -45,7 +44,7 @@ export function SyncStatus() {
     },
     unauthorized: {
       icon: LogIn,
-      label: "Login required",
+      label: "Sign-in required",
       className: "text-destructive",
     },
   }[status];
@@ -53,21 +52,16 @@ export function SyncStatus() {
   const Icon = statusConfig.icon;
 
   return (
-    <Button
-      aria-label={lastSyncError ? `${statusConfig.label}: ${lastSyncError}` : statusConfig.label}
-      className={cn(
-        "h-12 w-full justify-start gap-3 px-4 text-base",
-        statusConfig.className,
-      )}
-      disabled
+    <span
+      role="status"
+      className={cn("inline-flex items-center gap-2", statusConfig.className)}
       title={lastSyncError ?? statusConfig.label}
-      type="button"
-      variant="outline"
     >
       <Icon
-        className={cn("size-5", status === "syncing" && "animate-spin")}
+        aria-hidden="true"
+        className={cn("size-4 shrink-0", status === "syncing" && "animate-spin")}
       />
-      <span className="min-w-0 truncate">{statusConfig.label}</span>
-    </Button>
+      {statusConfig.label}
+    </span>
   );
 }

@@ -1,24 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useTheme } from "next-themes";
 import {
   ChevronRight,
   Home,
   LogIn,
   LogOut,
-  Moon,
-  Sun,
+  Settings,
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppLink, useAppRouter } from "@/components/app-navigation";
 import { Button } from "@/components/ui/button";
+import { isSettingsPathname } from "@/lib/app-routes";
 import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { PwaInstallButton } from "@/components/pwa-install-button";
 import { WorkoutIcon } from "@/components/workout-icon";
 
 const linkClassName =
@@ -40,7 +38,7 @@ export function NavigationMenu({
   const [isSigningOut, setIsSigningOut] = useState(false);
   const workouts = useStore((state) => state.workouts);
   const router = useAppRouter();
-  const { resolvedTheme, setTheme } = useTheme();
+  const settingsActive = isSettingsPathname(pathname);
   const exerciseId = pathname.match(/^\/e\/([^/]+)/)?.[1];
   const activeWorkoutId = useStore((state) =>
     exerciseId ? state.getExerciseById(exerciseId)?.workoutId : undefined,
@@ -91,6 +89,19 @@ export function NavigationMenu({
             aria-hidden="true"
           />
         </AppLink>
+        <AppLink
+          onNavigate={onNavigate}
+          href="/settings"
+          aria-current={settingsActive ? "page" : undefined}
+          className={cn(
+            linkClassName,
+            settingsActive && "border-primary/30 bg-primary/10 text-primary",
+          )}
+        >
+          <Settings className="size-5 shrink-0" aria-hidden="true" />
+          <span className="flex-1">Settings</span>
+          <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+        </AppLink>
 
         {workouts.length > 0 ? (
           <div className="mt-4">
@@ -133,9 +144,6 @@ export function NavigationMenu({
             </ul>
           </div>
         ) : null}
-        <div className="mt-5 space-y-2 border-t pt-4 empty:hidden lg:hidden">
-          <PwaInstallButton />
-        </div>
       </nav>
       <div className="flex shrink-0 items-center gap-2 border-t bg-muted/20 p-4">
         <AppLink
@@ -164,16 +172,6 @@ export function NavigationMenu({
           </span>
         </AppLink>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-11 shrink-0 rounded-xl"
-          aria-label="Toggle theme"
-          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-        >
-          <Sun className="hidden size-5 dark:block" aria-hidden="true" />
-          <Moon className="size-5 dark:hidden" aria-hidden="true" />
-        </Button>
         {session ? (
           <Button
             variant="ghost"

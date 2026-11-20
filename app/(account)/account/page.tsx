@@ -5,30 +5,17 @@ import { ChangePasswordDialog } from "@/components/account/change-password-dialo
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
 import { PasskeysDialog } from "@/components/account/passkeys-dialog";
 import { SignOutButton } from "@/components/account/sign-out-button";
-import { SyncStatus } from "@/components/sync-status";
+import { SettingsLayout } from "@/components/settings-layout";
 import { authClient } from "@/lib/auth-client";
-import { usePwaOnboarding } from "@/components/pwa-context";
-import { PwaInstallButton } from "@/components/pwa-install-button";
-import { Button } from "@/components/ui/button";
 
 export default function AccountPage() {
   const session = authClient.useSession();
-  const { canReplay, replay } = usePwaOnboarding();
   const currentEmail = session.data?.user.email;
   const actionsDisabled = session.isPending || !session.data;
 
   return (
-    <main className="min-h-dvh px-6 py-10">
-      <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
-        <h1 className="mb-5 text-center text-4xl font-bold">Account</h1>
-
-        <SyncStatus />
-        <PwaInstallButton />
-        {canReplay && (
-          <Button variant="outline" className="min-h-12 lg:hidden" onClick={replay}>
-            Replay onboarding
-          </Button>
-        )}
+    <SettingsLayout title="Account">
+      <div className="flex w-full max-w-sm flex-col gap-3">
         <ChangeEmailDialog
           currentEmail={currentEmail}
           disabled={actionsDisabled}
@@ -47,6 +34,6 @@ export default function AccountPage() {
           </p>
         ) : null}
       </div>
-    </main>
+    </SettingsLayout>
   );
 }

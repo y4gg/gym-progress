@@ -19,6 +19,7 @@ import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
 import { AppLogo } from "@/components/app-logo";
 import { Launchpad } from "@/components/launchpad";
 import { NavigationMenu } from "@/components/navigation-menu";
+import { isSettingsPathname } from "@/lib/app-routes";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { authClient } from "@/lib/auth-client";
@@ -202,6 +203,8 @@ function PageSpecificNavItem({
       />
     );
   }
+
+  if (isSettingsPathname(pathname)) return <div aria-hidden="true" />;
 
   return (
     <NavLink href="/account" label="Account">

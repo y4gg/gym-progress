@@ -67,7 +67,11 @@ type SyncOperation =
   | { id: string; type: "addExerciseLog"; exerciseLog: ExerciseLog; queuedAt: string }
   | { id: string; type: "deleteExerciseLog"; exerciseLogId: string; queuedAt: string };
 
+type TrainingDefaults = Pick<Exercise, "sets" | "step" | "logging">;
+
 interface Store {
+  trainingDefaults: TrainingDefaults;
+  setTrainingDefaults: (defaults: Partial<TrainingDefaults>) => void;
   workouts: Workout[];
   exerciseLogs: ExerciseLog[];
   syncUserId: string | null;

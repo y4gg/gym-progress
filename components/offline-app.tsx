@@ -10,15 +10,20 @@ import CreateExercise from "@/components/screens/create-exercise";
 import Exercise from "@/components/screens/exercise";
 import ExerciseHistory from "@/components/screens/exercise-history";
 import ExerciseLogs from "@/components/screens/exercise-logs";
+import Settings, {
+  AppearanceSettings,
+  SyncSettings,
+  TrainingSettings,
+} from "@/components/screens/settings";
 import { useStore } from "@/lib/store";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
-import { isWorkoutPathname } from "@/lib/workout-routes";
+import { isLocalAppPathname } from "@/lib/app-routes";
 
 export function AppScreen({ children }: { children: ReactNode }) {
   const pathname = useAppPathname();
   // Native history changes the URL without fetching a new Next page. Render
-  // workout screens from that URL; account pages keep their server content.
-  return isWorkoutPathname(pathname) ? <OfflineApp /> : children;
+  // local screens from that URL while account pages keep their server content.
+  return isLocalAppPathname(pathname) ? <OfflineApp /> : children;
 }
 
 export function OfflineApp() {
@@ -27,6 +32,17 @@ export function OfflineApp() {
   const workouts = useStore((state) => state.workouts);
 
   if (!hydrated) return null;
+
+  switch (pathname.replace(/\/$/, "")) {
+    case "/settings":
+      return <Settings />;
+    case "/settings/training":
+      return <TrainingSettings />;
+    case "/settings/appearance":
+      return <AppearanceSettings />;
+    case "/settings/sync":
+      return <SyncSettings />;
+  }
 
   let screen;
   const workoutRoute = pathname.match(/^\/w\/([^/]+)(\/create)?\/?$/);
@@ -72,7 +88,11 @@ export function OfflineApp() {
             : "Connect to the internet to sign in or manage your account. You can keep tracking workouts offline."}
         </p>
         <Button asChild>
-          <AppLink href="/">Go to workouts</AppLink>
+          {pathname === "/account" ? (
+            <AppLink href="/settings">Back to settings</AppLink>
+          ) : (
+            <AppLink href="/">Go to workouts</AppLink>
+          )}
         </Button>
       </main>
     );

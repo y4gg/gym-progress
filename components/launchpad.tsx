@@ -127,7 +127,7 @@ export function Launchpad({
               <Check className="size-16" aria-hidden="true" />
               <h2 className="text-2xl font-bold">You found your launchpad</h2>
               <p className="max-w-xs leading-7 text-muted-foreground">
-                Jump between workouts, manage your account, and switch themes
+                Jump between workouts, open settings, and manage your account
                 here. Swipe right or close the menu to continue.
               </p>
               <Dialog.Close asChild>

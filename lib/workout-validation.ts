@@ -20,7 +20,8 @@ export const exerciseFieldsSchema = z.object({
   sets: z
     .number()
     .int("Sets must be a whole number.")
-    .min(1, "Enter at least one set."),
+    .min(1, "Enter at least one set.")
+    .max(2_147_483_647, "Enter fewer sets."),
   maxReps: z.number().int().min(1).optional(),
   logging: z.boolean(),
   step: z
