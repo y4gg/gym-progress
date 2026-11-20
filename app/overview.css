@@ -24,11 +24,6 @@
   --overview-marker: var(--overview-ice);
 }
 
-.overview-display {
-  font-family: var(--font-overview-display), var(--font-sans), sans-serif;
-  font-weight: 600;
-}
-
 .overview-period {
   display: inline-flex;
   gap: 0.25rem;
