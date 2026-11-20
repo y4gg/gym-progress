@@ -153,7 +153,7 @@ export default function Settings() {
 
 const trainingNumbersSchema = exerciseFieldsSchema.pick({ sets: true, step: true });
 const trainingInputClassName =
-  "h-14 px-4 text-2xl font-semibold tracking-tight tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+  "h-14 px-4 text-2xl font-semibold tracking-tight tabular-nums lg:h-12 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 const weightUnits = [
   { value: "kg", label: "Kilograms" },
   { value: "lb", label: "Pounds" },
@@ -200,30 +200,32 @@ export function TrainingSettings() {
 
   return (
     <SettingsLayout title="Training">
-      <fieldset className="border-b border-border pb-5">
-        <legend className="mb-3 text-sm font-medium">Weight unit</legend>
-        <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:max-w-sm">
-          {weightUnits.map(({ value, label }) => (
-            <label key={value} className="min-w-0">
-              <input
-                type="radio"
-                name="weight-unit"
-                value={value}
-                checked={weightUnit === value}
-                onChange={() => setWeightUnit(value)}
-                className="peer sr-only"
-              />
-              <span className="flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-transparent px-2 py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground peer-checked:border-border peer-checked:bg-background peer-checked:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-foreground">
-                {label} ({value})
-              </span>
-            </label>
-          ))}
+      <fieldset aria-labelledby="weight-unit-label" className="border-b border-border pb-5 lg:pb-4">
+        <div className="grid gap-3 lg:flex lg:items-center lg:justify-between lg:gap-6">
+          <span id="weight-unit-label" className="text-sm font-medium lg:text-base">Weight unit</span>
+          <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:max-w-sm lg:w-64">
+            {weightUnits.map(({ value, label }) => (
+              <label key={value} className="min-w-0">
+                <input
+                  type="radio"
+                  name="weight-unit"
+                  value={value}
+                  checked={weightUnit === value}
+                  onChange={() => setWeightUnit(value)}
+                  className="peer sr-only"
+                />
+                <span className="flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-transparent px-2 py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground peer-checked:border-border peer-checked:bg-background peer-checked:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-foreground">
+                  {label} ({value})
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
       </fieldset>
       <form
         noValidate
         onSubmit={saveDefaults}
-        className="grid items-start gap-5 sm:grid-cols-2"
+        className="grid items-start gap-5 sm:grid-cols-2 lg:gap-y-4"
       >
         <div className="grid gap-2">
           <Label htmlFor="default-sets">Default sets</Label>
@@ -281,7 +283,7 @@ export function TrainingSettings() {
         <Button
           type="submit"
           disabled={!changed}
-          className="min-h-11 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 sm:col-span-2 sm:w-fit"
+          className="min-h-11 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 sm:col-span-2 sm:w-fit lg:justify-self-end"
         >
           Save defaults
         </Button>
