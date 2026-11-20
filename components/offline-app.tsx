@@ -5,6 +5,7 @@ import { AppLink, useAppPathname } from "@/components/app-navigation";
 import { Button } from "@/components/ui/button";
 import { SyncStatus } from "@/components/sync-status";
 import Home from "@/components/screens/home";
+import Overview from "@/components/screens/overview";
 import Workout from "@/components/screens/workout";
 import CreateExercise from "@/components/screens/create-exercise";
 import Exercise from "@/components/screens/exercise";
@@ -12,7 +13,7 @@ import ExerciseHistory from "@/components/screens/exercise-history";
 import ExerciseLogs from "@/components/screens/exercise-logs";
 import { useStore } from "@/lib/store";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
-import { isWorkoutPathname } from "@/lib/workout-routes";
+import { isOverviewPathname, isWorkoutPathname } from "@/lib/workout-routes";
 
 export function AppScreen({ children }: { children: ReactNode }) {
   const pathname = useAppPathname();
@@ -34,6 +35,8 @@ export function OfflineApp() {
 
   if (pathname === "/" || pathname === "/offline") {
     screen = <Home />;
+  } else if (isOverviewPathname(pathname)) {
+    screen = <Overview />;
   } else if (
     workoutRoute &&
     workouts.some((workout) => workout.id === workoutRoute[1])

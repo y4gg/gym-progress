@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import {
+  BarChart3,
   ChevronRight,
   Home,
   LogIn,
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { isOverviewPathname } from "@/lib/workout-routes";
 import { PwaInstallButton } from "@/components/pwa-install-button";
 import { WorkoutIcon } from "@/components/workout-icon";
 
@@ -48,6 +50,7 @@ export function NavigationMenu({
   const accountHref = !isSessionPending && !session ? "/login" : "/account";
   const accountLabel = accountHref === "/login" ? "Login" : "Account";
   const AccountIcon = accountHref === "/login" ? LogIn : UserRound;
+  const isOverview = isOverviewPathname(pathname);
 
   async function signOut() {
     setIsSigningOut(true);
@@ -86,6 +89,23 @@ export function NavigationMenu({
         >
           <Home className="size-5 shrink-0" aria-hidden="true" />
           <span className="flex-1">Home</span>
+          <ChevronRight
+            className="size-4 text-muted-foreground"
+            aria-hidden="true"
+          />
+        </AppLink>
+        <AppLink
+          onNavigate={onNavigate}
+          href="/overview"
+          aria-current={isOverview ? "page" : undefined}
+          className={cn(
+            linkClassName,
+            "mt-1",
+            isOverview && "border-primary/30 bg-primary/10 text-primary",
+          )}
+        >
+          <BarChart3 className="size-5 shrink-0" aria-hidden="true" />
+          <span className="flex-1">Overview</span>
           <ChevronRight
             className="size-4 text-muted-foreground"
             aria-hidden="true"

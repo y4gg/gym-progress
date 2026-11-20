@@ -141,6 +141,7 @@ test("offline navigation serves the app for unvisited IDs, query strings, and ac
   await sw.lifecycle("install");
   for (const path of [
     "/",
+    "/overview",
     "/w/new/create",
     "/e/new",
     "/e/new/history",
@@ -196,7 +197,7 @@ test("workout launches and reloads use the cached app without starting a network
   });
   await sw.lifecycle("install");
   for (const path of [
-    "/", "/offline", "/w/new", "/w/new/create/", "/e/new",
+    "/", "/offline", "/overview", "/overview/", "/w/new", "/w/new/create/", "/e/new",
     "/e/new/history", "/e/new/logs?select=1",
   ]) {
     assert.equal(await (await sw.request(path)).text(), "/offline");

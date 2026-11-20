@@ -7,6 +7,7 @@ export type HistorySession = {
   sets: number;
   weight: number;
   reps: number;
+  maxReps: number;
   volume: number;
 };
 
@@ -27,11 +28,13 @@ export function buildHistorySessions(logs: ExerciseLog[]): HistorySession[] {
       sets: 0,
       weight: 0,
       reps: 0,
+      maxReps: 0,
       volume: 0,
     };
     session.sets += 1;
     session.weight = Math.max(session.weight, log.weight);
     session.reps += log.reps;
+    session.maxReps = Math.max(session.maxReps, log.reps);
     session.volume += log.weight * log.reps;
     days.set(day, session);
   }
