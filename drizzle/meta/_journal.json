@@ -36,6 +36,13 @@
       "when": 1794856163512,
       "tag": "0004_exercise_icons",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795208897079,
+      "tag": "0005_weight_precision",
+      "breakpoints": true
     }
   ]
 }

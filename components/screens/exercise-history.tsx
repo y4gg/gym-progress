@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { formatWeight, type WeightUnit } from "@/lib/weight-units";
 import {
   buildHistorySessions,
   filterHistorySessions,
@@ -30,17 +31,14 @@ const metrics = {
   weight: {
     label: "Weight",
     description: "Heaviest logged set per day",
-    unit: "kg",
   },
   reps: {
     label: "Reps",
     description: "Total reps per day, across all sets",
-    unit: "reps",
   },
   volume: {
     label: "Volume",
     description: "Weight × reps, summed across all sets per day",
-    unit: "kg",
   },
 };
 const ranges = [
@@ -49,14 +47,21 @@ const ranges = [
   { label: "All time", days: null },
 ];
 
+function formatMetric(value: number, metric: HistoryMetric, weightUnit: WeightUnit) {
+  return metric === "reps" ? number.format(value) : formatWeight(value, weightUnit);
+}
+
 function TrendChart({
   sessions,
   metric,
+  weightUnit,
 }: {
   sessions: HistorySession[];
   metric: HistoryMetric;
+  weightUnit: WeightUnit;
 }) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const unit = metric === "reps" ? "reps" : weightUnit;
   const selected =
     sessions.find((session) => session.day === selectedDay) ??
     sessions[sessions.length - 1];
@@ -82,9 +87,9 @@ function TrendChart({
         aria-live="polite"
       >
         <p className="text-3xl font-bold tabular-nums">
-          {number.format(selected[metric])}{" "}
+          {formatMetric(selected[metric], metric, weightUnit)}{" "}
           <span className="text-sm font-medium text-muted-foreground">
-            {metrics[metric].unit}
+            {unit}
           </span>
         </p>
         <p className="text-sm text-muted-foreground">
@@ -95,7 +100,7 @@ function TrendChart({
         viewBox="0 0 360 210"
         className="mt-2 w-full overflow-visible"
         role="img"
-        aria-label={`${metrics[metric].label} trend across ${sessions.length} training days. ${number.format(first[metric])} to ${number.format(last[metric])} ${metrics[metric].unit}.`}
+        aria-label={`${metrics[metric].label} trend across ${sessions.length} training days. ${formatMetric(first[metric], metric, weightUnit)} to ${formatMetric(last[metric], metric, weightUnit)} ${unit}.`}
       >
         {[0, 0.5, 1].map((fraction) => (
           <g key={fraction}>
@@ -113,7 +118,7 @@ function TrendChart({
               textAnchor="end"
               className="fill-muted-foreground text-[10px]"
             >
-              {number.format(max * fraction)}
+              {formatMetric(max * fraction, metric, weightUnit)}
             </text>
           </g>
         ))}
@@ -137,8 +142,7 @@ function TrendChart({
             strokeWidth="2"
           >
             <title>
-              {fullDate(session.timestamp)}: {number.format(session[metric])}{" "}
-              {metrics[metric].unit}
+              {fullDate(session.timestamp)}: {formatMetric(session[metric], metric, weightUnit)} {unit}
             </title>
           </circle>
         ))}
@@ -190,6 +194,7 @@ export default function ExerciseHistoryPage({
     exercise ? state.getWorkoutById(exercise.workoutId) : undefined,
   );
   const logs = useStore((state) => state.exerciseLogs);
+  const weightUnit = useStore((state) => state.weightUnit);
   const [metric, setMetric] = useState<HistoryMetric>("weight");
   const [days, setDays] = useState<number | null>(null);
   const sessions = useMemo(
@@ -199,6 +204,7 @@ export default function ExerciseHistoryPage({
   );
   const hasWeight = sessions.some((session) => session.weight > 0);
   const activeMetric = !hasWeight && metric !== "reps" ? "reps" : metric;
+  const unit = activeMetric === "reps" ? "reps" : weightUnit;
   const visible = filterHistorySessions(sessions, days, new Date());
   if (!hydrated) return null;
   if (!exercise || !workout) notFound();
@@ -274,7 +280,7 @@ export default function ExerciseHistoryPage({
               {metrics[activeMetric].description}
             </p>
             {visible.length ? (
-              <TrendChart sessions={visible} metric={activeMetric} />
+              <TrendChart sessions={visible} metric={activeMetric} weightUnit={weightUnit} />
             ) : (
               <p className="py-14 text-center text-sm text-muted-foreground">
                 No sets logged in this period. Try All time.
@@ -286,7 +292,7 @@ export default function ExerciseHistoryPage({
               <p className="text-xs text-muted-foreground">Change in period</p>
               <p className="mt-2 text-xl font-bold tabular-nums">
                 {visible.length > 1
-                  ? `${change > 0 ? "+" : ""}${number.format(change)} ${metrics[activeMetric].unit}`
+                  ? `${change > 0 ? "+" : ""}${formatMetric(change, activeMetric, weightUnit)} ${unit}`
                   : "—"}
               </p>
             </section>
@@ -296,9 +302,9 @@ export default function ExerciseHistoryPage({
                 All-time best
               </p>
               <p className="mt-2 text-xl font-bold tabular-nums">
-                {number.format(best)}{" "}
+                {formatMetric(best, activeMetric, weightUnit)}{" "}
                 <span className="text-sm font-medium">
-                  {metrics[activeMetric].unit}
+                  {unit}
                 </span>
               </p>
             </section>
@@ -333,8 +339,7 @@ export default function ExerciseHistoryPage({
                         </p>
                       </div>
                       <p className="text-sm font-semibold tabular-nums">
-                        {number.format(session[activeMetric])}{" "}
-                        {metrics[activeMetric].unit}
+                        {formatMetric(session[activeMetric], activeMetric, weightUnit)} {unit}
                       </p>
                     </li>
                   ))}

@@ -45,6 +45,7 @@ const { act, cleanup, fireEvent, render } =
   await import("@testing-library/react");
 const { useStore } = await import("@/lib/store");
 const { default: ExerciseLogsPage } = await import("./exercise-logs");
+const { default: ExerciseHistoryPage } = await import("./exercise-history");
 
 const today = new Date(2026, 9, 4, 12);
 const exercise: Exercise = {
@@ -83,6 +84,7 @@ beforeEach(async () => {
   browser.localStorage.clear();
   useStore.getState().clearData();
   useStore.setState({
+    weightUnit: "kg",
     workouts: [
       {
         id: "push",
@@ -124,6 +126,23 @@ test("reps-only days omit weight", () => {
   expect(view.container.querySelector("summary")?.textContent).toBe(
     "3 Nov 20261 set · 12 reps",
   );
+});
+
+test("pounds update logs and history without changing saved logs or rep totals", () => {
+  useStore.getState().setWeightUnit("lb");
+  const savedLogs = useStore.getState().exerciseLogs;
+  searchParams = new URLSearchParams("select=1");
+  const view = render(<ExerciseLogsPage exerciseId={exercise.id} />);
+  expect(view.getByText("132.28–154.32 lb")).toBeTruthy();
+  expect(view.getByRole("button", { name: "Set 2: 7 reps, 154.32 lb" })).toBeTruthy();
+
+  view.rerender(<ExerciseHistoryPage exerciseId={exercise.id} />);
+  expect(view.getByRole("img", { name: /Weight trend.*154\.32 lb/ })).toBeTruthy();
+  fireEvent.click(view.getByRole("button", { name: "Volume" }));
+  expect(view.getByRole("img", { name: /Volume trend.*3,240\.8 lb/ })).toBeTruthy();
+  fireEvent.click(view.getByRole("button", { name: "Reps" }));
+  expect(view.getByRole("img", { name: /Reps trend.*14 to 21 reps/ })).toBeTruthy();
+  expect(useStore.getState().exerciseLogs).toBe(savedLogs);
 });
 
 test("select mode opens the individual sets and retains set selection", () => {

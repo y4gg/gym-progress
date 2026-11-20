@@ -28,7 +28,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { authClient } from "@/lib/auth-client";
 import { useStore } from "@/lib/store";
-import { exerciseFieldsSchema } from "@/lib/workout-validation";
+import { exerciseFieldsSchema, weightStepInputSchema } from "@/lib/workout-validation";
+import { formatWeight, toKilograms, weightInputValue, type WeightUnit } from "@/lib/weight-units";
 
 const themes = [
   { value: "system", label: "System", icon: Monitor },
@@ -47,6 +48,7 @@ export default function Settings() {
   const { canReplay, replay } = usePwaOnboarding();
   const { theme } = useTheme();
   const { sets, step } = useStore((state) => state.trainingDefaults);
+  const weightUnit = useStore((state) => state.weightUnit);
   const links = [
     {
       href: "/settings/appearance",
@@ -97,7 +99,7 @@ export default function Settings() {
                 <strong className="font-semibold">{sets.toLocaleString()}</strong> {sets === 1 ? "set" : "sets"}
               </span>
               <span>
-                <strong className="font-semibold">+{step.toLocaleString()}</strong> kg
+                <strong className="font-semibold">+{formatWeight(step, weightUnit)}</strong> {weightUnit}
               </span>
             </span>
           </div>
@@ -152,20 +154,37 @@ export default function Settings() {
 const trainingNumbersSchema = exerciseFieldsSchema.pick({ sets: true, step: true });
 const trainingInputClassName =
   "h-14 px-4 text-2xl font-semibold tracking-tight tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+const weightUnits = [
+  { value: "kg", label: "Kilograms" },
+  { value: "lb", label: "Pounds" },
+] as const;
 
 export function TrainingSettings() {
   const defaults = useStore((state) => state.trainingDefaults);
   const setDefaults = useStore((state) => state.setTrainingDefaults);
+  const weightUnit = useStore((state) => state.weightUnit);
+  const setWeightUnit = useStore((state) => state.setWeightUnit);
   const [sets, setSets] = useState(String(defaults.sets));
-  const [step, setStep] = useState(String(defaults.step));
+  const [stepDraft, setStepDraft] = useState<{ value: string; unit: WeightUnit } | null>(null);
   const [errors, setErrors] = useState<{ sets?: string[]; step?: string[] }>({});
-  const changed = sets !== String(defaults.sets) || step !== String(defaults.step);
+  const defaultStep = String(weightInputValue(defaults.step, weightUnit));
+  const changed = sets !== String(defaults.sets) || stepDraft !== null;
+  let step = defaultStep;
+  if (stepDraft) {
+    step = stepDraft.value;
+    if (stepDraft.unit !== weightUnit && step !== "") {
+      step = String(weightInputValue(toKilograms(Number(step), stepDraft.unit), weightUnit));
+    }
+  }
 
   function saveDefaults(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = trainingNumbersSchema.safeParse({
+    const schema = stepDraft
+      ? trainingNumbersSchema.extend({ step: weightStepInputSchema(stepDraft.unit) })
+      : trainingNumbersSchema;
+    const result = schema.safeParse({
       sets: Number(sets),
-      step: Number(step),
+      step: stepDraft ? Number(stepDraft.value) : defaults.step,
     });
     if (!result.success) {
       setErrors(z.flattenError(result.error).fieldErrors);
@@ -174,13 +193,33 @@ export function TrainingSettings() {
 
     setDefaults(result.data);
     setSets(String(result.data.sets));
-    setStep(String(result.data.step));
+    setStepDraft(null);
     setErrors({});
     toast.success("Training defaults saved.");
   }
 
   return (
     <SettingsLayout title="Training">
+      <fieldset className="border-b border-border pb-5">
+        <legend className="mb-3 text-sm font-medium">Weight unit</legend>
+        <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:max-w-sm">
+          {weightUnits.map(({ value, label }) => (
+            <label key={value} className="min-w-0">
+              <input
+                type="radio"
+                name="weight-unit"
+                value={value}
+                checked={weightUnit === value}
+                onChange={() => setWeightUnit(value)}
+                className="peer sr-only"
+              />
+              <span className="flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-transparent px-2 py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground peer-checked:border-border peer-checked:bg-background peer-checked:text-foreground peer-focus-visible:outline-2 peer-focus-visible:outline-foreground">
+                {label} ({value})
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <p className="max-w-[48ch] text-sm leading-relaxed text-muted-foreground">
         Set the starting values for new exercises on this device. You can adjust them for each exercise.
       </p>
@@ -213,7 +252,7 @@ export function TrainingSettings() {
         </div>
         <div className="grid gap-2">
           <Label htmlFor="default-weight-increment">
-            Default weight increment<span className="sr-only"> (kg)</span>
+            Default weight increment<span className="sr-only"> ({weightUnit})</span>
           </Label>
           <div className="relative">
             <Input
@@ -227,12 +266,13 @@ export function TrainingSettings() {
               aria-invalid={Boolean(errors.step)}
               aria-describedby={errors.step ? "default-step-error" : undefined}
               onChange={(event) => {
-                setStep(event.target.value);
+                const value = event.target.value;
+                setStepDraft(value === defaultStep ? null : { value, unit: weightUnit });
                 setErrors((current) => ({ ...current, step: undefined }));
               }}
             />
             <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-muted-foreground">
-              kg
+              {weightUnit}
             </span>
           </div>
           {errors.step && (

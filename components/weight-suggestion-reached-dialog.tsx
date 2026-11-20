@@ -10,25 +10,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { formatWeight, type WeightUnit } from "@/lib/weight-units";
 
 type WeightSuggestionReachedDialogProps = {
   open: boolean;
   exerciseName: string;
   currentWeight: number;
   nextWeight: number;
+  weightUnit: WeightUnit;
   onCancel: () => void;
   onConfirm: () => void;
 };
-
-function formatWeight(weight: number) {
-  return Number.isInteger(weight) ? `${weight}` : weight.toFixed(2);
-}
 
 export function WeightSuggestionReachedDialog({
   open,
   exerciseName,
   currentWeight,
   nextWeight,
+  weightUnit,
   onCancel,
   onConfirm,
 }: WeightSuggestionReachedDialogProps) {
@@ -41,8 +40,8 @@ export function WeightSuggestionReachedDialog({
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center text-base leading-6">
             Congratulations! You have reached your weight suggestion threshold.
-            Increase {exerciseName} from {formatWeight(currentWeight)} kg to{" "}
-            {formatWeight(nextWeight)} kg?
+            Increase {exerciseName} from {formatWeight(currentWeight, weightUnit)} {weightUnit} to{" "}
+            {formatWeight(nextWeight, weightUnit)} {weightUnit}?
           </AlertDialogDescription>
         </AlertDialogHeader>
 

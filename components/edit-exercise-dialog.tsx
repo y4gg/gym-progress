@@ -15,7 +15,7 @@ import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { Exercise } from "@/lib/types";
 import { toast } from "sonner";
-import { exerciseFieldsSchema } from "@/lib/workout-validation";
+import { parseExerciseFields } from "@/lib/workout-validation";
 import { Minus, Plus } from "lucide-react";
 import { AdvancedExerciseOptionsDialog } from "@/components/advanced-exercise-options-dialog";
 import { DeleteDialog } from "@/components/delete-dialog";
@@ -31,9 +31,11 @@ export function EditExerciseDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [newExercise, setNewExercise] = useState<Exercise>(exercise);
+  const [stepInput, setStepInput] = useState<string | null>(null);
 
   const deleteExercise = useStore((state) => state.deleteExercise);
   const editExercise = useStore((state) => state.editExercise);
+  const weightUnit = useStore((state) => state.weightUnit);
 
   const handleEditExercise = () => {
     // Weight, notes and order can change through sync while this dialog is open.
@@ -44,9 +46,8 @@ export function EditExerciseDialog({
       sets: newExercise.sets,
       logging: newExercise.logging,
       maxReps: newExercise.maxReps,
-      step: newExercise.step,
     };
-    const result = exerciseFieldsSchema.safeParse(updatedExercise);
+    const result = parseExerciseFields(updatedExercise, stepInput, weightUnit);
     if (!result.success) {
       toast.error(result.error.issues[0].message);
       return;
@@ -69,6 +70,7 @@ export function EditExerciseDialog({
         setOpen(nextOpen);
         if (nextOpen) {
           setNewExercise(exercise);
+          setStepInput(null);
         }
       }}
     >
@@ -170,6 +172,9 @@ export function EditExerciseDialog({
           <AdvancedExerciseOptionsDialog
             exercise={newExercise}
             onExerciseChange={setNewExercise}
+            stepInput={stepInput}
+            onStepInputChange={setStepInput}
+            weightUnit={weightUnit}
           />
         </div>
         <DialogFooter className="grid grid-cols-2 sm:grid-cols-2">

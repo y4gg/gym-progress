@@ -81,6 +81,7 @@ beforeEach(async () => {
   browser.localStorage.clear();
   useStore.getState().clearData();
   useStore.setState({
+    weightUnit: "kg",
     workouts: [
       {
         id: "push",
@@ -343,4 +344,29 @@ test("decimal weight steps do not accumulate floating point errors", () => {
   const view = render(<ExercisePage exerciseId={exercise.id} />);
   fireEvent.click(view.getByRole("button", { name: "Increase weight" }));
   expect(useStore.getState().getExerciseById(exercise.id)?.weight).toBe(0.3);
+});
+
+test("pound input, increments, suggestions and set logs share the same stored weight", () => {
+  useStore.getState().setWeightUnit("lb");
+  useStore.getState().editExercise({ ...exercise, step: 2.267962, maxReps: 8 });
+  const view = render(<ExercisePage exerciseId={exercise.id} />);
+  const weight = view.getByLabelText("Weight") as HTMLInputElement;
+  fireEvent.change(weight, { target: { value: "135" } });
+  expect(weight.value).toBe("135");
+  fireEvent.click(view.getByRole("button", { name: "Increase weight" }));
+  expect(weight.value).toBe("140");
+  fireEvent.click(view.getByRole("button", { name: "Decrease weight" }));
+  expect(weight.value).toBe("135");
+  fireEvent.click(view.getByRole("button", { name: "Next set" }));
+  fireEvent.click(view.getByRole("button", { name: "Yes" }));
+
+  expect(view.getByText(/from 135 lb to 140 lb/)).toBeTruthy();
+  expect(useStore.getState().exerciseLogs[0].weight).toBe(61.23497);
+  fireEvent.click(view.getByRole("button", { name: "Yes" }));
+  expect(weight.value).toBe("140");
+  const stored = useStore.getState().getExerciseById(exercise.id)?.weight;
+  expect(stored).toBe(63.502932);
+  act(() => useStore.getState().setWeightUnit("kg"));
+  expect(weight.value).toBe("63.5");
+  expect(useStore.getState().getExerciseById(exercise.id)?.weight).toBe(stored);
 });

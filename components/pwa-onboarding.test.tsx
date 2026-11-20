@@ -62,6 +62,7 @@ mock.module("@/lib/store", () => ({
     selector({
       syncUserId: savedUserId,
       workouts: [],
+      weightUnit: "kg",
       trainingDefaults: { sets: 3, step: 2.5, logging: true },
     }),
 }));

@@ -18,6 +18,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { WeightSuggestionReachedDialog } from "@/components/weight-suggestion-reached-dialog";
 import { weightSchema } from "@/lib/workout-validation";
 import { WorkoutIcon } from "@/components/workout-icon";
+import { roundKilograms, toKilograms, weightInputValue } from "@/lib/weight-units";
 
 export default function ExercisePage({ exerciseId }: { exerciseId: string }) {
   return <ExerciseScreen key={exerciseId} exerciseId={exerciseId} />;
@@ -38,6 +39,7 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
     exercise ? state.getPreviousExerciseById(exercise.id) : undefined,
   );
   const exerciseLogs = useStore((state) => state.exerciseLogs);
+  const weightUnit = useStore((state) => state.weightUnit);
 
   const addExerciseLog = useStore((state) => state.addExerciseLog);
   const deleteExercise = useStore((state) => state.deleteExercise);
@@ -101,7 +103,7 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
   const step = exercise.step ?? 2.5;
   const defaultReps = exerciseLogReps ?? exercise.maxReps ?? 8;
   const currentWeight = exercise.weight;
-  const suggestedWeight = Number((currentWeight + step).toFixed(2));
+  const suggestedWeight = roundKilograms(currentWeight + step);
   const canIncreaseWeight = weightSchema.safeParse(suggestedWeight).success;
   const targetReps = exercise.maxReps;
   const weightSuggestionEnabled = typeof targetReps === "number";
@@ -225,11 +227,12 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
           <div className="relative">
             <Input
               aria-label="Weight"
+              aria-describedby="exercise-weight-unit"
               className="h-16 px-4 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               inputMode="decimal"
               min={0}
               onChange={(e) => {
-                const weight = Number(e.target.value);
+                const weight = toKilograms(Number(e.target.value), weightUnit);
                 if (weightSchema.safeParse(weight).success) {
                   editExercise({ ...exercise, weight });
                 }
@@ -237,10 +240,10 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
               placeholder="0"
               step="any"
               type="number"
-              value={exercise.weight}
+              value={weightInputValue(exercise.weight, weightUnit)}
             />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-semibold text-muted-foreground">
-              kg
+            <span id="exercise-weight-unit" className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-semibold text-muted-foreground">
+              {weightUnit}
             </span>
           </div>
 
@@ -251,10 +254,7 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
             onClick={() => {
               editExercise({
                 ...exercise,
-                weight: Math.max(
-                  0,
-                  Number((exercise.weight - step).toFixed(2)),
-                ),
+                weight: Math.max(0, roundKilograms(exercise.weight - step)),
               });
             }}
             type="button"
@@ -393,6 +393,7 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
             currentWeight={currentWeight}
             exerciseName={exercise.name}
             nextWeight={suggestedWeight}
+            weightUnit={weightUnit}
             onCancel={handleCancelWeightSuggestion}
             onConfirm={handleConfirmWeightSuggestion}
             open={weightSuggestionPending}

@@ -15,6 +15,7 @@ import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import type { ExerciseLog } from "@/lib/types";
+import { formatWeight, type WeightUnit } from "@/lib/weight-units";
 import { toast } from "sonner";
 
 type LogGroup = {
@@ -32,16 +33,9 @@ function formatDate(value: string) {
   }).format(date);
 }
 
-function formatWeight(weight: number) {
-  return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 0,
-  }).format(weight);
-}
-
-function buildLogLabel(exerciseLog: ExerciseLog & { setNumber: number }) {
+function buildLogLabel(exerciseLog: ExerciseLog & { setNumber: number }, unit: WeightUnit) {
   const weightLabel =
-    exerciseLog.weight > 0 ? `, ${formatWeight(exerciseLog.weight)} kg` : "";
+    exerciseLog.weight > 0 ? `, ${formatWeight(exerciseLog.weight, unit)} ${unit}` : "";
 
   return `Set ${exerciseLog.setNumber}: ${exerciseLog.reps} reps${weightLabel}`;
 }
@@ -49,9 +43,11 @@ function buildLogLabel(exerciseLog: ExerciseLog & { setNumber: number }) {
 function ExerciseLogSummary({
   exerciseLog,
   selected,
+  unit,
 }: {
   exerciseLog: ExerciseLog & { setNumber: number };
   selected: boolean;
+  unit: WeightUnit;
 }) {
   return (
     <span className="flex min-w-0 flex-1 items-center justify-between gap-3 text-sm">
@@ -65,22 +61,21 @@ function ExerciseLogSummary({
       </span>
       {exerciseLog.weight > 0 ? (
         <span className="shrink-0 font-medium tabular-nums">
-          {formatWeight(exerciseLog.weight)} kg
+          {formatWeight(exerciseLog.weight, unit)} {unit}
         </span>
       ) : null}
     </span>
   );
 }
 
-function DaySummary({ group }: { group: LogGroup }) {
+function DaySummary({ group, unit }: { group: LogGroup; unit: WeightUnit }) {
   const totalReps = group.logs.reduce((total, log) => total + log.reps, 0);
   const weights = group.logs.map((log) => log.weight);
   const minWeight = Math.min(...weights);
   const maxWeight = Math.max(...weights);
-  const weightLabel =
-    minWeight === maxWeight
-      ? `${formatWeight(maxWeight)} kg`
-      : `${formatWeight(minWeight)}–${formatWeight(maxWeight)} kg`;
+  const minLabel = formatWeight(minWeight, unit);
+  const maxLabel = formatWeight(maxWeight, unit);
+  const weightLabel = minLabel === maxLabel ? maxLabel : `${minLabel}–${maxLabel}`;
 
   return (
     <span className="flex items-center justify-between gap-3 py-3">
@@ -93,7 +88,7 @@ function DaySummary({ group }: { group: LogGroup }) {
       </span>
       {maxWeight > 0 ? (
         <span className="shrink-0 text-sm font-semibold tabular-nums">
-          {weightLabel}
+          {weightLabel} {unit}
         </span>
       ) : null}
     </span>
@@ -147,6 +142,7 @@ function ExerciseLogsView({
 }) {
   const router = useAppRouter();
   const deleteExerciseLogs = useStore((state) => state.deleteExerciseLogs);
+  const weightUnit = useStore((state) => state.weightUnit);
   const [selectedLogIds, setSelectedLogIds] = useState<string[]>([]);
   const selectedCount = selectedLogIds.length;
 
@@ -182,7 +178,7 @@ function ExerciseLogsView({
           {groupedLogs.map((group) => (
             <details key={group.dateLabel} open={selectMode ? true : undefined}>
               <summary className="cursor-pointer list-none rounded-sm focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
-                <DaySummary group={group} />
+                <DaySummary group={group} unit={weightUnit} />
               </summary>
 
               <div className="mb-3 flex flex-col divide-y border-t">
@@ -191,7 +187,7 @@ function ExerciseLogsView({
 
                   return (
                     <button
-                      aria-label={buildLogLabel(exerciseLog)}
+                      aria-label={buildLogLabel(exerciseLog, weightUnit)}
                       aria-pressed={selectMode ? selected : undefined}
                       className={cn(
                         "flex min-h-11 w-full items-center justify-between gap-3 rounded-sm bg-background px-2 text-left transition-colors",
@@ -208,6 +204,7 @@ function ExerciseLogsView({
                       <ExerciseLogSummary
                         exerciseLog={exerciseLog}
                         selected={selected}
+                        unit={weightUnit}
                       />
                       {selectMode ? (
                         <Check

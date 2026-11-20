@@ -11,7 +11,8 @@ import { createId } from "@paralleldrive/cuid2";
 import { notFound } from "next/navigation";
 import { toast } from "sonner";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
-import { exerciseFieldsSchema } from "@/lib/workout-validation";
+import { parseExerciseFields } from "@/lib/workout-validation";
+import { toKilograms, weightInputValue } from "@/lib/weight-units";
 import { AdvancedExerciseOptionsDialog } from "@/components/advanced-exercise-options-dialog";
 import { WorkoutIconPicker } from "@/components/workout-icon-picker";
 import { normalizeWorkoutIcon } from "@/lib/workout-icons";
@@ -26,6 +27,8 @@ export default function CreateExercisePage({ id }: { id: string }) {
 function CreateExerciseForm({ id }: { id: string }) {
   const router = useAppRouter();
   const workout = useStore((state) => state.getWorkoutById(id));
+  const weightUnit = useStore((state) => state.weightUnit);
+  const [stepInput, setStepInput] = useState<string | null>(null);
   const [newExercise, setNewExercise] = useState<NewExercise>(() => ({
     id: createId(),
     name: "",
@@ -40,7 +43,7 @@ function CreateExerciseForm({ id }: { id: string }) {
   }
 
   const handleCreateExercise = () => {
-    const result = exerciseFieldsSchema.safeParse(newExercise);
+    const result = parseExerciseFields(newExercise, stepInput, weightUnit);
     if (!result.success) {
       toast.error(result.error.issues[0].message);
       return;
@@ -79,22 +82,23 @@ function CreateExerciseForm({ id }: { id: string }) {
         <div className="relative">
           <Input
             aria-label="Weight"
+            aria-describedby="starting-weight-unit"
             className="h-16 px-5 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             inputMode="decimal"
             min={0}
             onChange={(e) =>
               setNewExercise({
                 ...newExercise,
-                weight: Number(e.target.value),
+                weight: toKilograms(Number(e.target.value), weightUnit),
               })
             }
             placeholder="0"
             step="any"
             type="number"
-            value={newExercise.weight}
+            value={weightInputValue(newExercise.weight, weightUnit)}
           />
-          <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-2xl font-semibold text-muted-foreground">
-            kg
+          <span id="starting-weight-unit" className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-2xl font-semibold text-muted-foreground">
+            {weightUnit}
           </span>
         </div>
 
@@ -162,6 +166,9 @@ function CreateExerciseForm({ id }: { id: string }) {
         <AdvancedExerciseOptionsDialog
           exercise={newExercise}
           onExerciseChange={setNewExercise}
+          stepInput={stepInput}
+          onStepInputChange={setStepInput}
+          weightUnit={weightUnit}
         />
 
         <Button className="h-16 text-xl font-semibold" type="submit">

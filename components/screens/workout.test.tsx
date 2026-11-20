@@ -69,6 +69,7 @@ beforeEach(async () => {
   browser.localStorage.clear();
   useStore.getState().clearData();
   useStore.setState({
+    weightUnit: "kg",
     trainingDefaults: { sets: 3, step: 2.5, logging: true },
     workouts: [
       workout,
@@ -178,7 +179,7 @@ test("clearing the optional weight step stores the default and whitespace names 
     target: { value: "Pull ups" },
   });
   fireEvent.click(view.getByRole("button", { name: "Advanced" }));
-  fireEvent.change(view.getByLabelText("Weight step"), {
+  fireEvent.change(view.getByLabelText("Weight increment"), {
     target: { value: "" },
   });
   fireEvent.click(view.getByRole("button", { name: "Close" }));
@@ -194,7 +195,7 @@ test("a weight step that would round to zero in PostgreSQL cannot be saved", () 
     target: { value: "Pull ups" },
   });
   fireEvent.click(view.getByRole("button", { name: "Advanced" }));
-  fireEvent.change(view.getByLabelText("Weight step"), {
+  fireEvent.change(view.getByLabelText("Weight increment"), {
     target: { value: "0.001" },
   });
   fireEvent.click(view.getByRole("button", { name: "Close" }));
@@ -234,4 +235,41 @@ test("saved training defaults survive hydration and apply to new exercises", asy
   const exercises = useStore.getState().getWorkoutById("push")?.exercises;
   expect(exercises?.[0]).toMatchObject(exercise);
   expect(exercises?.[2]).toMatchObject({ sets: 5, step: 1.25, logging: false });
+});
+
+test("pounds persist on this device and new exercise inputs save kilograms", async () => {
+  const view = render(<TrainingSettings />);
+  expect((view.getByRole("radio", { name: "Kilograms (kg)" }) as HTMLInputElement).checked).toBe(true);
+  fireEvent.click(view.getByRole("radio", { name: "Pounds (lb)" }));
+  expect((view.getByLabelText("Default weight increment (lb)") as HTMLInputElement).value).toBe("5.51");
+  expect(useStore.getState().trainingDefaults.step).toBe(2.5);
+  fireEvent.change(view.getByLabelText("Default weight increment (lb)"), { target: { value: "5" } });
+
+  // Switching units mid-edit and saving keeps the intended value of the draft.
+  fireEvent.click(view.getByRole("radio", { name: "Kilograms (kg)" }));
+  expect((view.getByLabelText("Default weight increment (kg)") as HTMLInputElement).value).toBe("2.27");
+  fireEvent.submit(view.container.querySelector("form")!);
+  expect(useStore.getState().trainingDefaults.step).toBe(2.267962);
+  fireEvent.click(view.getByRole("radio", { name: "Pounds (lb)" }));
+
+  const saved = localStorage.getItem("store")!;
+  await act(async () => {
+    useStore.setState({ weightUnit: "kg" });
+    localStorage.setItem("store", saved);
+    await useStore.persist.rehydrate();
+  });
+  view.rerender(<CreateExercisePage id="push" />);
+  fireEvent.change(view.getByLabelText("Exercise name"), { target: { value: "Dumbbell press" } });
+  fireEvent.change(view.getByLabelText("Weight"), { target: { value: "135" } });
+  fireEvent.click(view.getByRole("button", { name: "Advanced" }));
+  expect((view.getByLabelText("Weight increment") as HTMLInputElement).value).toBe("5");
+  fireEvent.change(view.getByLabelText("Weight increment"), { target: { value: "2.5" } });
+  fireEvent.click(view.getByRole("button", { name: "Close" }));
+  fireEvent.submit(view.container.querySelector("form")!);
+
+  expect(useStore.getState().getWorkoutById("push")?.exercises[0]).toMatchObject(exercise);
+  expect(useStore.getState().getWorkoutById("push")?.exercises[2]).toMatchObject({
+    weight: 61.23497,
+    step: 1.133981,
+  });
 });
