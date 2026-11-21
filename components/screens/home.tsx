@@ -32,33 +32,27 @@ export default function Home() {
     window.history.replaceState(null, "", nextURL);
   }, []);
 
-  const createWorkout = (
-    <CreateWorkoutDialog
-      trigger={
-        <Button className="h-12 gap-2 px-5 text-base" type="button">
-          <Plus aria-hidden="true" />
-          Create workout
-        </Button>
-      }
-    />
-  );
-
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-7 pb-28 lg:max-w-3xl lg:pb-10">
-      <h1 className="mb-2 text-center text-3xl font-bold">Workouts</h1>
-      {hydrated &&
-        (workouts.length === 0 ? (
-          <div className="flex min-h-[calc(100svh-8.75rem)] items-center lg:min-h-[calc(100svh-4.25rem)]">
-            <EmptyState
-              icon={<Dumbbell className="size-10" />}
-              title="No workouts yet"
-            >
-              {createWorkout}
-            </EmptyState>
-          </div>
-        ) : (
-          <div className="flex justify-end">{createWorkout}</div>
-        ))}
+    <main className="mx-auto flex w-full max-w-[calc(var(--container-sm)+3rem)] flex-col gap-3 px-6 pt-6 pb-28 lg:max-w-3xl lg:pb-10">
+      <header className="flex min-h-11 flex-wrap items-center justify-between gap-2">
+        <h1 className="text-3xl font-bold">Workouts</h1>
+        {hydrated && (
+          <CreateWorkoutDialog
+            trigger={
+              <Button className="h-11 gap-2 px-3 text-base" type="button">
+                <Plus aria-hidden="true" />
+                Create workout
+              </Button>
+            }
+          />
+        )}
+      </header>
+      {hydrated && workouts.length === 0 && (
+        <EmptyState
+          icon={<Dumbbell className="size-10" />}
+          title="No workouts yet"
+        />
+      )}
       {workouts.map((workout: Workout) => (
         <div className="flex w-full gap-2" key={workout.id}>
           <Button

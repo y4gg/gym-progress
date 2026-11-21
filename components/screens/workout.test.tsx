@@ -85,7 +85,10 @@ afterEach(cleanup);
 test("the in-page create workout action works after workouts have been added", () => {
   const view = render(<Home />);
   expect(view.getByRole("link", { name: "Push" })).toBeTruthy();
-  fireEvent.click(view.getByRole("button", { name: "Create workout" }));
+  const create = view.getByRole("button", { name: "Create workout" });
+  const heading = view.getByRole("heading", { name: "Workouts" });
+  expect(heading.closest("header")?.contains(create)).toBe(true);
+  fireEvent.click(create);
   expect(view.getByRole("heading", { name: "New workout" })).toBeTruthy();
 });
 
