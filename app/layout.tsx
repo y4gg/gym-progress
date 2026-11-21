@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow_Semi_Condensed, Geist, Geist_Mono, Inter } from "next/font/google";
+import { Barlow_Semi_Condensed } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
-import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import Hydration from "@/components/hydration";
@@ -14,23 +13,11 @@ import { ServiceWorkerRegistration } from "@/components/service-worker-registrat
 import { PageTransition } from "@/components/page-transition";
 import { PwaOnboardingProvider } from "@/components/pwa-onboarding-provider";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-
-const overviewDisplay = Barlow_Semi_Condensed({
-  weight: "600",
+const barlowSemiCondensed = Barlow_Semi_Condensed({
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
-  variable: "--font-overview-display",
-  preload: false,
-});
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-barlow-semi-condensed",
+  fallback: ["sans-serif"],
 });
 
 export const metadata: Metadata = {
@@ -61,15 +48,7 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="en"
-      className={cn(
-        "h-full",
-        "antialiased",
-        geistSans.variable,
-        geistMono.variable,
-        "font-sans",
-        inter.variable,
-        overviewDisplay.variable,
-      )}
+      className={`h-full antialiased ${barlowSemiCondensed.variable}`}
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider
