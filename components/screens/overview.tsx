@@ -45,29 +45,20 @@ function WeeklyActivity({ weeks }: { weeks: Progress["weeks"] }) {
   const loggedDays = selected.days
     .filter((day) => day.sets > 0)
     .map((day) => `${date.format(day.timestamp)}, ${formatSets(day.sets)}`);
-  const compact = weeks.length > 4;
+  const weeksInColumns = weeks.length > 4;
   const months = weeks.map((week) => month.format(week.start));
 
   return (
     <section className="overview-activity">
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
-        <h2 className="overview-display text-[1.625rem] leading-none sm:text-3xl">
-          Weekly activity
-        </h2>
-        <p aria-live="polite" className="overview-week-detail">
-          <span>{date.formatRange(selected.start, selected.end)}</span>
-          <strong>{formatDays(selected.trainingDays)}, {formatSets(selectedSets)}</strong>
-          {loggedDays.length > 0 && (
-            <span className="sr-only">{loggedDays.join(". ")}</span>
-          )}
-        </p>
-      </div>
+      <h2 className="overview-display mb-4 text-[1.625rem] leading-none sm:mb-5 sm:text-3xl">
+        Weekly activity
+      </h2>
 
-      <div className="overview-calendar" data-compact={compact}>
+      <div className="overview-calendar" data-layout={weeksInColumns ? "columns" : "rows"}>
         <div aria-hidden className="overview-weekdays">
           {weekdays.map((day) => <span key={day}>{day}</span>)}
         </div>
-        <ul aria-label="Training activity by week" className="overview-weeks">
+        <ul role="list" aria-label="Training activity by week" className="overview-weeks">
           {weeks.map((week, index) => {
             // Leave room for the next label when the first month has only one column.
             const showMonth = index === 0
@@ -75,9 +66,6 @@ function WeeklyActivity({ weeks }: { weeks: Progress["weeks"] }) {
               : months[index] !== months[index - 1];
             return (
               <li key={week.start}>
-                <span aria-hidden className="overview-week-date">
-                  {compact ? (showMonth && months[index]) : date.format(week.start)}
-                </span>
                 <button
                   type="button"
                   aria-label={`${date.formatRange(week.start, week.end)}, ${formatDays(week.trainingDays)}`}
@@ -85,6 +73,9 @@ function WeeklyActivity({ weeks }: { weeks: Progress["weeks"] }) {
                   onClick={() => setSelectedStart(week.start)}
                   className="overview-week"
                 >
+                  <span aria-hidden className="overview-week-date">
+                    {weeksInColumns ? (showMonth && months[index]) : date.format(week.start)}
+                  </span>
                   <span aria-hidden className="overview-week-slots">
                     {week.days.map((day) => (
                       <span
@@ -101,16 +92,25 @@ function WeeklyActivity({ weeks }: { weeks: Progress["weeks"] }) {
           })}
         </ul>
       </div>
-      <div className="overview-legend">
-        <span>Sets per day</span>
-        <ul aria-label="Activity levels">
-          {activityLevels.map(({ minimum, label }) => (
-            <li key={minimum}>
-              <span aria-hidden className="overview-day" data-level={minimum} />
-              {label}
-            </li>
-          ))}
-        </ul>
+      <div className="overview-activity-footer">
+        <p aria-live="polite" className="overview-week-detail">
+          <span>{date.formatRange(selected.start, selected.end)}</span>
+          <strong>{formatDays(selected.trainingDays)}, {formatSets(selectedSets)}</strong>
+          {loggedDays.length > 0 && (
+            <span className="sr-only">{loggedDays.join(". ")}</span>
+          )}
+        </p>
+        <div className="overview-legend">
+          <span>Sets per day</span>
+          <ul role="list" aria-label="Activity levels">
+            {activityLevels.map(({ minimum, label }) => (
+              <li key={minimum}>
+                <span aria-hidden className="overview-day" data-level={minimum} />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   );
