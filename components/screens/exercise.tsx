@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { useAppRouter, AppLink as Link } from "@/components/app-navigation";
+import { BackLink } from "@/components/back-link";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -201,6 +202,7 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
 
   return (
     <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32 lg:max-w-xl lg:pb-10">
+      <BackLink href={`/w/${workout.id}`}>Back to workout</BackLink>
       <div className="flex flex-col gap-4">
         <h1 className="flex min-w-0 items-center justify-center gap-3 text-3xl font-bold">
           <WorkoutIcon name={exercise.icon} className="size-8 shrink-0" />

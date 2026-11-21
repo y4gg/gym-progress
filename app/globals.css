@@ -59,6 +59,10 @@
 }
 
 :root {
+  --bottom-nav-inset: max(1rem, env(safe-area-inset-bottom));
+  --bottom-nav-height: 4rem;
+  --bottom-control-gap: 0.5rem;
+  --page-action-size: 3rem;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
