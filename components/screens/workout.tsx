@@ -22,7 +22,7 @@ import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { AppLink as Link } from "@/components/app-navigation";
 import type { Exercise } from "@/lib/types";
-import { Edit, GripVertical } from "lucide-react";
+import { Edit, GripVertical, Plus } from "lucide-react";
 import { notFound } from "next/navigation";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { EditExerciseDialog } from "@/components/edit-exercise-dialog";
@@ -188,6 +188,12 @@ function WorkoutScreen({ id }: { id: string }) {
         </>
       ) : (
         <>
+          <Button asChild className="h-12 self-end gap-2 px-5 text-base">
+            <Link href={`/w/${workout.id}/create`}>
+              <Plus aria-hidden="true" />
+              Create exercise
+            </Link>
+          </Button>
           {exercises.map((exercise: Exercise) => (
             <div className="flex w-full gap-2" key={exercise.id}>
               <Button

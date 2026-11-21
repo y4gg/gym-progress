@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { AppLink as Link } from "@/components/app-navigation";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Trophy, Activity } from "lucide-react";
+import { BackLink } from "@/components/back-link";
 import { Button } from "@/components/ui/button";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { useStore } from "@/lib/store";
@@ -218,6 +219,7 @@ export default function ExerciseHistoryPage({
   );
   return (
     <main className="mx-auto w-full max-w-md px-6 py-9 pb-32 lg:max-w-3xl lg:pb-10">
+      <BackLink href={`/e/${exercise.id}`}>Back to exercise</BackLink>
       <header className="mb-7 text-center">
         <h1 className="text-3xl font-bold">History</h1>
         <p className="mt-3 truncate text-xl font-semibold">{exercise.name}</p>

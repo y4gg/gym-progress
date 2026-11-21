@@ -8,7 +8,7 @@ import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { AppLink as Link } from "@/components/app-navigation";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
-import { Dumbbell, Edit } from "lucide-react";
+import { Dumbbell, Edit, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { WorkoutIcon } from "@/components/workout-icon";
 
@@ -32,25 +32,33 @@ export default function Home() {
     window.history.replaceState(null, "", nextURL);
   }, []);
 
+  const createWorkout = (
+    <CreateWorkoutDialog
+      trigger={
+        <Button className="h-12 gap-2 px-5 text-base" type="button">
+          <Plus aria-hidden="true" />
+          Create workout
+        </Button>
+      }
+    />
+  );
+
   return (
     <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-7 pb-28 lg:max-w-3xl lg:pb-10">
       <h1 className="mb-2 text-center text-3xl font-bold">Workouts</h1>
-      {hydrated && workouts.length === 0 ? (
-        <div className="flex min-h-[calc(100svh-8.75rem)] items-center lg:min-h-[calc(100svh-4.25rem)]">
-          <EmptyState
-            icon={<Dumbbell className="size-10" />}
-            title="No workouts yet"
-          >
-            <CreateWorkoutDialog
-              trigger={
-                <Button className="h-12 px-6 text-base" type="button">
-                  Create workout
-                </Button>
-              }
-            />
-          </EmptyState>
-        </div>
-      ) : null}
+      {hydrated &&
+        (workouts.length === 0 ? (
+          <div className="flex min-h-[calc(100svh-8.75rem)] items-center lg:min-h-[calc(100svh-4.25rem)]">
+            <EmptyState
+              icon={<Dumbbell className="size-10" />}
+              title="No workouts yet"
+            >
+              {createWorkout}
+            </EmptyState>
+          </div>
+        ) : (
+          <div className="flex justify-end">{createWorkout}</div>
+        ))}
       {workouts.map((workout: Workout) => (
         <div className="flex w-full gap-2" key={workout.id}>
           <Button

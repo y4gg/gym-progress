@@ -9,6 +9,7 @@ import {
 import { Check, CheckSquare, Trash2, X } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { BackLink } from "@/components/back-link";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { Button } from "@/components/ui/button";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
@@ -174,6 +175,7 @@ function ExerciseLogsView({
           "max-lg:pb-[calc(var(--bottom-nav-inset)+var(--bottom-nav-height)+5.25rem)]",
       )}
     >
+      <BackLink href={`/e/${exerciseId}`}>Back to exercise</BackLink>
       <h1 className="mb-6 truncate text-center text-3xl font-bold">Logs</h1>
 
       {!hasLogs ? (
