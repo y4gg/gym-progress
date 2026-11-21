@@ -9,7 +9,7 @@ export function BackLink({ href, children }: { href: string; children: ReactNode
     <Button
       asChild
       variant="ghost"
-      className="mb-3 h-11 gap-2 px-3 text-base text-muted-foreground"
+      className="mb-3 hidden h-11 gap-2 px-3 text-base text-muted-foreground lg:inline-flex"
     >
       <AppLink href={href}>
         <ArrowLeft aria-hidden="true" />

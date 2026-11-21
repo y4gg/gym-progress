@@ -190,6 +190,10 @@ export function AppNavbar() {
   const pathname = useAppPathname();
   const session = authClient.useSession();
   const isOverview = isOverviewPathname(pathname);
+  const isBackAction = Boolean(
+    getExerciseId(pathname) ||
+      (getWorkoutId(pathname) && pathname.endsWith("/create")),
+  );
   const showPageAction =
     !isOverview &&
     !isSettingsPathname(pathname) &&
@@ -220,10 +224,18 @@ export function AppNavbar() {
       {showPageAction && (
         <div
           aria-hidden="true"
-          className="h-[calc(var(--page-action-size)+var(--bottom-control-gap))] shrink-0 lg:h-8 xl:hidden"
+          className={cn(
+            "h-[calc(var(--page-action-size)+var(--bottom-control-gap))] shrink-0",
+            isBackAction ? "lg:hidden" : "lg:h-8 xl:hidden",
+          )}
         />
       )}
-      <div className="pointer-events-none fixed inset-x-0 bottom-(--bottom-nav-inset) z-50 px-6">
+      <div
+        className={cn(
+          "pointer-events-none fixed inset-x-0 bottom-(--bottom-nav-inset) z-50 px-6",
+          isBackAction && "lg:hidden",
+        )}
+      >
         <div className="mx-auto flex w-full max-w-sm flex-col items-end gap-(--bottom-control-gap) lg:max-w-none">
           {showPageAction && <PageAction pathname={pathname} />}
           <nav
