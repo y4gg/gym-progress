@@ -190,10 +190,6 @@ export function AppNavbar() {
   const pathname = useAppPathname();
   const session = authClient.useSession();
   const isOverview = isOverviewPathname(pathname);
-  const isBackAction = Boolean(
-    getExerciseId(pathname) ||
-      (getWorkoutId(pathname) && pathname.endsWith("/create")),
-  );
   const showPageAction =
     !isOverview &&
     !isSettingsPathname(pathname) &&
@@ -224,23 +220,15 @@ export function AppNavbar() {
       {showPageAction && (
         <div
           aria-hidden="true"
-          className={cn(
-            "h-[calc(var(--page-action-size)+var(--bottom-control-gap))] shrink-0",
-            isBackAction ? "lg:hidden" : "lg:h-8 xl:hidden",
-          )}
+          className="h-[calc(var(--page-action-size)+var(--bottom-control-gap))] shrink-0 lg:hidden"
         />
       )}
-      <div
-        className={cn(
-          "pointer-events-none fixed inset-x-0 bottom-(--bottom-nav-inset) z-50 px-6",
-          isBackAction && "lg:hidden",
-        )}
-      >
-        <div className="mx-auto flex w-full max-w-sm flex-col items-end gap-(--bottom-control-gap) lg:max-w-none">
+      <div className="pointer-events-none fixed inset-x-0 bottom-(--bottom-nav-inset) z-50 px-6 lg:hidden">
+        <div className="mx-auto flex w-full max-w-sm flex-col items-end gap-(--bottom-control-gap)">
           {showPageAction && <PageAction pathname={pathname} />}
           <nav
             aria-label="Primary"
-            className="pointer-events-auto grid h-(--bottom-nav-height) w-full grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md lg:hidden"
+            className="pointer-events-auto grid h-(--bottom-nav-height) w-full grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md"
           >
             <NavLink href="/" label="Home" active={pathname === "/"}>
               <Home />
