@@ -145,6 +145,7 @@ function ExerciseLogsView({
   const weightUnit = useStore((state) => state.weightUnit);
   const [selectedLogIds, setSelectedLogIds] = useState<string[]>([]);
   const selectedCount = selectedLogIds.length;
+  const hasLogs = groupedLogs.length > 0;
 
   const toggleLogSelection = (exerciseLogId: string) => {
     setSelectedLogIds((currentLogIds) =>
@@ -166,10 +167,16 @@ function ExerciseLogsView({
   };
 
   return (
-    <main className="mx-auto w-full max-w-md px-6 py-9 pb-32 lg:max-w-3xl">
+    <main
+      className={cn(
+        "mx-auto w-full max-w-md px-6 py-9 pb-32 lg:max-w-3xl",
+        hasLogs &&
+          "max-lg:pb-[calc(var(--bottom-nav-inset)+var(--bottom-nav-height)+5.25rem)]",
+      )}
+    >
       <h1 className="mb-6 truncate text-center text-3xl font-bold">Logs</h1>
 
-      {groupedLogs.length === 0 ? (
+      {!hasLogs ? (
         <p className="py-16 text-center text-lg font-medium text-muted-foreground">
           No logs yet.
         </p>
@@ -223,8 +230,8 @@ function ExerciseLogsView({
         </div>
       )}
 
-      {groupedLogs.length > 0 ? (
-        <div className="fixed inset-x-0 bottom-24 z-40 flex justify-center px-6 lg:left-72 lg:bottom-6">
+      {hasLogs ? (
+        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-inset)+var(--bottom-nav-height)+var(--page-action-size)+2*var(--bottom-control-gap))] z-40 flex justify-center px-6 lg:left-72 lg:bottom-6">
           {selectMode && selectedCount > 0 ? (
             <div className="grid w-full max-w-sm grid-cols-2 gap-2 rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur-md">
               <DeleteDialog
