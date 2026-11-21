@@ -43,7 +43,7 @@ function WeeklyActivity({ weeks }: { weeks: Progress["weeks"] }) {
   return (
     <section className="overview-activity">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-x-5 gap-y-2 sm:mb-6">
-        <h2 className="overview-display text-[1.625rem] leading-none sm:text-3xl">
+        <h2 className="text-[1.625rem] leading-none font-semibold sm:text-3xl">
           Weekly activity
         </h2>
         <p aria-live="polite" className="overview-week-detail">
@@ -118,7 +118,7 @@ function TrainingTotals({ progress, weightUnit }: {
             className="overview-total-value"
             title={unit ? `${number.format(value)} ${unit} (weight × reps)` : undefined}
           >
-            <span className="overview-display">
+            <span className="font-semibold">
               {value >= 10_000 ? (
                 <>
                   <span aria-hidden>{compactNumber.format(value)}</span>
@@ -142,7 +142,7 @@ function ExerciseProgress({ exercises, hasLogs, weightUnit }: {
   return (
     <section>
       <header className="mb-4 sm:mb-5">
-        <h2 className="overview-display text-3xl leading-none sm:text-[2.125rem]">
+        <h2 className="text-3xl leading-none font-semibold sm:text-[2.125rem]">
           Exercise progress
         </h2>
         {exercises.length > 0 && (
@@ -240,7 +240,7 @@ export default function Overview() {
     <main className="overview mx-auto grid w-full max-w-5xl gap-8 px-4 pt-8 pb-28 sm:gap-10 sm:px-8 lg:pt-12 lg:pb-10">
       <header className="flex flex-wrap items-end justify-between gap-x-3 gap-y-4">
         <div>
-          <h1 className="overview-display text-5xl leading-[0.95] tracking-tight sm:text-[4.5rem]">
+          <h1 className="text-5xl leading-[0.95] font-semibold tracking-tight sm:text-[4.5rem]">
             Overview
           </h1>
           <p className="mt-2 text-sm text-muted-foreground sm:mt-3 sm:text-base">
