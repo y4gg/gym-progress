@@ -22,7 +22,7 @@ import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { AppLink as Link } from "@/components/app-navigation";
 import type { Exercise } from "@/lib/types";
-import { Edit, GripVertical } from "lucide-react";
+import { Edit, GripVertical, Plus } from "lucide-react";
 import { notFound } from "next/navigation";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
 import { EditExerciseDialog } from "@/components/edit-exercise-dialog";
@@ -145,11 +145,21 @@ function WorkoutScreen({ id }: { id: string }) {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-col gap-3 px-6 py-9 pb-28 lg:max-w-3xl lg:pb-10">
-      <h1 className="mb-2 flex min-w-0 items-center justify-center gap-3 text-3xl font-bold">
-        <WorkoutIcon name={workout.icon} className="size-8 shrink-0" />
-        <span className="truncate">{workout.name}</span>
-      </h1>
+    <main className="mx-auto flex w-full max-w-[calc(var(--container-sm)+3rem)] flex-col gap-3 px-6 pt-6 pb-28 lg:max-w-3xl lg:pb-10">
+      <header className="flex min-h-11 items-center justify-between gap-2">
+        <h1 className="flex min-w-0 items-start gap-2 text-3xl font-bold">
+          <WorkoutIcon name={workout.icon} className="mt-1 size-7 shrink-0" />
+          <span className="wrap-anywhere">{workout.name}</span>
+        </h1>
+        {!sorting && (
+          <Button asChild className="h-11 gap-2 px-3 text-base">
+            <Link href={`/w/${workout.id}/create`}>
+              <Plus aria-hidden="true" />
+              Create exercise
+            </Link>
+          </Button>
+        )}
+      </header>
       {sorting ? (
         <>
           <DndContext

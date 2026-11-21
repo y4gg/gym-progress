@@ -1,5 +1,6 @@
 "use client";
 import { useAppRouter } from "@/components/app-navigation";
+import { BackLink } from "@/components/back-link";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ function CreateExerciseForm({ id }: { id: string }) {
 
   return (
     <main className="mx-auto w-full max-w-sm px-6 py-9 pb-28 lg:max-w-xl lg:pb-10">
+      <BackLink href={`/w/${workout.id}`}>Back to workout</BackLink>
       <form
         className="flex flex-col gap-4"
         id="create-exercise-form"

@@ -262,23 +262,28 @@ test("account pages keep their server-rendered screen", () => {
   expect(view.getByText("Account screen")).toBeTruthy();
 });
 
-test("desktop sidebar links stay above the page action when switching to settings", () => {
+test("the icon-only page action sits outside both navigation areas and hides on settings", () => {
   const view = render(
     <AppNavigation>
       <AppNavbar />
     </AppNavigation>,
   );
-  const sidebar = within(view.getByRole("complementary", { name: "Sidebar" }));
+  const sidebarElement = view.getByRole("complementary", { name: "Sidebar" });
+  const sidebar = within(sidebarElement);
   const menu = sidebar.getByRole("navigation", { name: "Menu" });
-  const create = sidebar.getByRole("button", { name: "Create workout" });
-  expect(
-    menu.compareDocumentPosition(create) & Node.DOCUMENT_POSITION_FOLLOWING,
-  ).toBeTruthy();
+  const primary = view.getByRole("navigation", { name: "Primary" });
+  const create = view.getByRole("button", { name: "Create workout" });
+  expect(create.textContent).toBe("");
+  expect(sidebarElement.contains(create)).toBe(false);
+  expect(primary.contains(create)).toBe(false);
+  expect(within(primary).getAllByRole("link")).toHaveLength(2);
+  expect(within(primary).getByRole("button", { name: "Menu" })).toBeTruthy();
 
   fireEvent.click(within(menu).getByRole("link", { name: "Settings" }));
   expect(browser.location.pathname).toBe("/settings");
   expect(sidebar.getByRole("navigation", { name: "Menu" })).toBe(menu);
-  expect(sidebar.queryByRole("button", { name: "Create workout" })).toBeNull();
+  expect(view.getByRole("navigation", { name: "Primary" })).toBe(primary);
+  expect(view.queryByRole("button", { name: "Create workout" })).toBeNull();
 });
 
 test("settings and their detail pages open locally for an offline guest", () => {

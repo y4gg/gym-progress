@@ -36,6 +36,7 @@ mock.module("@/components/app-navigation", () => ({
 const { act, cleanup, fireEvent, render } =
   await import("@testing-library/react");
 const { useStore } = await import("@/lib/store");
+const { default: Home } = await import("./home");
 const { default: WorkoutOverview } = await import("./workout");
 const { default: CreateExercisePage } = await import("./create-exercise");
 const { TrainingSettings } = await import("./settings");
@@ -81,12 +82,25 @@ beforeEach(async () => {
 });
 afterEach(cleanup);
 
+test("the in-page create workout action works after workouts have been added", () => {
+  const view = render(<Home />);
+  expect(view.getByRole("link", { name: "Push" })).toBeTruthy();
+  const create = view.getByRole("button", { name: "Create workout" });
+  const heading = view.getByRole("heading", { name: "Workouts" });
+  expect(heading.closest("header")?.contains(create)).toBe(true);
+  fireEvent.click(create);
+  expect(view.getByRole("heading", { name: "New workout" })).toBeTruthy();
+});
+
 test("switching workouts ends the previous workout's sorting session", () => {
   const view = render(<WorkoutOverview id="push" />);
   fireEvent.click(view.getByRole("button", { name: "Sort exercises" }));
   view.rerender(<WorkoutOverview id="pull" />);
   expect(view.queryByRole("button", { name: "Done" })).toBeNull();
   expect(view.getByRole("button", { name: "Sort exercises" })).toBeTruthy();
+  expect(
+    view.getByRole("link", { name: "Create exercise" }).getAttribute("href"),
+  ).toBe("/w/pull/create");
 });
 
 test("sorting includes exercises added through sync while the draft is open", async () => {
@@ -129,6 +143,9 @@ test("switching create routes resets the draft and persists the new exercise's i
   });
   fireEvent.click(view.getByRole("radio", { name: "Chest" }));
   view.rerender(<CreateExercisePage id="pull" />);
+  expect(
+    view.getByRole("link", { name: "Back to workout" }).getAttribute("href"),
+  ).toBe("/w/pull");
   expect((view.getByLabelText("Exercise name") as HTMLInputElement).value).toBe(
     "",
   );

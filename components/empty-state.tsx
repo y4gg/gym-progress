@@ -15,7 +15,7 @@ export function EmptyState({ icon, title, children }: EmptyStateProps) {
             {icon}
           </div>
         ) : null}
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h2 className="text-xl font-semibold">{title}</h2>
       </div>
       {children}
     </div>

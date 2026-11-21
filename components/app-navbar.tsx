@@ -20,6 +20,7 @@ import { CreateWorkoutDialog } from "@/components/create-workout-dialog";
 import { AppLogo } from "@/components/app-logo";
 import { Launchpad } from "@/components/launchpad";
 import { NavigationMenu } from "@/components/navigation-menu";
+import { Button } from "@/components/ui/button";
 import { isOverviewPathname, isSettingsPathname } from "@/lib/app-routes";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
@@ -35,6 +36,9 @@ type NavLinkProps = {
 const navItemClassName =
   "flex h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-center text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 max-lg:[&>svg]:size-5 lg:flex-none lg:flex-row lg:justify-start lg:gap-2 lg:px-3 lg:text-sm";
 
+const pageActionClassName =
+  "pointer-events-auto size-(--page-action-size) rounded-xl shadow-lg";
+
 function NavLink({ active, children, href, label }: NavLinkProps) {
   return (
     <Link
@@ -45,6 +49,16 @@ function NavLink({ active, children, href, label }: NavLinkProps) {
     >
       {children}
     </Link>
+  );
+}
+
+function PageActionLink({ children, href, label }: Omit<NavLinkProps, "active">) {
+  return (
+    <Button asChild size="icon" className={pageActionClassName}>
+      <Link aria-label={label} href={href} title={label}>
+        {children}
+      </Link>
+    </Button>
   );
 }
 
@@ -67,13 +81,7 @@ function isAccountPath(pathname: string) {
   );
 }
 
-function AccountPageNavItem({
-  isLoggedIn,
-  isSessionPending,
-}: {
-  isLoggedIn: boolean;
-  isSessionPending: boolean;
-}) {
+function AccountPageAction() {
   const router = useAppRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -99,33 +107,23 @@ function AccountPageNavItem({
     }
   }
 
-  if (isSessionPending || !isLoggedIn) {
-    return <div aria-hidden className={cn(navItemClassName, "invisible")} />;
-  }
-
+  const label = isSigningOut ? "Signing out" : "Sign out";
   return (
-    <button
-      aria-label="Sign out"
-      className={navItemClassName}
+    <Button
+      aria-label={label}
+      className={pageActionClassName}
       disabled={isSigningOut}
       onClick={handleSignOut}
+      size="icon"
+      title={label}
       type="button"
     >
-      <LogOut className="size-6" />
-      <span>{isSigningOut ? "Signing out" : "Sign out"}</span>
-    </button>
+      <LogOut aria-hidden="true" className="size-6" />
+    </Button>
   );
 }
 
-function PageSpecificNavItem({
-  isLoggedIn,
-  isSessionPending,
-  pathname,
-}: {
-  isLoggedIn: boolean;
-  isSessionPending: boolean;
-  pathname: string;
-}) {
+function PageAction({ pathname }: { pathname: string }) {
   const workoutId = getWorkoutId(pathname);
   const exerciseId = getExerciseId(pathname);
   const exerciseWorkoutId = useStore((state) =>
@@ -136,90 +134,66 @@ function PageSpecificNavItem({
     return (
       <CreateWorkoutDialog
         trigger={
-          <button
+          <Button
             aria-label="Create workout"
-            className={navItemClassName + " cursor-pointer"}
+            className={pageActionClassName}
+            size="icon"
+            title="Create workout"
             type="button"
           >
-            <Plus className="size-6" />
-            <span>Create</span>
-          </button>
+            <Plus aria-hidden="true" className="size-6" />
+          </Button>
         }
       />
     );
   }
 
-  if (workoutId && !pathname.endsWith("/create")) {
-    return (
-      <NavLink href={`/w/${workoutId}/create`} label="Create exercise">
-        <Plus />
-        <span>Create</span>
-      </NavLink>
+  if (workoutId) {
+    return pathname.endsWith("/create") ? (
+      <PageActionLink href={`/w/${workoutId}`} label="Back to workout">
+        <ArrowLeft aria-hidden="true" className="size-6" />
+      </PageActionLink>
+    ) : (
+      <PageActionLink href={`/w/${workoutId}/create`} label="Create exercise">
+        <Plus aria-hidden="true" className="size-6" />
+      </PageActionLink>
     );
   }
 
-  if (workoutId && pathname.endsWith("/create")) {
-    return (
-      <NavLink href={`/w/${workoutId}`} label="Back to workout">
-        <ArrowLeft />
-        <span>Back</span>
-      </NavLink>
-    );
-  }
-
-  if (exerciseId && pathname === `/e/${exerciseId}/logs`) {
-    return (
-      <NavLink href={`/e/${exerciseId}`} label="Back to exercise">
-        <ArrowLeft />
-        <span>Back</span>
-      </NavLink>
-    );
-  }
-
-  if (exerciseId && pathname !== `/e/${exerciseId}`) {
-    return (
-      <NavLink href={`/e/${exerciseId}`} label="Back to exercise">
-        <ArrowLeft />
-        <span>Back</span>
-      </NavLink>
-    );
-  }
-
-  if (exerciseId && pathname === `/e/${exerciseId}`) {
-    return (
-      <NavLink
+  if (exerciseId) {
+    return pathname === `/e/${exerciseId}` ? (
+      <PageActionLink
         href={exerciseWorkoutId ? `/w/${exerciseWorkoutId}` : "/"}
         label="Back to workout"
       >
-        <ArrowLeft />
-        <span>Back</span>
-      </NavLink>
+        <ArrowLeft aria-hidden="true" className="size-6" />
+      </PageActionLink>
+    ) : (
+      <PageActionLink href={`/e/${exerciseId}`} label="Back to exercise">
+        <ArrowLeft aria-hidden="true" className="size-6" />
+      </PageActionLink>
     );
   }
 
   if (isAccountPath(pathname)) {
-    return (
-      <AccountPageNavItem
-        isLoggedIn={isLoggedIn}
-        isSessionPending={isSessionPending}
-      />
-    );
+    return <AccountPageAction />;
   }
 
   return (
-    <NavLink href="/account" label="Account">
-      <Settings />
-      <span>Manage</span>
-    </NavLink>
+    <PageActionLink href="/account" label="Account">
+      <Settings aria-hidden="true" className="size-6" />
+    </PageActionLink>
   );
 }
 
 export function AppNavbar() {
   const pathname = useAppPathname();
   const session = authClient.useSession();
-  const isLoggedIn = Boolean(session.data);
   const isOverview = isOverviewPathname(pathname);
-  const showPageAction = !isOverview && !isSettingsPathname(pathname);
+  const showPageAction =
+    !isOverview &&
+    !isSettingsPathname(pathname) &&
+    (!isAccountPath(pathname) || (!session.isPending && Boolean(session.data)));
 
   if (pathname === "/offline") return null;
 
@@ -240,51 +214,40 @@ export function AppNavbar() {
           pathname={pathname}
           session={session.data}
           isSessionPending={session.isPending}
-          pageAction={
-            showPageAction && (
-              <PageSpecificNavItem
-                isLoggedIn={isLoggedIn}
-                isSessionPending={session.isPending}
-                pathname={pathname}
-              />
-            )
-          }
         />
       </aside>
-      <nav
-        aria-label="Primary"
-        className="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 flex justify-center px-6 pointer-events-none lg:hidden"
-      >
+      {/* Let the page scroll past the action where it can cover the content. */}
+      {showPageAction && (
         <div
-          className={cn(
-            "pointer-events-auto grid h-16 w-full max-w-sm items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md",
-            showPageAction ? "grid-cols-4" : "grid-cols-3",
-          )}
-        >
-          <NavLink href="/" label="Home" active={pathname === "/"}>
-            <Home />
-            <span>Home</span>
-          </NavLink>
-          <NavLink href="/overview" label="Overview" active={isOverview}>
-            <BarChart3 />
-            <span>Overview</span>
-          </NavLink>
-          {showPageAction && (
-            <PageSpecificNavItem
-              isLoggedIn={isLoggedIn}
+          aria-hidden="true"
+          className="h-[calc(var(--page-action-size)+var(--bottom-control-gap))] shrink-0 lg:hidden"
+        />
+      )}
+      <div className="pointer-events-none fixed inset-x-0 bottom-(--bottom-nav-inset) z-50 px-6 lg:hidden">
+        <div className="mx-auto flex w-full max-w-sm flex-col items-end gap-(--bottom-control-gap)">
+          {showPageAction && <PageAction pathname={pathname} />}
+          <nav
+            aria-label="Primary"
+            className="pointer-events-auto grid h-(--bottom-nav-height) w-full grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md"
+          >
+            <NavLink href="/" label="Home" active={pathname === "/"}>
+              <Home />
+              <span>Home</span>
+            </NavLink>
+            <NavLink href="/overview" label="Overview" active={isOverview}>
+              <BarChart3 />
+              <span>Overview</span>
+            </NavLink>
+            <Launchpad
+              key={pathname}
               isSessionPending={session.isPending}
               pathname={pathname}
+              session={session.data}
+              triggerClassName={cn(navItemClassName, "cursor-pointer")}
             />
-          )}
-          <Launchpad
-            key={pathname}
-            pathname={pathname}
-            session={session.data}
-            isSessionPending={session.isPending}
-            triggerClassName={cn(navItemClassName, "cursor-pointer")}
-          />
+          </nav>
         </div>
-      </nav>
+      </div>
     </>
   );
 }
