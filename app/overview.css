@@ -242,6 +242,23 @@
   line-height: 1;
 }
 
+@container (max-width: 41.99rem) {
+  .overview-calendar {
+    --overview-day-size: min(1rem, calc((100cqi - 3.25rem) / 53));
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .overview-weekdays {
+    display: none;
+  }
+
+  .overview-months,
+  .overview-weeks {
+    grid-column: 1;
+  }
+}
+
 @container (min-width: 42rem) {
   .overview-panel {
     grid-template-columns: minmax(0, 1fr) minmax(10rem, 20%);
