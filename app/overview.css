@@ -78,20 +78,18 @@
 }
 
 .overview-calendar-scroll {
-  overflow-x: auto;
+  overflow-x: hidden;
   padding: 0.25rem 0.25rem 0.5rem;
-  scrollbar-color: var(--overview-divider) transparent;
-  overscroll-behavior-inline: contain;
 }
 
 .overview-calendar {
-  --overview-day-gap: 0.1875rem;
-  --overview-day-size: clamp(0.65rem, 1.7cqi, 1rem);
+  --overview-day-gap: 0.0625rem;
+  --overview-day-size: min(1rem, calc((100cqi - 6.25rem) / 53));
   display: grid;
   grid-template-columns: 2.5rem minmax(0, 1fr);
   grid-template-rows: 1.25rem auto;
   column-gap: 0.5rem;
-  min-width: 44rem;
+  min-width: 0;
   container-type: inline-size;
 }
 

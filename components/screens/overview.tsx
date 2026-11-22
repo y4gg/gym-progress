@@ -35,6 +35,15 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
     .filter((day) => day.logged)
     .map((day) => date.format(day.timestamp));
   const months = weeks.map((week) => month.format(week.start));
+  const monthGroups = months.reduce<Array<{ label: string; start: number; end: number }>>(
+    (groups, label, index) => {
+      const current = groups.at(-1);
+      if (current?.label === label) current.end = index;
+      else groups.push({ label, start: index, end: index });
+      return groups;
+    },
+    [],
+  );
 
   return (
     <section className="overview-activity">
@@ -67,9 +76,12 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
             {weekdays.map((day) => <span key={day}>{day}</span>)}
           </div>
           <div aria-hidden className="overview-months">
-            {weeks.map((week, index) => (
-              <span key={week.start}>
-                {index === 0 || months[index] !== months[index - 1] ? months[index] : ""}
+            {monthGroups.map(({ label, start, end }) => (
+              <span
+                key={`${label}-${start}`}
+                style={{ gridColumn: `${start + 1} / ${end + 2}` }}
+              >
+                {label}
               </span>
             ))}
           </div>
