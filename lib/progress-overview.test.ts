@@ -61,6 +61,9 @@ test("counts a local training day once and groups sets into Monday-to-Sunday wee
   expect(new Date(progress.weeks[0].start)).toEqual(new Date(2026, 9, 26));
   expect(progress.weeks.map(({ trainingDays }) => trainingDays)).toEqual([1, 0, 1, 1]);
   expect(progress.weeks[2].days.map(({ sets }) => sets)).toEqual([0, 0, 0, 0, 0, 0, 1]);
+  expect(progress.weeks[2].days.map(({ logged }) => logged)).toEqual([
+    false, false, false, false, false, false, true,
+  ]);
   expect(progress.weeks[3].days.map(({ sets, upcoming }) => [sets, upcoming])).toEqual([
     [2, false], [0, false], [0, false], [0, false],
     [0, true], [0, true], [0, true],

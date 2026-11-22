@@ -20,6 +20,7 @@ export function buildProgressOverview(
   });
   const sessions = buildHistorySessions(periodLogs);
   const setsByDay = new Map(sessions.map(({ timestamp, sets }) => [timestamp, sets]));
+  const trainingDays = new Set(sessions.map(({ timestamp }) => timestamp));
 
   const weeks = Array.from({ length: weekCount }, (_, index) => {
     const offset = 7 * (index - weekCount + 1);
@@ -28,13 +29,14 @@ export function buildProgressOverview(
       return {
         timestamp,
         sets: setsByDay.get(timestamp) ?? 0,
+        logged: trainingDays.has(timestamp),
         upcoming: timestamp >= tomorrow,
       };
     });
     return {
       start: days[0].timestamp,
       end: days[6].timestamp,
-      trainingDays: days.filter(({ sets }) => sets > 0).length,
+      trainingDays: days.filter(({ logged }) => logged).length,
       days,
     };
   });
