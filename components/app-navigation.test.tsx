@@ -373,7 +373,7 @@ test("overview opens locally and uses the weight unit chosen in settings", () =>
   expect(router.push).not.toHaveBeenCalled();
   expect(assign).not.toHaveBeenCalled();
 
-  const activeWeek = view.getByRole("button", { name: /, 1 day$/ });
+  const activeWeek = view.getAllByRole("button", { name: /, 1 day$/ })[0];
   fireEvent.click(activeWeek);
   expect(activeWeek.getAttribute("aria-pressed")).toBe("true");
 

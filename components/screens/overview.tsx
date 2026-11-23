@@ -27,6 +27,42 @@ function formatDays(days: number) {
   return `${days} ${days === 1 ? "day" : "days"}`;
 }
 
+function ActivityWeek({
+  week,
+  selected,
+  onSelect,
+}: {
+  week: Progress["weeks"][number];
+  selected: Progress["weeks"][number];
+  onSelect: (start: number) => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        aria-label={`${date.formatRange(week.start, week.end)}, ${formatDays(week.trainingDays)}`}
+        aria-pressed={week.start === selected.start}
+        onClick={() => onSelect(week.start)}
+        className="overview-week"
+      >
+        {week.days.map((day) => (
+          <span
+            className={cn(
+              "overview-day",
+              day.logged && "overview-day-logged",
+              day.upcoming && "overview-day-upcoming",
+            )}
+            key={day.timestamp}
+            title={`${date.format(day.timestamp)}, ${day.upcoming ? "Upcoming" : day.logged ? "Gym day" : "Rest day"}`}
+            aria-label={`${date.format(day.timestamp)}, ${day.upcoming ? "upcoming" : day.logged ? "gym day" : "rest day"}`}
+            role="img"
+          />
+        ))}
+      </button>
+    </li>
+  );
+}
+
 function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
   const [selectedStart, setSelectedStart] = useState<number | null>(null);
   const selected =
@@ -44,6 +80,23 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
     },
     [],
   );
+  // Split near thirds at month boundaries so each month label stays with its weeks.
+  const bandStarts = [1, 2].map((third) => {
+    const target = (weeks.length * third) / 3;
+    return monthGroups.reduce(
+      (closest, { start }) =>
+        Math.abs(start - target) < Math.abs(closest - target) ? start : closest,
+      0,
+    );
+  }).filter((start, index, starts) =>
+    start > 0 && start < weeks.length && (index === 0 || start > starts[index - 1]),
+  );
+  const boundaries = [0, ...bandStarts, weeks.length];
+  const bands = boundaries.slice(0, -1).map((start, index) => ({
+    start,
+    end: boundaries[index + 1],
+  }));
+  const maxBandWeeks = Math.max(...bands.map(({ start, end }) => end - start));
 
   return (
     <section className="overview-activity">
@@ -56,62 +109,84 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
             One mark for every day you logged a set.
           </p>
         </div>
-        <p aria-live="polite" className="overview-year-detail">
+        <p className="overview-year-detail">
           <strong>
             {formatDays(weeks.reduce((total, week) => total + week.trainingDays, 0))}
           </strong>
           <span>{date.formatRange(weeks[0].start, weeks[weeks.length - 1].end)}</span>
-          {loggedDates.length > 0 && (
-            <span className="sr-only">Logged on {loggedDates.join(". ")}</span>
-          )}
         </p>
       </div>
 
       <div className="overview-calendar-scroll">
         <div
           className="overview-calendar"
-          style={{ "--overview-week-count": weeks.length } as CSSProperties}
+          style={{
+            "--overview-week-count": weeks.length,
+            "--overview-band-week-count": maxBandWeeks,
+          } as CSSProperties}
         >
           <div aria-hidden className="overview-weekdays">
             {weekdays.map((day) => <span key={day}>{day}</span>)}
           </div>
-          <div aria-hidden className="overview-months">
-            {monthGroups.map(({ label, start, end }) => (
-              <span
-                key={`${label}-${start}`}
-                style={{ gridColumn: `${start + 1} / ${end + 2}` }}
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-          <ul role="list" aria-label="Training days by week" className="overview-weeks">
-            {weeks.map((week) => (
-              <li key={week.start}>
-                <button
-                  type="button"
-                  aria-label={`${date.formatRange(week.start, week.end)}, ${formatDays(week.trainingDays)}`}
-                  aria-pressed={week.start === selected.start}
-                  onClick={() => setSelectedStart(week.start)}
-                  className="overview-week"
+          <div className="overview-calendar-desktop">
+            <div aria-hidden className="overview-months">
+              {monthGroups.map(({ label, start, end }) => (
+                <span
+                  key={`${label}-${start}`}
+                  style={{ gridColumn: `${start + 1} / ${end + 2}` }}
                 >
-                  {week.days.map((day) => (
-                    <span
-                      className={cn(
-                        "overview-day",
-                        day.logged && "overview-day-logged",
-                        day.upcoming && "overview-day-upcoming",
-                      )}
-                      key={day.timestamp}
-                      title={`${date.format(day.timestamp)}, ${day.upcoming ? "Upcoming" : day.logged ? "Gym day" : "Rest day"}`}
-                      aria-label={`${date.format(day.timestamp)}, ${day.upcoming ? "upcoming" : day.logged ? "gym day" : "rest day"}`}
-                      role="img"
+                  {end - start < 1 ? label.slice(0, 1) : label}
+                </span>
+              ))}
+            </div>
+            <ul role="list" aria-label="Training days by week" className="overview-weeks">
+              {weeks.map((week) => (
+                <ActivityWeek
+                  key={week.start}
+                  week={week}
+                  selected={selected}
+                  onSelect={setSelectedStart}
+                />
+              ))}
+            </ul>
+          </div>
+          <div
+            className="overview-calendar-mobile"
+            style={{ "--overview-band-week-count": maxBandWeeks } as CSSProperties}
+          >
+            {bands.map(({ start, end }) => (
+              <div className="overview-calendar-band" key={weeks[start].start}>
+                <div aria-hidden className="overview-months">
+                  {monthGroups
+                    .filter((group) => group.end >= start && group.start < end)
+                    .map((group) => {
+                      const groupStart = Math.max(group.start, start);
+                      const groupEnd = Math.min(group.end, end - 1);
+                      return (
+                        <span
+                          key={group.start}
+                          style={{ gridColumn: `${groupStart - start + 1} / ${groupEnd - start + 2}` }}
+                        >
+                          {groupEnd - groupStart < 1
+                            ? group.label.slice(0, 1)
+                            : group.label}
+                        </span>
+                      );
+                    })}
+                </div>
+                <ul role="list" aria-label="Training days by week" className="overview-weeks">
+                  {weeks.slice(start, end).map((week) => (
+                    <ActivityWeek
+                      key={week.start}
+                      week={week}
+                      selected={selected}
+                      onSelect={setSelectedStart}
                     />
                   ))}
-                </button>
-              </li>
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       </div>
       <div className="overview-activity-footer">
@@ -121,9 +196,14 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
           <span className="overview-day" aria-hidden />
           <span>Rest day</span>
         </div>
-        <p className="overview-selected-week">
+        <p aria-live="polite" className="overview-selected-week">
           <span>{date.formatRange(selected.start, selected.end)}</span>
           <strong>{formatDays(selected.trainingDays)}</strong>
+          {loggedDates.length > 0 && (
+            <span className="overview-logged-dates sr-only">
+              Trained on {loggedDates.join(", ")}
+            </span>
+          )}
         </p>
       </div>
     </section>

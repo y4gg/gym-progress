@@ -111,9 +111,13 @@
   gap: var(--overview-day-gap);
 }
 
-.overview-months {
+.overview-calendar-desktop {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 1 / span 2;
+  min-width: 0;
+}
+
+.overview-months {
   min-width: 0;
   color: var(--overview-subtle);
   font-size: 0.6875rem;
@@ -126,9 +130,11 @@
 }
 
 .overview-weeks {
-  grid-column: 2;
-  grid-row: 2;
   min-width: 0;
+}
+
+.overview-calendar-mobile {
+  display: none;
 }
 
 .overview-weeks li,
@@ -244,7 +250,7 @@
 
 @container (max-width: 41.99rem) {
   .overview-calendar {
-    --overview-day-size: min(1rem, calc((100cqi - 3.25rem) / 53));
+    display: block;
     grid-template-columns: minmax(0, 1fr);
     column-gap: 0;
   }
@@ -253,9 +259,37 @@
     display: none;
   }
 
-  .overview-months,
-  .overview-weeks {
-    grid-column: 1;
+  .overview-calendar-desktop {
+    display: none;
+  }
+
+  .overview-calendar-mobile {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    min-width: 0;
+    container-type: inline-size;
+  }
+
+  .overview-calendar-band {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .overview-calendar-mobile .overview-months,
+  .overview-calendar-mobile .overview-weeks {
+    grid-template-columns: repeat(var(--overview-band-week-count), minmax(0, 1fr));
+    min-width: 0;
+  }
+
+  .overview-calendar-mobile .overview-months {
+    --overview-day-size: min(1rem, calc((100cqi - 0.25rem) / var(--overview-band-week-count)));
+  }
+
+  .overview-calendar-mobile .overview-week {
+    --overview-day-size: min(1rem, calc((100cqi - 0.25rem) / var(--overview-band-week-count)));
   }
 }
 
