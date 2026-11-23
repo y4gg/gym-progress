@@ -80,9 +80,9 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
     },
     [],
   );
-  // Split near thirds at month boundaries so each month label stays with its weeks.
-  const bandStarts = [1, 2].map((third) => {
-    const target = (weeks.length * third) / 3;
+  // Split near seasonal quarters at month boundaries so each row stays readable.
+  const bandStarts = [1, 2, 3].map((quarter) => {
+    const target = (weeks.length * quarter) / 4;
     return monthGroups.reduce(
       (closest, { start }) =>
         Math.abs(start - target) < Math.abs(closest - target) ? start : closest,
@@ -158,7 +158,12 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
               <div className="overview-calendar-band" key={weeks[start].start}>
                 <div aria-hidden className="overview-months">
                   {monthGroups
-                    .filter((group) => group.end >= start && group.start < end)
+                    .filter(
+                      (group) =>
+                        group.end >= start &&
+                        group.start < end &&
+                        !(start === 0 && group.start === 0 && group.end === 0),
+                    )
                     .map((group) => {
                       const groupStart = Math.max(group.start, start);
                       const groupEnd = Math.min(group.end, end - 1);
