@@ -80,23 +80,16 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
     },
     [],
   );
-  // Split near seasonal quarters at month boundaries so each row stays readable.
-  const bandStarts = [1, 2, 3].map((quarter) => {
-    const target = (weeks.length * quarter) / 4;
-    return monthGroups.reduce(
-      (closest, { start }) =>
-        Math.abs(start - target) < Math.abs(closest - target) ? start : closest,
-      0,
-    );
-  }).filter((start, index, starts) =>
-    start > 0 && start < weeks.length && (index === 0 || start > starts[index - 1]),
+  // Balance the year into four seasonal bands so the grid keeps a steady rhythm.
+  const seasonCount = 4;
+  const bandStarts = Array.from({ length: seasonCount - 1 }, (_, index) =>
+    Math.floor((weeks.length * (index + 1)) / seasonCount),
   );
   const boundaries = [0, ...bandStarts, weeks.length];
   const bands = boundaries.slice(0, -1).map((start, index) => ({
     start,
     end: boundaries[index + 1],
   }));
-  const maxBandWeeks = Math.max(...bands.map(({ start, end }) => end - start));
 
   return (
     <section className="overview-activity">
@@ -122,7 +115,6 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
           className="overview-calendar"
           style={{
             "--overview-week-count": weeks.length,
-            "--overview-band-week-count": maxBandWeeks,
           } as CSSProperties}
         >
           <div aria-hidden className="overview-weekdays">
@@ -152,15 +144,18 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
           </div>
           <div
             className="overview-calendar-mobile"
-            style={{ "--overview-band-week-count": maxBandWeeks } as CSSProperties}
           >
             {bands.map(({ start, end }) => (
-              <div className="overview-calendar-band" key={weeks[start].start}>
+              <div
+                className="overview-calendar-band"
+                key={weeks[start].start}
+                style={{ "--overview-band-week-count": end - start } as CSSProperties}
+              >
                 <div aria-hidden className="overview-months">
                   {monthGroups
                     .filter(
                       (group) =>
-                        group.end >= start &&
+                        group.start >= start &&
                         group.start < end &&
                         !(start === 0 && group.start === 0 && group.end === 0),
                     )
