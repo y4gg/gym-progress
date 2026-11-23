@@ -54,8 +54,7 @@
   margin-bottom: clamp(1.25rem, 3cqi, 1.75rem);
 }
 
-.overview-year-detail,
-.overview-selected-week {
+.overview-year-detail {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -71,8 +70,7 @@
   text-align: right;
 }
 
-.overview-year-detail strong,
-.overview-selected-week strong {
+.overview-year-detail strong {
   color: var(--overview-marker);
   font-weight: 650;
 }
@@ -180,36 +178,6 @@
 .overview-day-upcoming {
   border: 1px dashed var(--overview-divider);
   background: transparent;
-}
-
-.overview-activity-footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  margin-top: 1rem;
-  padding-top: 0.875rem;
-  border-top: 1px solid var(--overview-divider);
-}
-
-.overview-legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.5rem;
-  color: var(--overview-subtle);
-  font-size: 0.75rem;
-}
-
-.overview-legend .overview-day {
-  width: 0.75rem;
-  height: 0.75rem;
-}
-
-.overview-selected-week {
-  margin: 0;
-  justify-content: flex-end;
 }
 
 .overview-totals {

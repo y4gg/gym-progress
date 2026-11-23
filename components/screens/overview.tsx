@@ -67,9 +67,6 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
   const [selectedStart, setSelectedStart] = useState<number | null>(null);
   const selected =
     weeks.find((week) => week.start === selectedStart) ?? weeks[weeks.length - 1];
-  const loggedDates = selected.days
-    .filter((day) => day.logged)
-    .map((day) => date.format(day.timestamp));
   const months = weeks.map((week) => month.format(week.start));
   const monthGroups = months.reduce<Array<{ label: string; start: number; end: number }>>(
     (groups, label, index) => {
@@ -185,23 +182,6 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
             ))}
           </div>
         </div>
-      </div>
-      <div className="overview-activity-footer">
-        <div className="overview-legend">
-          <span className="overview-day overview-day-logged" aria-hidden />
-          <span>Gym day</span>
-          <span className="overview-day" aria-hidden />
-          <span>Rest day</span>
-        </div>
-        <p aria-live="polite" className="overview-selected-week">
-          <span>{date.formatRange(selected.start, selected.end)}</span>
-          <strong>{formatDays(selected.trainingDays)}</strong>
-          {loggedDates.length > 0 && (
-            <span className="overview-logged-dates sr-only">
-              Trained on {loggedDates.join(", ")}
-            </span>
-          )}
-        </p>
       </div>
     </section>
   );
