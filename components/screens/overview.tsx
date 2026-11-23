@@ -98,9 +98,6 @@ function YearlyActivity({ weeks }: { weeks: Progress["weeks"] }) {
           <h2 className="text-[1.625rem] leading-none font-semibold sm:text-3xl">
             Gym days
           </h2>
-          <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
-            One mark for every day you logged a set.
-          </p>
         </div>
         <p className="overview-year-detail">
           <strong>
