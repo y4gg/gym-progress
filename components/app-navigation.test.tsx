@@ -366,16 +366,14 @@ test("overview opens locally and uses the weight unit chosen in settings", () =>
 
   fireEvent.click(view.getByRole("link", { name: "Overview" }));
   expect(view.getByRole("heading", { name: "Overview" })).toBeTruthy();
-  expect(view.getByText("No exercise progress to show in this period.")).toBeTruthy();
+  expect(view.getByRole("link", { name: /Bench press/ }).getAttribute("href")).toBe(
+    "/e/bench/history",
+  );
+  expect(view.getByTitle("480 kg (weight × reps)")).toBeTruthy();
   expect(router.push).not.toHaveBeenCalled();
   expect(assign).not.toHaveBeenCalled();
 
-  fireEvent.click(view.getByRole("button", { name: "12 weeks" }));
-  expect(
-    view.getByRole("link", { name: /Bench press/ }).getAttribute("href"),
-  ).toBe("/e/bench/history");
-  expect(view.getByTitle("480 kg (weight × reps)")).toBeTruthy();
-  const activeWeek = view.getByRole("button", { name: /, 1 day$/ });
+  const activeWeek = view.getAllByRole("button", { name: /, 1 day$/ })[0];
   fireEvent.click(activeWeek);
   expect(activeWeek.getAttribute("aria-pressed")).toBe("true");
 
@@ -383,7 +381,6 @@ test("overview opens locally and uses the weight unit chosen in settings", () =>
   fireEvent.click(view.getByRole("link", { name: "Training" }));
   fireEvent.click(view.getByRole("radio", { name: "Pounds (lb)" }));
   fireEvent.click(view.getByRole("link", { name: "Overview" }));
-  fireEvent.click(view.getByRole("button", { name: "12 weeks" }));
   expect(view.getByText("132.28 lb")).toBeTruthy();
   expect(view.getByTitle("1,058.22 lb (weight × reps)")).toBeTruthy();
   expect(router.push).not.toHaveBeenCalled();
