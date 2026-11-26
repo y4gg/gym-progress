@@ -323,7 +323,7 @@ export default function Overview() {
   const progress = buildProgressOverview(workouts, logs, yearWeekCount, now);
 
   return (
-    <main className="overview mx-auto grid w-full max-w-5xl gap-8 px-4 pt-8 pb-28 sm:gap-10 sm:px-8 lg:pt-12 lg:pb-10">
+    <main className="overview gym-page mx-auto grid w-full max-w-5xl gap-8 sm:gap-10">
       <header className="flex flex-wrap items-end justify-between gap-x-3 gap-y-4">
         <div>
           <h1 className="text-5xl leading-[0.95] font-semibold tracking-tight sm:text-[4.5rem]">
@@ -335,7 +335,7 @@ export default function Overview() {
         </div>
       </header>
 
-      <div className="overview-panel">
+      <div className="overview-panel gym-panel">
         <YearlyActivity weeks={progress.weeks} />
         <TrainingTotals progress={progress} weightUnit={weightUnit} />
       </div>

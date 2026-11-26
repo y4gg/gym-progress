@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { WorkoutIcon } from "@/components/workout-icon";
 
 const linkClassName =
-  "flex min-h-12 min-w-0 items-center gap-3 rounded-2xl border border-transparent px-3 py-3 text-sm font-semibold transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring";
+  "gym-nav-item gym-focus flex min-h-12 min-w-0 items-center gap-3 rounded-xl border border-transparent px-3 py-3 text-sm font-semibold transition-colors";
 
 export type NavigationMenuProps = {
   pathname: string;

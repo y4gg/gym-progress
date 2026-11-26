@@ -1,0 +1,300 @@
+/* Material treatments shared by workout screens, navigation, and overlays. */
+:root {
+  --canvas-light: radial-gradient(ellipse 70rem 38rem at 68% 0%, #e0e4ed, transparent);
+  --glass-top: #fdfdff;
+  --glass-base: #eef0f5;
+  --glass-rim: #fff;
+  --glass-edge: #ccd0dc;
+  --reflection: #ffffffc0;
+  --glass-inset: #ffffffb0;
+  --shadow-near: #2129391c;
+  --shadow-far: #25314a2b;
+  --well: #f5f6f9;
+  --well-shadow: #222b4216;
+  --metal-light: #fff;
+  --metal-base: #aeb6c6;
+  --metal-ink: #252b37;
+  --action-glint: #ffffff28;
+  --scrim: #11141d66;
+}
+
+.dark {
+  --canvas-light: radial-gradient(ellipse 70rem 38rem at 68% 0%, #292d3b, transparent);
+  --glass-top: #292d39;
+  --glass-base: #1b1d26;
+  --glass-rim: #ffffff37;
+  --glass-edge: #3a4050;
+  --reflection: #c3ccef14;
+  --glass-inset: #ffffff0e;
+  --shadow-near: #05060b83;
+  --shadow-far: #05060b9c;
+  --well: #161820;
+  --well-shadow: #0007;
+  --metal-light: #f5f7fc;
+  --metal-base: #9da7bb;
+  --metal-ink: #252b37;
+  --action-glint: #ffffff92;
+  --scrim: #080a12a6;
+}
+
+:root {
+  --glass:
+    radial-gradient(ellipse at 14% 0%, var(--reflection), transparent 68%),
+    linear-gradient(150deg, var(--glass-top), var(--glass-base) 78%);
+  --panel-shadow:
+    inset 0 1px var(--glass-inset),
+    0 2px 5px var(--shadow-near),
+    0 16px 30px -16px var(--shadow-far);
+  --control-shadow: inset 0 1px var(--glass-inset), 0 2px 4px var(--shadow-near);
+  --well-inset: inset 0 2px 5px var(--well-shadow);
+  --metal:
+    radial-gradient(ellipse at 24% 0%, #ffffffb0, transparent 65%),
+    linear-gradient(155deg, var(--metal-light), var(--metal-base));
+}
+
+.gym-page {
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: 1.5rem var(--page-gutter) 7rem;
+}
+
+.gym-page-narrow {
+  max-width: 34rem;
+}
+
+@media (min-width: 1024px) {
+  .gym-page {
+    padding-block: 2.5rem;
+  }
+}
+
+.gym-panel {
+  min-width: 0;
+  border: 1px solid var(--glass-edge);
+  border-top-color: var(--glass-rim);
+  border-radius: var(--radius);
+  background: var(--glass);
+  box-shadow: var(--panel-shadow);
+}
+
+.gym-scrim {
+  background: var(--scrim);
+  backdrop-filter: blur(4px);
+}
+
+.gym-overlay {
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--panel-shadow), 0 26px 65px -18px var(--shadow-far);
+}
+
+.gym-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(1rem, 5vw, 2.25rem);
+  border-radius: var(--radius-overlay);
+}
+
+.gym-hero-home {
+  min-height: clamp(10.5rem, 31vw, 14.5rem);
+  align-content: center;
+}
+
+.gym-hero::after {
+  position: absolute;
+  inset: 0 12% auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--glass-rim), transparent);
+  pointer-events: none;
+  content: "";
+}
+
+.gym-hero-plate {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: clamp(-5.5rem, calc(24vw - 10rem), 1.75rem);
+  display: grid;
+  place-items: center;
+  width: clamp(11.5rem, 40vw, 18rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 53%, #0b101ba8 54% 55%, #e6edfc76 56%, transparent 57% 66%, #e6edfc8c 68%, #141924 70%),
+    conic-gradient(from 28deg, #141924, #535b6b 12%, #e0e6f4 23%, #7a859a 27%, #2b303d 39%, #10131b 59%, #758093 83%, #c5cede 89%, #5c6678 93%, #141924);
+  box-shadow:
+    inset 0 1px 4px #ffffffa6,
+    inset 0 -3px 5px #0a0d18c4,
+    0 5px #333947,
+    0 9px #151923,
+    0 22px 28px #09102483;
+  color: #e8ecf6;
+  opacity: 0.52;
+  transform: translateY(-49%) rotate(-19deg) scaleY(0.82);
+  pointer-events: none;
+}
+
+.dark .gym-hero-plate {
+  opacity: 0.8;
+}
+
+.gym-hero-plate svg {
+  width: 36%;
+  filter: drop-shadow(0 2px #121621) drop-shadow(0 4px 5px #0a0d18);
+}
+
+.gym-hero-home::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(90deg, var(--glass-top) 12%, transparent 66%);
+  pointer-events: none;
+  content: "";
+}
+
+.gym-page-title {
+  font-size: clamp(1.875rem, 6vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.gym-hero-title {
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
+  letter-spacing: -0.045em;
+}
+
+.gym-icon-tile {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid #fbfcff85;
+  border-radius: 0.625rem;
+  background: var(--metal);
+  box-shadow: inset 0 1px #ffffffb5, inset 0 -2px 4px #27324f36, 0 3px 5px var(--shadow-near);
+  color: var(--metal-ink);
+}
+
+.gym-row {
+  min-width: 0;
+  border: 1px solid var(--glass-edge);
+  border-top-color: var(--glass-rim);
+  border-radius: var(--radius);
+  background: var(--glass);
+  box-shadow: var(--control-shadow);
+}
+
+.gym-row-link {
+  transition: background-color var(--feedback-duration) ease;
+}
+
+.gym-row-link:hover {
+  background-color: var(--accent);
+}
+
+.gym-pressable {
+  transition:
+    background-color var(--feedback-duration) ease,
+    border-color var(--feedback-duration) ease,
+    box-shadow var(--feedback-duration) ease,
+    color var(--feedback-duration) ease;
+}
+
+@media (hover: hover) {
+  .gym-pressable:not(:disabled):hover {
+    border-color: var(--ring);
+  }
+}
+
+.gym-action {
+  border-color: color-mix(in srgb, var(--primary) 68%, var(--foreground));
+  background: linear-gradient(176deg, var(--action-glint), transparent 65%), var(--primary);
+  box-shadow: var(--control-shadow);
+  color: var(--primary-foreground);
+}
+
+.gym-action:not(:disabled):hover {
+  background-color: var(--action-hover);
+}
+
+.gym-action:not(:disabled):active {
+  background-color: var(--action-pressed);
+}
+
+.gym-secondary {
+  border-color: var(--glass-edge);
+  background: var(--glass);
+  box-shadow: var(--control-shadow);
+  color: var(--secondary-foreground);
+}
+
+.gym-outline {
+  border-color: var(--input);
+  background-color: var(--card);
+}
+
+.gym-outline:not(:disabled):is(:hover, [aria-expanded="true"]),
+.gym-secondary:not(:disabled):is(:hover, [aria-expanded="true"]) {
+  background-color: var(--accent);
+}
+
+.gym-secondary:not(:disabled):is(:hover, [aria-expanded="true"]) {
+  background-image: linear-gradient(var(--reflection), transparent);
+}
+
+.gym-danger {
+  border-color: color-mix(in srgb, var(--destructive) 27%, var(--border));
+  background-color: var(--danger-surface);
+  color: var(--destructive);
+}
+
+.gym-danger:not(:disabled):hover {
+  border-color: var(--destructive);
+}
+
+.gym-well {
+  background-color: var(--well);
+  box-shadow: var(--well-inset);
+}
+
+.gym-stepper {
+  display: grid;
+  grid-template-columns: clamp(3rem, 15vw, 4rem) minmax(0, 1fr) clamp(3rem, 15vw, 4rem);
+  gap: 0.5rem;
+}
+
+.gym-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.gym-dock {
+  background:
+    radial-gradient(ellipse at 15% 0%, var(--reflection), transparent 70%),
+    linear-gradient(155deg, color-mix(in srgb, var(--glass-top) 94%, transparent), color-mix(in srgb, var(--glass-base) 90%, transparent));
+  backdrop-filter: blur(12px);
+}
+
+.gym-nav-item {
+  border: 1px solid transparent;
+  color: var(--muted-foreground);
+}
+
+.gym-nav-item:hover {
+  background-color: var(--accent);
+  color: var(--foreground);
+}
+
+.gym-nav-item:is([aria-current="page"], [data-state="open"]) {
+  border-color: var(--glass-edge);
+  border-top-color: var(--glass-rim);
+  background: var(--glass);
+  box-shadow: var(--control-shadow);
+  color: var(--foreground);
+}
+
+.gym-focus:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

@@ -55,10 +55,10 @@ function CreateExerciseForm({ id }: { id: string }) {
   };
 
   return (
-    <main className="mx-auto w-full max-w-sm px-6 py-9 pb-28 lg:max-w-xl lg:pb-10">
+    <main className="gym-page gym-page-narrow">
       <BackLink href={`/w/${workout.id}`}>Back to workout</BackLink>
       <form
-        className="flex flex-col gap-4"
+        className="gym-panel gym-hero flex flex-col gap-4"
         id="create-exercise-form"
         onSubmit={(event) => {
           event.preventDefault();
@@ -67,7 +67,7 @@ function CreateExerciseForm({ id }: { id: string }) {
       >
         <Input
           aria-label="Exercise name"
-          className="h-16 px-5 text-center text-2xl font-semibold"
+          className="gym-well h-16 px-5 text-center text-2xl font-semibold"
           placeholder="Exercise name"
           value={newExercise.name}
           onChange={(e) =>
@@ -85,7 +85,7 @@ function CreateExerciseForm({ id }: { id: string }) {
           <Input
             aria-label="Weight"
             aria-describedby="starting-weight-unit"
-            className="h-16 px-5 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="gym-well h-16 px-5 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             inputMode="decimal"
             min={0}
             onChange={(e) =>
@@ -106,7 +106,7 @@ function CreateExerciseForm({ id }: { id: string }) {
 
         <Textarea
           aria-label="Notes"
-          className="min-h-36 resize-none px-4 py-4 text-xl"
+          className="gym-well min-h-32 resize-none px-4 py-4 text-lg"
           placeholder="Notes"
           value={newExercise.notes}
           onChange={(e) =>
@@ -114,10 +114,10 @@ function CreateExerciseForm({ id }: { id: string }) {
           }
         />
 
-        <div className="grid grid-cols-[4.5rem_1fr_4.5rem] gap-2">
+        <div className="gym-stepper">
           <Button
             aria-label="Increase sets"
-            className="h-16"
+            className="gym-secondary h-16"
             onClick={() =>
               setNewExercise({
                 ...newExercise,
@@ -132,7 +132,7 @@ function CreateExerciseForm({ id }: { id: string }) {
           <div className="relative">
             <Input
               aria-label="Sets"
-              className="h-16 px-4 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="gym-well h-16 px-4 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               min={1}
               onChange={(e) => {
                 setNewExercise({
@@ -150,7 +150,7 @@ function CreateExerciseForm({ id }: { id: string }) {
           </div>
           <Button
             aria-label="Decrease sets"
-            className="h-16"
+            className="gym-secondary h-16"
             disabled={newExercise.sets <= 1}
             onClick={() =>
               setNewExercise({
@@ -173,7 +173,7 @@ function CreateExerciseForm({ id }: { id: string }) {
           weightUnit={weightUnit}
         />
 
-        <Button className="h-16 text-xl font-semibold" type="submit">
+        <Button className="gym-action h-16 text-xl font-semibold" type="submit">
           Create Exercise
         </Button>
       </form>

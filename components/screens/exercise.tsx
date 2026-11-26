@@ -7,8 +7,7 @@ import { BackLink } from "@/components/back-link";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 import { notFound } from "next/navigation";
 import { EditExerciseDialog } from "@/components/edit-exercise-dialog";
 import { useStoreHydrated } from "@/lib/use-store-hydrated";
@@ -201,128 +200,130 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
   };
 
   return (
-    <main className="mx-auto w-full max-w-sm px-6 py-9 pb-32 lg:max-w-xl lg:pb-10">
+    <main className="gym-page gym-page-narrow flex flex-col gap-4">
       <BackLink href={`/w/${workout.id}`}>Back to workout</BackLink>
-      <div className="flex flex-col gap-4">
-        <h1 className="flex min-w-0 items-center justify-center gap-3 text-3xl font-bold">
-          <WorkoutIcon name={exercise.icon} className="size-8 shrink-0" />
-          <span className="truncate">{exercise.name}</span>
-        </h1>
-
-        <div className="grid grid-cols-[4.5rem_1fr_4.5rem] gap-2">
-          <Button
-            aria-label="Increase weight"
-            className="h-16"
-            disabled={!canIncreaseWeight}
-            onClick={() => {
-              editExercise({
-                ...exercise,
-                weight: suggestedWeight,
-              });
-            }}
-            type="button"
-            variant="outline"
-          >
-            <Plus className="size-8" />
-          </Button>
-
-          <div className="relative">
-            <Input
-              aria-label="Weight"
-              aria-describedby="exercise-weight-unit"
-              className="h-16 px-4 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-              inputMode="decimal"
-              min={0}
-              onChange={(e) => {
-                const weight = toKilograms(Number(e.target.value), weightUnit);
-                if (weightSchema.safeParse(weight).success) {
-                  editExercise({ ...exercise, weight });
-                }
-              }}
-              placeholder="0"
-              step="any"
-              type="number"
-              value={weightInputValue(exercise.weight, weightUnit)}
-            />
-            <span id="exercise-weight-unit" className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-semibold text-muted-foreground">
-              {weightUnit}
-            </span>
+      <section className="gym-panel gym-hero flex flex-col gap-4">
+        <header className="border-b pb-4">
+          <div className="min-w-0">
+            <p className="truncate text-sm text-muted-foreground">{workout.name}</p>
+            <h1 className="gym-page-title flex min-w-0 items-center gap-3">
+              <span className="gym-icon-tile size-12" data-workout-icon={exercise.icon}>
+                <WorkoutIcon name={exercise.icon} className="size-7" />
+              </span>
+              <span className="truncate">{exercise.name}</span>
+            </h1>
           </div>
+        </header>
 
-          <Button
-            aria-label="Decrease weight"
-            className="h-16"
-            disabled={exercise.weight <= 0}
-            onClick={() => {
-              editExercise({
-                ...exercise,
-                weight: Math.max(0, roundKilograms(exercise.weight - step)),
-              });
-            }}
-            type="button"
-            variant="outline"
-          >
-            <Minus className="size-8" />
-          </Button>
+        <div>
+          <label className="mb-2 block font-medium" htmlFor="exercise-weight">Weight</label>
+          <div className="gym-stepper">
+            <Button
+              aria-label="Decrease weight"
+              className="h-14"
+              disabled={exercise.weight <= 0}
+              onClick={() => {
+                editExercise({
+                  ...exercise,
+                  weight: Math.max(0, roundKilograms(exercise.weight - step)),
+                });
+              }}
+              type="button"
+              variant="secondary"
+            >
+              <Minus aria-hidden="true" className="size-6" />
+            </Button>
+            <div className="relative min-w-0">
+              <Input
+                aria-describedby="exercise-weight-unit"
+                className="gym-number h-14 px-2 pr-9 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                id="exercise-weight"
+                inputMode="decimal"
+                min={0}
+                onChange={(e) => {
+                  const weight = toKilograms(Number(e.target.value), weightUnit);
+                  if (weightSchema.safeParse(weight).success) {
+                    editExercise({ ...exercise, weight });
+                  }
+                }}
+                placeholder="0"
+                step="any"
+                type="number"
+                value={weightInputValue(exercise.weight, weightUnit)}
+              />
+              <span id="exercise-weight-unit" className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm font-medium text-muted-foreground">
+                {weightUnit}
+              </span>
+            </div>
+            <Button
+              aria-label="Increase weight"
+              className="h-14"
+              disabled={!canIncreaseWeight}
+              onClick={() => editExercise({ ...exercise, weight: suggestedWeight })}
+              type="button"
+              variant="secondary"
+            >
+              <Plus aria-hidden="true" className="size-6" />
+            </Button>
+          </div>
         </div>
 
-        <Textarea
-          aria-label="Notes"
-          className="min-h-36 resize-none px-4 py-4 text-xl"
-          onChange={(e) => {
-            editExercise({
-              ...exercise,
-              notes: e.target.value,
-            });
-          }}
-          placeholder="Notes"
-          value={exercise.notes}
-        />
-
-        <div className="grid grid-cols-[4.5rem_1fr_4.5rem] gap-2">
-          <Button
-            aria-label="Next set"
-            className="h-16"
-            onClick={handleNextSet}
-            type="button"
-            variant="outline"
-          >
-            <Plus className="size-8" />
-          </Button>
-
-          <div className="relative">
+        <div>
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-1">
+            <label className="font-medium" htmlFor="exercise-set">Current set</label>
+            <span id="exercise-set-total" className="gym-number text-sm text-muted-foreground">
+              {exercise.sets} total
+            </span>
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2">
+            <Button
+              aria-label="Previous set"
+              className="h-14"
+              onClick={previousSet}
+              type="button"
+              variant="secondary"
+            >
+              <ChevronLeft aria-hidden="true" className="size-6" />
+              <span className="hidden sm:inline">Previous</span>
+            </Button>
             <Input
               aria-label="Current set"
-              className="h-16 px-4 pr-14 text-center text-2xl font-semibold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              aria-describedby="exercise-set-total"
+              className="gym-number h-14 px-1 text-center text-2xl font-semibold disabled:opacity-100 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               disabled
+              id="exercise-set"
               max={exercise.sets}
               min={1}
-              onChange={(e) => setCurrentSet(Number(e.target.value))}
               type="number"
               value={currentSet}
             />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-muted-foreground">
-              set
-            </span>
+            <Button
+              aria-label="Next set"
+              className="h-14 gap-1.5 px-3 text-base font-semibold"
+              onClick={handleNextSet}
+              type="button"
+            >
+              {canTrackCurrentSet ? "Log set" : "Next set"}
+              <ChevronRight aria-hidden="true" />
+            </Button>
           </div>
-
-          <Button
-            aria-label="Previous set"
-            className="h-16"
-            onClick={previousSet}
-            type="button"
-            variant="outline"
-          >
-            <Minus className="size-8" />
-          </Button>
         </div>
 
-        <Separator orientation="horizontal" className="my-2" />
+        <div>
+          <label className="mb-2 block font-medium" htmlFor="exercise-notes">Notes</label>
+          <Textarea
+            id="exercise-notes"
+            className="min-h-24 px-3 py-2"
+            onChange={(e) => editExercise({ ...exercise, notes: e.target.value })}
+            value={exercise.notes}
+          />
+        </div>
+      </section>
 
-        <div className="grid grid-cols-2 gap-2 -mt-2">
+      <div className="grid grid-cols-2 gap-2">
           <Button
-            className="h-14 text-xl font-semibold"
-            variant="outline"
+            className="h-12 text-base"
+            variant="secondary"
             asChild
           >
             {typeof previousExercise === "undefined" ? (
@@ -332,7 +333,7 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
             )}
           </Button>
 
-          <Button className="h-14 text-xl font-semibold" asChild>
+          <Button className="h-12 text-base" variant="secondary" asChild>
             {typeof nextExercise === "undefined" ? (
               <Link href={`/w/${workout.id}`}>Finish</Link>
             ) : (
@@ -341,16 +342,16 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
           </Button>
 
           <Button
-            className="h-14 text-xl font-semibold"
-            variant="outline"
+            className="h-12 text-base"
+            variant="secondary"
             asChild
           >
             <Link href={`/e/${exercise.id}/history`}>History</Link>
           </Button>
 
           <Button
-            className="h-14 text-xl font-semibold"
-            variant="outline"
+            className="h-12 text-base"
+            variant="secondary"
             asChild
           >
             <Link href={`/e/${exercise.id}/logs`}>Logs</Link>
@@ -359,7 +360,7 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
             exercise={exercise}
             trigger={
               <Button
-                className="h-14 text-xl font-semibold"
+                className="h-12 text-base"
                 type="button"
                 variant="secondary"
               >
@@ -372,7 +373,7 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
             onConfirm={handleDelete}
             element={
               <Button
-                className="h-14 text-xl font-semibold"
+                className="h-12 text-base"
                 type="button"
                 variant="destructive"
               >
@@ -380,7 +381,7 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
               </Button>
             }
           />
-        </div>
+      </div>
         {trackRepsDialogOpen ? (
           <TrackRepsDialog
             defaultReps={defaultReps}
@@ -401,7 +402,6 @@ function ExerciseScreen({ exerciseId }: { exerciseId: string }) {
             open={weightSuggestionPending}
           />
         ) : null}
-      </div>
     </main>
   );
 }
