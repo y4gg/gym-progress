@@ -34,7 +34,7 @@ type NavLinkProps = {
 };
 
 const navItemClassName =
-  "flex h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-center text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 max-lg:[&>svg]:size-5 lg:flex-none lg:flex-row lg:justify-start lg:gap-2 lg:px-3 lg:text-sm";
+  "gym-nav-item gym-focus flex h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-center text-xs font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50 max-lg:[&>svg]:size-5 lg:flex-none lg:flex-row lg:justify-start lg:gap-2 lg:px-3 lg:text-sm";
 
 const pageActionClassName =
   "pointer-events-auto size-(--page-action-size) rounded-xl shadow-lg";
@@ -201,7 +201,7 @@ export function AppNavbar() {
     <>
       <aside
         aria-label="Sidebar"
-        className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex"
+        className="gym-dock fixed inset-y-0 left-0 z-40 hidden w-72 flex-col border-r border-sidebar-border text-sidebar-foreground lg:flex"
       >
         <Link
           href="/"
@@ -228,7 +228,7 @@ export function AppNavbar() {
           {showPageAction && <PageAction pathname={pathname} />}
           <nav
             aria-label="Primary"
-            className="pointer-events-auto grid h-(--bottom-nav-height) w-full grid-cols-3 items-center gap-1 rounded-xl border border-border bg-background/90 p-1 shadow-lg backdrop-blur-md"
+            className="gym-dock pointer-events-auto grid h-(--bottom-nav-height) w-full grid-cols-3 items-center gap-1 rounded-xl border border-border p-1 shadow-lg"
           >
             <NavLink href="/" label="Home" active={pathname === "/"}>
               <Home />

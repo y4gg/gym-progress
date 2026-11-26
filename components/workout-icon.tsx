@@ -30,7 +30,7 @@ export function WorkoutIcon({
   const icon = normalizeWorkoutIcon(name);
   if (icon === "dumbbell" || icon === "arms") {
     const Icon = icon === "arms" ? BicepsFlexed : Dumbbell;
-    return <Icon className={className} aria-hidden="true" />;
+    return <Icon className={className} aria-hidden="true" data-workout-icon={icon} />;
   }
   return <MuscleGroupIcon group={icon} className={className} />;
 }
